@@ -1211,7 +1211,7 @@
 "%@ cookies are disabled." = "Файли cookie %@ вимкнено.";
 "%@ web API access is disabled." = "Доступ до веб-API %@ вимкнено.";
 "Disable %@ dashboard cookie usage." = "Вимкнути використання файлів cookie панелі інструментів %@.";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "Доступ Keychain вимкнено в Advanced, тому імпорт файлів cookie браузера недоступний.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "Доступ до в’язки ключів вимкнено, тому імпортуються лише cookie Safari та Firefox.";
 "Manually paste an %@ from a browser session." = "Вручну вставте %@ із сеансу браузера.";
 "Paste a Cookie header captured from %@." = "Вставте заголовок файлу cookie, отриманий із %@.";
 "Paste a Cookie header from %@." = "Вставте заголовок файлу cookie з %@.";

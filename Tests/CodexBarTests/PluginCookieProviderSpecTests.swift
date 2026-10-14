@@ -61,7 +61,8 @@ struct PluginCookieProviderSpecTests {
             #expect(fixture.settings.providerConfig(for: provider)?.cookieSource == .auto)
             fixture.settings.debugDisableKeychainAccess = true
             let disabled = try #require(implementation.settingsPickers(context: context).first)
-            #expect(!disabled.options.contains { $0.id == "auto" })
+            // Auto stays available: the import order skips Keychain-backed browsers on its own.
+            #expect(disabled.options.contains { $0.id == "auto" })
             fixture.settings.debugDisableKeychainAccess = false
         }
     }

@@ -1228,7 +1228,7 @@
 "%@ cookies are disabled." = "%@ ملفات تعريف الارتباط معطلة.";
 "%@ web API access is disabled." = "%@ الوصول إلى API الويب معطل.";
 "Disable %@ dashboard cookie usage." = "قم بتعطيل استخدام ملفات تعريف الارتباط %@ لوحة التحكم.";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "Keychain الوصول معطل في القسم المتقدم، لذا فإن استيراد ملفات تعريف الارتباط من المتصفح غير متاح.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "الوصول إلى سلسلة المفاتيح معطّل، لذا تُستورد ملفات تعريف الارتباط من Safari وFirefox فقط.";
 "Manually paste an %@ from a browser session." = "قم بلصق %@ يدويا من جلسة متصفح.";
 "Paste a Cookie header captured from %@." = "الصق رأس كوكي تم التقاطه من %@.";
 "Paste a Cookie header from %@." = "لصق رأس كوكي من %@.";

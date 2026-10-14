@@ -315,8 +315,8 @@ struct PopupLocalizationTests {
 
             #expect(subtitle.contains("貼上"))
             #expect(!subtitle.contains("Paste a Cookie"))
-            #expect(disabledSubtitle.contains("鑰匙圈"))
-            #expect(!disabledSubtitle.contains("Keychain access"))
+            // Manual mode is unaffected by the Keychain switch; only Auto gains the Safari/Firefox note.
+            #expect(disabledSubtitle == subtitle)
             #expect(jsonBundleSubtitle.contains("來自 localStorage 的 Windsurf session JSON"))
             settings.windsurfCookieSource = .off
             #expect(windsurf.dynamicSubtitle?() == "Windsurf Web API 存取已停用。")

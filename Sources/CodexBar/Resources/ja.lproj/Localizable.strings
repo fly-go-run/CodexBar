@@ -1208,7 +1208,7 @@
 "%@ cookies are disabled." = "%@ の Cookie は無効になっています。";
 "%@ web API access is disabled." = "%@ のウェブ API アクセスは無効になっています。";
 "Disable %@ dashboard cookie usage." = "%@ ダッシュボードの Cookie 使用を無効にします。";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "詳細設定でキーチェーンへのアクセスが無効になっているため、ブラウザ Cookie の読み込みは利用できません。";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "キーチェーンへのアクセスが無効なため、Safari と Firefox の Cookie のみ読み込みます。";
 "Manually paste an %@ from a browser session." = "ブラウザセッションから %@ を手動で貼り付けてください。";
 "Paste a Cookie header captured from %@." = "%@ から取得した Cookie ヘッダーを貼り付けてください。";
 "Paste a Cookie header from %@." = "%@ の Cookie ヘッダーを貼り付けてください。";

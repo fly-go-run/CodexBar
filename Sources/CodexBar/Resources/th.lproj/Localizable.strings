@@ -1228,7 +1228,7 @@
 "%@ cookies are disabled." = "คุกกี้ %@ ถูกปิดใช้งาน";
 "%@ web API access is disabled." = "%@ การเข้าถึง API เว็บถูกปิดใช้งาน";
 "Disable %@ dashboard cookie usage." = "ปิดใช้งานการใช้คุกกี้แดชบอร์ด %@";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "การเข้าถึง Keychain ถูกปิดใช้งานในขั้นสูง ดังนั้นการนําเข้าคุกกี้ของเบราว์เซอร์จึงไม่พร้อมใช้งาน";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "ปิดการเข้าถึงพวงกุญแจอยู่ จึงนำเข้าเฉพาะคุกกี้ของ Safari และ Firefox";
 "Manually paste an %@ from a browser session." = "วาง %@ จากเซสชันเบราว์เซอร์ด้วยตนเอง";
 "Paste a Cookie header captured from %@." = "วางส่วนหัวคุกกี้ที่บันทึกจาก %@";
 "Paste a Cookie header from %@." = "วางส่วนหัวคุกกี้จาก %@";

@@ -1211,7 +1211,7 @@
 "%@ cookies are disabled." = "%@ cookies zijn uitgeschakeld.";
 "%@ web API access is disabled." = "%@ web-API-toegang is uitgeschakeld.";
 "Disable %@ dashboard cookie usage." = "Schakel het gebruik van %@ dashboardcookies uit.";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "De sleutelhangertoegang is uitgeschakeld in Geavanceerd, dus het importeren van browsercookies is niet beschikbaar.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "Sleutelhangertoegang is uitgeschakeld, dus alleen Safari- en Firefox-cookies worden geïmporteerd.";
 "Manually paste an %@ from a browser session." = "Plak handmatig een %@ uit een browsersessie.";
 "Paste a Cookie header captured from %@." = "Plak een Cookie-header vastgelegd van %@.";
 "Paste a Cookie header from %@." = "Plak een Cookie-header van %@.";

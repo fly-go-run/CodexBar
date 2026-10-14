@@ -1050,7 +1050,7 @@
 "%@ cookies are disabled." = "As cookies de %@ están desactivadas.";
 "%@ web API access is disabled." = "O acceso á API web de %@ está desactivado.";
 "Disable %@ dashboard cookie usage." = "Desactiva o uso das cookies do panel de %@.";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "O acceso ao chaveiro está desactivado en Avanzado, polo que a importación de cookies do navegador non está dispoñible.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "O acceso ao chaveiro está desactivado, así que só se importan cookies de Safari e Firefox.";
 "Manually paste an %@ from a browser session." = "Pega manualmente un %@ dunha sesión do navegador.";
 "Paste a Cookie header captured from %@." = "Pega unha cabeceira de cookie capturada de %@.";
 "Paste a Cookie header from %@." = "Pega unha cabeceira de cookie de %@.";

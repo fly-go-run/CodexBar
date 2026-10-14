@@ -1189,7 +1189,7 @@
 "%@ cookies are disabled." = "%@ Cookie 已禁用。";
 "%@ web API access is disabled." = "%@ Web API 访问已禁用。";
 "Disable %@ dashboard cookie usage." = "禁用 %@ 仪表盘 Cookie 用法。";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "高级设置中已禁用钥匙串访问，因此无法导入浏览器 Cookie。";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "钥匙串访问已禁用，只导入 Safari 和 Firefox 的 Cookie。";
 "Manually paste an %@ from a browser session." = "从浏览器会话中手动粘贴 %@。";
 "Paste a Cookie header captured from %@." = "粘贴从 %@ 捕获的 Cookie 标头。";
 "Paste a Cookie header from %@." = "粘贴来自 %@ 的 Cookie 标头。";

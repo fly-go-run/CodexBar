@@ -1063,7 +1063,7 @@
 "%@ cookies are disabled." = "Las cookies de %@ están desactivadas.";
 "%@ web API access is disabled." = "El acceso a la API web de %@ está desactivado.";
 "Disable %@ dashboard cookie usage." = "Desactiva el uso de cookies del panel de %@.";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "El acceso al llavero está desactivado en Avanzado, así que la importación de cookies del navegador no está disponible.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "El acceso al llavero está desactivado, así que solo se importan cookies de Safari y Firefox.";
 "Manually paste an %@ from a browser session." = "Pega manualmente un %@ de una sesión del navegador.";
 "Paste a Cookie header captured from %@." = "Pega una cabecera Cookie capturada desde %@.";
 "Paste a Cookie header from %@." = "Pega una cabecera Cookie de %@.";

@@ -1228,7 +1228,7 @@
 "%@ cookies are disabled." = "%@ کوکی ها غیرفعال هستند.";
 "%@ web API access is disabled." = "دسترسی %@ وب API غیرفعال است.";
 "Disable %@ dashboard cookie usage." = "استفاده %@ از کوکی داشبورد را غیرفعال کنید.";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "دسترسی Keychain در حالت پیشرفته غیرفعال است، بنابراین وارد کردن کوکی مرورگر در دسترس نیست.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "دسترسی به جاکلیدی غیرفعال است، بنابراین فقط کوکی‌های Safari و Firefox وارد می‌شوند.";
 "Manually paste an %@ from a browser session." = "یک %@ را به صورت دستی از یک جلسه مرورگر پیست کنید.";
 "Paste a Cookie header captured from %@." = "یک هدر کوکی که از %@ گرفته شده بچسبان.";
 "Paste a Cookie header from %@." = "یک هدر کوکی از %@ بچسبان.";

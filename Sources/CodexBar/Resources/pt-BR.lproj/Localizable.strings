@@ -1208,7 +1208,7 @@
 "%@ cookies are disabled." = "Os cookies de %@ estão desativados.";
 "%@ web API access is disabled." = "O acesso à API web de %@ está desativado.";
 "Disable %@ dashboard cookie usage." = "Desativar o uso de cookies do painel de %@.";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "O acesso ao Chaves está desativado em Avançado, então a importação de cookies do navegador está indisponível.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "O acesso às Chaves está desativado, então só os cookies do Safari e do Firefox são importados.";
 "Manually paste an %@ from a browser session." = "Cole manualmente um %@ de uma sessão do navegador.";
 "Paste a Cookie header captured from %@." = "Cole um cabeçalho Cookie capturado de %@.";
 "Paste a Cookie header from %@." = "Cole um cabeçalho Cookie de %@.";

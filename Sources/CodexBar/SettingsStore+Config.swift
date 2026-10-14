@@ -303,9 +303,9 @@ extension SettingsStore {
         provider: UsageProvider,
         fallback: ProviderCookieSource) -> ProviderCookieSource
     {
-        let source = self.configSnapshot.providerConfig(for: provider.instanceID)?.cookieSource ?? fallback
-        guard self.debugDisableKeychainAccess == false else { return source == .off ? .off : .manual }
-        return source
+        // With Keychain access disabled, Auto still works: the import order skips every browser that
+        // needs Keychain to decrypt cookies (Chromium family) and only reads Safari/Firefox stores.
+        self.configSnapshot.providerConfig(for: provider.instanceID)?.cookieSource ?? fallback
     }
 
     func logProviderModeChange(provider: UsageProvider, field: String, value: String) {

@@ -1230,7 +1230,7 @@
 "%@ cookies are disabled." = "Pliki cookie %@ są wyłączone.";
 "%@ web API access is disabled." = "Dostęp do web API %@ jest wyłączony.";
 "Disable %@ dashboard cookie usage." = "Wyłącz użycie plików cookie panelu %@.";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "Dostęp do pęku kluczy jest wyłączony w Zaawansowanych, więc import plików cookie przeglądarki jest niedostępny.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "Dostęp do pęku kluczy jest wyłączony, więc importowane są tylko ciasteczka Safari i Firefox.";
 "Manually paste an %@ from a browser session." = "Wklej ręcznie %@ z sesji przeglądarki.";
 "Paste a Cookie header captured from %@." = "Wklej nagłówek Cookie przechwycony z %@.";
 "Paste a Cookie header from %@." = "Wklej nagłówek Cookie z %@.";

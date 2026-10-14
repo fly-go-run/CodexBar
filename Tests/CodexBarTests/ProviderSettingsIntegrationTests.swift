@@ -109,7 +109,7 @@ struct ProviderSettingsIntegrationTests {
                         #expect(registration.accepts(contribution))
                         let cookie = try #require(registration
                             .cookieSettings(from: .init(contributions: [contribution])))
-                        #expect(cookie.cookieSource == (keychainDisabled && mode != .off ? .manual : mode))
+                        #expect(cookie.cookieSource == mode)
                         #expect(cookie.manualCookieHeader == header)
                     }
                 }

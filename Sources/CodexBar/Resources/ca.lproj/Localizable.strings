@@ -1065,7 +1065,7 @@
 "%@ cookies are disabled." = "Les galetes de %@ estan desactivades.";
 "%@ web API access is disabled." = "L'accés a l'API web de %@ està desactivat.";
 "Disable %@ dashboard cookie usage." = "Desactiveu l'ús de galetes del tauler de %@.";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "L'accés al Clauer està desactivat a Avançat, així que la importació de galetes del navegador no està disponible.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "L’accés al clauer està desactivat, així que només s’importen galetes de Safari i Firefox.";
 "Manually paste an %@ from a browser session." = "Enganxeu manualment un %@ d'una sessió del navegador.";
 "Paste a Cookie header captured from %@." = "Enganxeu una capçalera Cookie capturada de %@.";
 "Paste a Cookie header from %@." = "Enganxeu una capçalera Cookie de %@.";

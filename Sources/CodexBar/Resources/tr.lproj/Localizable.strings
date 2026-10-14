@@ -1223,7 +1223,7 @@
 "%@ cookies are disabled." = "%@ çerezleri devre dışı.";
 "%@ web API access is disabled." = "%@ web API erişimi devre dışı.";
 "Disable %@ dashboard cookie usage." = "%@ panel çerez kullanımını devre dışı bırak.";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "Anahtar Zinciri erişimi Gelişmiş bölümünde devre dışı bırakıldı, bu nedenle tarayıcı çerezleri içe aktarılamıyor.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "Anahtar Zinciri erişimi kapalı, bu yüzden yalnızca Safari ve Firefox çerezleri içe aktarılır.";
 "Manually paste an %@ from a browser session." = "Bir tarayıcı oturumundan %@ yapıştırın.";
 "Paste a Cookie header captured from %@." = "%@ üzerinden yakalanan bir çerez başlığı yapıştırın.";
 "Paste a Cookie header from %@." = "%@ üzerinden bir çerez başlığı yapıştırın.";

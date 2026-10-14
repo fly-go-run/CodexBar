@@ -1230,7 +1230,7 @@
 "%@ cookies are disabled." = "Cookie %@ dinonaktifkan.";
 "%@ web API access is disabled." = "Akses web API %@ dinonaktifkan.";
 "Disable %@ dashboard cookie usage." = "Nonaktifkan penggunaan cookie dasbor %@.";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "Akses Keychain dinonaktifkan di Lanjutan, jadi impor cookie browser tidak tersedia.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "Akses Rantai Kunci dinonaktifkan, jadi hanya cookie Safari dan Firefox yang diimpor.";
 "Manually paste an %@ from a browser session." = "Tempel %@ secara manual dari sesi browser.";
 "Paste a Cookie header captured from %@." = "Tempel header Cookie yang ditangkap dari %@.";
 "Paste a Cookie header from %@." = "Tempel header Cookie dari %@.";

@@ -1207,7 +1207,7 @@
 "%@ cookies are disabled." = "%@ bị tắt. Quyền truy cập";
 "%@ web API access is disabled." = "%@ web API bị vô hiệu hóa.";
 "Disable %@ dashboard cookie usage." = "Tắt %@ cookie trang tổng quan Mức sử dụng . Quyền truy cập";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "Keychain bị vô hiệu hóa trong Nâng cao, do đó, tính năng nhập cookie trình duyệt không khả dụng.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "Quyền truy cập Chuỗi khóa đã tắt, nên chỉ nhập cookie của Safari và Firefox.";
 "Manually paste an %@ from a browser session." = "Dán %@ theo cách thủ công từ phiên trình duyệt.";
 "Paste a Cookie header captured from %@." = "Dán tiêu đề Cookie được lấy từ %@ .";
 "Paste a Cookie header from %@." = "Dán tiêu đề Cookie từ %@ .";

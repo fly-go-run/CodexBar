@@ -44,8 +44,8 @@ enum ProviderCookieSourceUI {
             trailingActions: trailingActions)
     }
 
-    static let keychainDisabledPrefixKey =
-        "Keychain access is disabled in Advanced, so browser cookie import is unavailable."
+    static let keychainDisabledAutoNoteKey =
+        "Keychain access is disabled, so only Safari and Firefox cookies are imported."
 
     @MainActor
     static func cachedTrailingText(provider: UsageProvider, scope: CookieHeaderCache.Scope? = nil) -> String? {
@@ -60,12 +60,9 @@ enum ProviderCookieSourceUI {
     }
 
     static func options(allowsOff: Bool, keychainDisabled: Bool) -> [ProviderSettingsPickerOption] {
-        var options: [ProviderSettingsPickerOption] = []
-        if !keychainDisabled {
-            options.append(ProviderSettingsPickerOption(
-                id: ProviderCookieSource.auto.rawValue,
-                title: ProviderCookieSource.auto.displayName))
-        }
+        var options: [ProviderSettingsPickerOption] = [ProviderSettingsPickerOption(
+            id: ProviderCookieSource.auto.rawValue,
+            title: ProviderCookieSource.auto.displayName)]
         options.append(ProviderSettingsPickerOption(
             id: ProviderCookieSource.manual.rawValue,
             title: ProviderCookieSource.manual.displayName))
@@ -84,13 +81,10 @@ enum ProviderCookieSourceUI {
         manual: String,
         off: String) -> String
     {
-        if keychainDisabled {
-            return source == .off ? off : "\(L(self.keychainDisabledPrefixKey)) \(manual)"
-        }
         switch source {
-        case .auto: return auto
-        case .manual: return manual
-        case .off: return off
+        case .auto: keychainDisabled ? "\(auto) \(L(self.keychainDisabledAutoNoteKey))" : auto
+        case .manual: manual
+        case .off: off
         }
     }
 }

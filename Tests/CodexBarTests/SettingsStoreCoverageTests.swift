@@ -544,7 +544,7 @@ struct SettingsStoreCoverageTests {
     }
 
     @Test
-    func `keychain disable forces manual cookie sources`() throws {
+    func `keychain disable keeps configured cookie sources`() throws {
         let suite = "SettingsStoreCoverageTests-keychain-\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
@@ -556,8 +556,8 @@ struct SettingsStoreCoverageTests {
         settings.kimiCookieSource = .off
         settings.debugDisableKeychainAccess = true
 
-        #expect(settings.codexCookieSource == .manual)
-        #expect(settings.claudeCookieSource == .manual)
+        #expect(settings.codexCookieSource == .auto)
+        #expect(settings.claudeCookieSource == .auto)
         #expect(settings.kimiCookieSource == .off)
     }
 

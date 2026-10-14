@@ -1078,7 +1078,7 @@
 "%@ cookies are disabled." = "%@ Cookie 已停用。";
 "%@ web API access is disabled." = "%@ Web API 存取已停用。";
 "Disable %@ dashboard cookie usage." = "停用 %@ 儀表板 Cookie。";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "進階設定中已停用鑰匙圈存取，因此無法匯入瀏覽器 Cookie。";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "鑰匙圈存取已停用，只匯入 Safari 和 Firefox 的 Cookie。";
 "Manually paste an %@ from a browser session." = "從瀏覽器工作階段中手動貼上 %@。";
 "Paste a Cookie header captured from %@." = "貼上從 %@ 擷取的 Cookie 標頭。";
 "Paste a Cookie header from %@." = "貼上來自 %@ 的 Cookie 標頭。";
