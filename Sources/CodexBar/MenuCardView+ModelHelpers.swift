@@ -549,7 +549,8 @@ extension UsageMenuCardView.Model {
             current.hintLine == candidate.hintLine &&
                 current.errorLine == candidate.errorLine &&
                 (current.meteredLine == nil) == (candidate.meteredLine == nil) &&
-                current.comparisonLines.count == candidate.comparisonLines.count
+                current.comparisonLines.count == candidate.comparisonLines.count &&
+                current.speedLines.count == candidate.speedLines.count
         default:
             false
         }

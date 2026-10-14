@@ -185,6 +185,8 @@ final class UsageStore {
     @ObservationIgnored var sharedSpendDashboardObservationDebounceTask: Task<Void, Never>?
     @ObservationIgnored var sharedSpendDashboardTokenPublicationDebounceTask: Task<Void, Never>?
     var tokenErrors: [ProviderInstanceID: String] = [:]
+    var tokenOutputSpeeds: [ProviderInstanceID: TokenOutputSpeedSnapshot] = [:]
+    @ObservationIgnored var tokenOutputSpeedScanStartedAt: [ProviderInstanceID: Date] = [:]
     var tokenRefreshInFlight: Set<ProviderInstanceID> = []
     var codexCostCatchUpActivity: CodexCostCatchUpActivity?
     var spendDashboardCodexCostCatchUpActivity: CodexCostCatchUpActivity?
@@ -1466,6 +1468,8 @@ extension UsageStore {
             self.resetTokenUsageState(for: provider)
             return
         }
+
+        self.scheduleTokenOutputSpeedRefresh(for: provider)
 
         guard await self.refreshPiHistoryScope(for: provider) else { return }
 

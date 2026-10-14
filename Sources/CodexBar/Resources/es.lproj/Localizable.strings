@@ -2618,3 +2618,5 @@
 "Daily spend · %@" = "Gasto diario · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Se aplica a la cuenta de token seleccionada «%@». Cada cuenta conserva sus propios límites.";
 "Applies to the OpenAI API key, not to token accounts." = "Se aplica a la clave de la API de OpenAI, no a las cuentas de token.";
+"token_speed_window_line" = "Velocidad (24 h): %@";
+"token_speed_last_hour_line" = "Última hora: %@ tok/s · %@ solicitudes";

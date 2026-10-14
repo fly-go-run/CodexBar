@@ -109,6 +109,7 @@ extension StatusItemController {
         ]
             .compactMap(\.self)
             + (tokenUsage?.comparisonLines ?? [])
+            + (tokenUsage?.speedLines ?? [])
             + [tokenUsage?.hintLine, tokenUsage?.errorLine].compactMap(\.self)
         return lines.filter { !$0.isEmpty }
     }
@@ -126,6 +127,7 @@ extension StatusItemController {
         ]
             .compactMap(\.self)
             + (tokenUsage?.comparisonLines ?? [])
+            + (tokenUsage?.speedLines ?? [])
             + [provider == .codex ? tokenUsage?.hintLine : nil].compactMap(\.self)
             + [tokenUsage?.errorLine].compactMap(\.self))
             .filter { !$0.isEmpty }

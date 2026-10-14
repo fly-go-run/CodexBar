@@ -2623,3 +2623,5 @@
 "Daily spend · %@" = "Günlük harcama · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Seçili “%@” token hesabı için geçerlidir. Her hesap kendi sınırlarını korur.";
 "Applies to the OpenAI API key, not to token accounts." = "Token hesapları için değil, OpenAI API anahtarı için geçerlidir.";
+"token_speed_window_line" = "Hız (24 sa): %@";
+"token_speed_last_hour_line" = "Son saat: %@ tok/s · %@ istek";

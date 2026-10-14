@@ -13,6 +13,7 @@ extension UsageMenuCardView.Model {
         let dashboardError: String?
         let tokenSnapshot: CostUsageTokenSnapshot?
         let tokenError: String?
+        let tokenOutputSpeed: TokenOutputSpeedSnapshot?
         let account: AccountInfo
         let accountIsAuthoritative: Bool
         let accountPrivacyOrdinal: PersonalInfoRedactor.AccountOrdinal?
@@ -64,6 +65,7 @@ extension UsageMenuCardView.Model {
             dashboardError: String?,
             tokenSnapshot: CostUsageTokenSnapshot?,
             tokenError: String?,
+            tokenOutputSpeed: TokenOutputSpeedSnapshot? = nil,
             account: AccountInfo,
             accountIsAuthoritative: Bool = false,
             accountPrivacyOrdinal: PersonalInfoRedactor.AccountOrdinal? = nil,
@@ -112,6 +114,7 @@ extension UsageMenuCardView.Model {
             self.dashboardError = dashboardError
             self.tokenSnapshot = tokenSnapshot
             self.tokenError = tokenError
+            self.tokenOutputSpeed = tokenOutputSpeed
             self.account = account
             self.accountIsAuthoritative = accountIsAuthoritative
             self.accountPrivacyOrdinal = accountPrivacyOrdinal

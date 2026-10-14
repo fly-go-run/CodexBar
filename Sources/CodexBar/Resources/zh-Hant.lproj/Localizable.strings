@@ -2598,3 +2598,5 @@
 "Daily spend · %@" = "每日支出 · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "適用於所選權杖帳戶「%@」。每個帳戶保留各自的限制。";
 "Applies to the OpenAI API key, not to token accounts." = "適用於 OpenAI API 金鑰，不適用於權杖帳戶。";
+"token_speed_window_line" = "輸出速度 (24h): %@";
+"token_speed_last_hour_line" = "近 1 小時: %@ tok/s · %@ 次請求";
