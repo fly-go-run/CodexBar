@@ -44,11 +44,17 @@ resolve_package_signing_identity() {
   fi
   # Developer ID names end in the Team ID; development names may end in a personal ID instead.
   local team_pattern='^Developer ID Application: .+ \(([A-Z0-9]{10})\)$'
-  if [[ ! "$selected_name" =~ $team_pattern ]]; then
+  local team
+  if [[ "$selected_name" =~ $team_pattern ]]; then
+    team="${BASH_REMATCH[1]}"
+  elif [[ "$selected_name" == "Apple Development: "* && -n "${APP_TEAM_ID:-}" ]]; then
+    # Local self-maintained builds: development names carry a personal ID, so the Team ID
+    # (the certificate's OU) must be passed explicitly.
+    team="$APP_TEAM_ID"
+  else
     echo "ERROR: Cannot derive a Team ID from APP_IDENTITY; use a Developer ID Application identity." >&2
     return 1
   fi
-  local team="${BASH_REMATCH[1]}"
   if [[ -n "${APP_TEAM_ID:-}" && "$APP_TEAM_ID" != "$team" ]]; then
     echo "ERROR: APP_TEAM_ID does not match the selected signing identity." >&2
     return 1
@@ -289,6 +295,11 @@ if [[ "$SIGNING_MODE" == "adhoc" ]]; then
 fi
 WIDGET_BUNDLE_ID="${BUNDLE_ID}.widget"
 resolve_package_signing_identity
+if [[ "$APP_TEAM_ID" != "Y5PE65HELJ" ]]; then
+  # Builds signed by another team must never auto-update to upstream releases.
+  FEED_URL=""
+  AUTO_CHECKS=false
+fi
 APP_GROUP_ID="${APP_TEAM_ID}.${BUNDLE_ID}"
 ENTITLEMENTS_DIR="$ROOT/.build/entitlements"
 APP_ENTITLEMENTS="${ENTITLEMENTS_DIR}/CodexBar.entitlements"
