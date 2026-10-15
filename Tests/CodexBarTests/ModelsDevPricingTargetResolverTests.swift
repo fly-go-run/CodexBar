@@ -23,18 +23,6 @@ struct ModelsDevPricingTargetResolverTests {
     }
 
     @Test
-    func `aliases retain exact provider before documented fallback`() {
-        #expect(Self.targets("kimi-coding", "kimi-coding/k3") == [
-            Self.target("kimi-coding", "k3"),
-            Self.target("kimi-for-coding", "k3"),
-        ])
-        #expect(Self.targets("opencode-free", "opencode-free/opencode") == [
-            Self.target("opencode-free", "opencode"),
-            Self.target("opencode", "opencode"),
-        ])
-    }
-
-    @Test
     func `google vertex retains its observed scope and unknown providers stay exact`() {
         #expect(Self.targets("google-vertex", "google-vertex/gemini-2.5-pro") == [
             Self.target("google-vertex", "gemini-2.5-pro"),

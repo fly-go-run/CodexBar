@@ -23,8 +23,7 @@ struct CostUsageClaudeResolverTests {
             "claude-sonnet-4-5@default", "claude-sonnet-4-6", "claude-opus-4-6",
             "anthropic/claude-sonnet-4-6", "vertex/claude-sonnet-4-5", "anthropic.anthropic.example",
             "anthropic.example", "example", "collision", "openai/collision", "unrecognized/collision",
-            "gpt-fixture", "gemini-fixture", "kimi-fixture", "minimax-fixture", "deepseek-fixture",
-            "kimi-coding/k3[1m]", "k3[1m]", "kimi-for-coding/k3", "opencode-free/fixture",
+            "gpt-fixture", "gemini-fixture", "minimax-fixture", "deepseek-fixture",
             "claude-test-caf\u{e9}", "claude-test-cafe\u{301}", "CLAUDE-test-known",
             " \tclaude-test-known\n", "\u{2003}claude-test-known\u{2003}", "", " \n", "unknown\0model",
         ]
@@ -279,11 +278,8 @@ struct CostUsageClaudeResolverTests {
             "collision":{"id":"collision","cost":{"input":5,"output":6}}
           }},
           "google": {"models":{"gemini-fixture":{"id":"gemini-fixture","cost":{"input":7,"output":8}}}},
-          "moonshot": {"models":{"kimi-fixture":{"id":"kimi-fixture","cost":{"input":9,"output":10}}}},
-          "kimi-for-coding": {"models":{"k3":{"id":"k3","cost":{"input":11,"output":12}}}},
           "minimax": {"models":{"minimax-fixture":{"id":"minimax-fixture","cost":{"input":13,"output":14}}}},
-          "deepseek": {"models":{"deepseek-fixture":{"id":"deepseek-fixture","cost":{"input":15,"output":16}}}},
-          "opencode": {"models":{"fixture":{"id":"fixture","cost":{"input":17,"output":18}}}}
+          "deepseek": {"models":{"deepseek-fixture":{"id":"deepseek-fixture","cost":{"input":15,"output":16}}}}
         }
         """#.utf8))
     }

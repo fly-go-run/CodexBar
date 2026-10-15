@@ -950,6 +950,7 @@ extension CostUsageStoreTests {
 
 extension CostUsageStoreTests {
     private static let testedPredecessorParserHashes = [
+        "850e297ebe305f0a", // Before Kimi alias and OpenCode route pricing removal; Codex subscription rows unchanged.
         "4b60f2bfafeaaa11", // Before OpenCodex routing removal; Codex subscription model filter unchanged.
         "73875b763abeaf9b", // Before Linux support removal; macOS Codex semantics unchanged.
         "3f88178bf03ad704", // Before provider trimming and Codex Workspaces removal; native Codex semantics unchanged.

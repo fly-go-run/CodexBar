@@ -416,15 +416,7 @@ enum CostUsagePricing {
     /// The route prefix is part of the model identity for local usage estimates. Keep both the
     /// client-facing aliases and their models.dev provider IDs here so pricing-cache fingerprints
     /// invalidate when any supported route's rates change.
-    static let codexModelsDevProviderIDs: Set<String> = [
-        "deepseek",
-        "kimi-coding",
-        "kimi-for-coding",
-        "openai",
-        "opencode",
-        "opencode-free",
-        "opencode-go",
-    ]
+    static let codexModelsDevProviderIDs: Set<String> = ["openai"]
     private static let claudeModelsDevProviderID = "anthropic"
 
     /// Returns the provider/model identities that may price a Codex model. Keep this mapping
@@ -938,27 +930,11 @@ extension CostUsagePricing {
         Self.claudeModelsDevProviderID,
         "openai",
         "google",
-        "moonshot",
-        "kimi-for-coding",
         "minimax",
         "deepseek",
     ]
 
     static func claudeModelsDevPricingTargets(for rawModel: String) -> [(providerID: String, modelID: String)] {
-        var targets = self.claudeUnaliasedModelsDevPricingTargets(for: rawModel)
-        // Claude's documented context-window alias stays inside Kimi Code, after every exact route match.
-        if targets.contains(where: {
-            $0.providerID == "kimi-for-coding"
-                && $0.modelID.trimmingCharacters(in: .whitespacesAndNewlines) == "k3[1m]"
-        }) {
-            targets.append(("kimi-for-coding", "k3"))
-        }
-        return targets
-    }
-
-    private static func claudeUnaliasedModelsDevPricingTargets(
-        for rawModel: String) -> [(providerID: String, modelID: String)]
-    {
         let trimmed = rawModel.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return [] }
         if let slash = trimmed.firstIndex(of: "/") {
@@ -1004,12 +980,6 @@ extension CostUsagePricing {
         }
         if ["gemini-", "gemma-", "deep-research-", "veo-", "lyria-"].contains(where: model.hasPrefix) {
             return ["google"]
-        }
-        if model == "kimi-for-coding" || model == "k3" || model == "k3[1m]" || model.hasPrefix("k3-") {
-            return ["kimi-for-coding"]
-        }
-        if model.hasPrefix("kimi-") || model.hasPrefix("moonshot-") {
-            return ["moonshot", "kimi-for-coding"]
         }
         if model.hasPrefix("minimax-") {
             return ["minimax"]

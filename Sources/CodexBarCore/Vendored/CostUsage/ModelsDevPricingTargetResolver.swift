@@ -14,16 +14,7 @@ enum ModelsDevPricingTargetResolver {
         let resolvedModelID = self.modelID(modelID, for: providerID)
         guard self.isValidModelID(resolvedModelID) else { return [] }
 
-        var providerIDs = [providerID]
-        switch providerID {
-        case "kimi-coding":
-            providerIDs.append("kimi-for-coding")
-        case "opencode-free":
-            providerIDs.append("opencode")
-        default:
-            break
-        }
-        return providerIDs.map { ModelsDevPricingTarget(providerID: $0, modelID: resolvedModelID) }
+        return [ModelsDevPricingTarget(providerID: providerID, modelID: resolvedModelID)]
     }
 
     private static func normalizedProviderID(_ rawProviderID: String) -> String {

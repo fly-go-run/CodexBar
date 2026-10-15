@@ -58,80 +58,6 @@ struct CostUsagePricingTests {
     }
 
     @Test
-    func `codex cost resolves OpenCodex provider qualified models`() throws {
-        let root = try Self.seedModelsDevCache("""
-        {
-          "deepseek": {
-            "id": "deepseek",
-            "models": {
-              "deepseek-v4-flash": {
-                "id": "deepseek-v4-flash",
-                "cost": { "input": 0.14, "output": 0.28 }
-              }
-            }
-          },
-          "kimi-for-coding": {
-            "id": "kimi-for-coding",
-            "models": {
-              "k3": {
-                "id": "k3",
-                "cost": { "input": 0, "output": 0 }
-              }
-            }
-          },
-          "opencode": {
-            "id": "opencode",
-            "models": {
-              "deepseek-v4-flash-free": {
-                "id": "deepseek-v4-flash-free",
-                "cost": { "input": 0, "output": 0 }
-              }
-            }
-          },
-          "opencode-go": {
-            "id": "opencode-go",
-            "models": {
-              "deepseek-v4-flash": {
-                "id": "deepseek-v4-flash",
-                "cost": { "input": 0.07, "output": 0.14 }
-              }
-            }
-          }
-        }
-        """)
-
-        let opencodeGo = CostUsagePricing.codexCostUSD(
-            model: "opencode-go/deepseek-v4-flash",
-            inputTokens: 100,
-            cachedInputTokens: 10,
-            outputTokens: 5,
-            modelsDevCacheRoot: root)
-        let opencodeFree = CostUsagePricing.codexCostUSD(
-            model: "opencode-free/deepseek-v4-flash-free",
-            inputTokens: 100,
-            cachedInputTokens: 10,
-            outputTokens: 5,
-            modelsDevCacheRoot: root)
-        let kimi = CostUsagePricing.codexCostUSD(
-            model: "kimi-coding/k3",
-            inputTokens: 100,
-            cachedInputTokens: 10,
-            outputTokens: 5,
-            modelsDevCacheRoot: root)
-        let deepseek = CostUsagePricing.codexCostUSD(
-            model: "deepseek/deepseek-v4-flash",
-            inputTokens: 100,
-            cachedInputTokens: 10,
-            outputTokens: 5,
-            modelsDevCacheRoot: root)
-
-        #expect(opencodeGo == (100.0 * 0.07e-6) + (5.0 * 0.14e-6))
-        #expect(opencodeFree == 0)
-        #expect(kimi == 0)
-        #expect(deepseek == (100.0 * 0.14e-6) + (5.0 * 0.28e-6))
-    }
-
-    @Test
     func `codex cost does not cross charge an unknown provider prefix`() throws {
         let root = try Self.seedModelsDevCache("""
         {
@@ -1400,28 +1326,12 @@ extension CostUsagePricingTests {
                 "cost": { "input": 0.14, "output": 0.28 }
               }
             }
-          },
-          "opencode-go": {
-            "id": "opencode-go",
-            "models": {
-              "deepseek-v4-flash": {
-                "id": "deepseek-v4-flash",
-                "cost": { "input": 0.07, "output": 0.14 }
-              }
-            }
           }
         }
         """)
 
         let bare = CostUsagePricing.claudeCostUSD(
             model: "deepseek-v4-flash",
-            inputTokens: 100,
-            cacheReadInputTokens: 0,
-            cacheCreationInputTokens: 0,
-            outputTokens: 5,
-            modelsDevCacheRoot: root)
-        let prefixed = CostUsagePricing.claudeCostUSD(
-            model: "opencode-go/deepseek-v4-flash",
             inputTokens: 100,
             cacheReadInputTokens: 0,
             cacheCreationInputTokens: 0,
@@ -1436,7 +1346,6 @@ extension CostUsagePricingTests {
             modelsDevCacheRoot: root)
 
         #expect(bare == (100.0 * 0.14e-6) + (5.0 * 0.28e-6))
-        #expect(prefixed == (100.0 * 0.07e-6) + (5.0 * 0.14e-6))
         #expect(anthropic == (10.0 * 3e-6) + (5.0 * 15e-6))
         #expect(CostUsagePricing.claudeModelsDevPricingTargets(for: "deepseek-v4-flash").first?.providerID
             == "deepseek")
@@ -1446,8 +1355,6 @@ extension CostUsagePricingTests {
             "anthropic",
             "openai",
             "google",
-            "moonshot",
-            "kimi-for-coding",
             "minimax",
             "deepseek",
         ]))
