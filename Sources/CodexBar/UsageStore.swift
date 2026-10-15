@@ -23,6 +23,7 @@ extension UsageStore {
         _ = self.claudeSwapRevision
         _ = self.tokenSnapshotPublications
         _ = self.tokenErrors
+        _ = self.tokenOutputSpeeds
         _ = self.tokenRefreshInFlight
         _ = self.codexCostCatchUpActivity
         _ = self.credits
