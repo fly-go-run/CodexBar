@@ -18,11 +18,6 @@ struct SpendDashboardSummary: View {
                 SpendSummaryValue(
                     title: L("Tracked tokens"),
                     value: spendDashboardGroupTokenText(self.group))
-                if let metered = self.group.meteredCost {
-                    SpendSummaryValue(
-                        title: L("Plan metered"),
-                        value: UsageFormatter.currencyString(metered, currencyCode: self.group.currencyCode))
-                }
                 SpendSummaryValue(
                     title: spendDashboardProviderCountTitle(self.group),
                     value: codexBarLocalizedInteger(self.group.providers.count))

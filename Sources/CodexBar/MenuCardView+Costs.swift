@@ -264,15 +264,6 @@ extension UsageMenuCardView.Model {
             }
             return "\(windowLabel): \(monthCost)"
         }()
-        // Plan-metered spend over the same window (what the provider actually deducts);
-        // only providers that report it populate `meteredCostUSD`.
-        let meteredLine: String? = (tokensOnly ? nil : snapshot.meteredCostUSD).map {
-            let amount = UsageFormatter.convertedCostString(
-                $0,
-                preferredCurrency: preferredCurrencyCode,
-                providerCurrency: snapshot.currencyCode)
-            return String(format: L("Cursor-metered: %@ (%@)"), amount, windowLabel.lowercased())
-        }
         let incompleteCount = CostUsageIncompleteRequests.sum(snapshot.daily.map(\.incompleteRequestCount))
         let todayIncompleteCount = snapshot.summary(forLastDays: 1, calendar: calendar).incompleteRequestCount
         let err = (error?.isEmpty ?? true) ? nil : error
@@ -286,7 +277,6 @@ extension UsageMenuCardView.Model {
             isRefreshing: isRefreshing,
             sessionLine: sessionLine + UsageFormatter.incompleteUsageSuffix(todayIncompleteCount),
             monthLine: monthLine + UsageFormatter.incompleteUsageSuffix(incompleteCount),
-            meteredLine: meteredLine,
             comparisonLines: comparisonPeriodsEnabled
                 ? snapshot.comparisonSummaries(calendar: calendar).map {
                     tokensOnly ? Self.tokenWindowLine(

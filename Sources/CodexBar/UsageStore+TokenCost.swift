@@ -466,7 +466,7 @@ extension UsageStore {
         _ snapshot: CostUsageTokenSnapshot,
         for provider: UsageProvider) throws -> Bool
     {
-        guard snapshot.daily.isEmpty, snapshot.meteredCostUSD == nil else { return false }
+        guard snapshot.daily.isEmpty else { return false }
         if snapshot.historyCoverageIsEstablished { return true }
         guard self.retainsEstablishedTokenHistory(snapshot, for: provider) else {
             throw TokenSnapshotError.historyUnavailable

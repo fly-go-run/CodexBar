@@ -34,7 +34,6 @@ public struct CostUsageWindowSummary: Sendable, Equatable {
     public let tokenMix: CostUsageTokenMix
     public let coverage: CostUsageCoverageCounts
     public let provenance: CostProvenance
-    public let meteredCostUSD: Double?
 
     public init(
         days: Int,
@@ -45,7 +44,6 @@ public struct CostUsageWindowSummary: Sendable, Equatable {
         tokenMix: CostUsageTokenMix = CostUsageTokenMix(),
         coverage: CostUsageCoverageCounts = CostUsageCoverageCounts(),
         provenance: CostProvenance = .unknown,
-        meteredCostUSD: Double? = nil,
         incompleteRequestCount: Int = 0)
     {
         self.days = days
@@ -57,7 +55,6 @@ public struct CostUsageWindowSummary: Sendable, Equatable {
         self.tokenMix = tokenMix
         self.coverage = coverage
         self.provenance = provenance
-        self.meteredCostUSD = meteredCostUSD
     }
 }
 
@@ -177,10 +174,6 @@ public struct CostUsageTokenSnapshot: Sendable, Equatable {
     public let historyScanIsPartial: Bool
     public var historyLabel: String?
     public var reportingPeriod: CostReportingPeriod?
-    /// Provider-metered spend over the same window as `last30DaysCostUSD` — what the plan
-    /// actually deducts, as opposed to the API-rate estimate. Only some providers (e.g. Cursor)
-    /// report this; `nil` when unknown.
-    public let meteredCostUSD: Double?
     /// How this snapshot's costs were produced. Never infer this solely from whether a
     /// cost figure exists — Bedrock and OpenAI Admin costs are vendor-reported.
     public let costProvenance: CostProvenance
@@ -211,7 +204,6 @@ public struct CostUsageTokenSnapshot: Sendable, Equatable {
         historyCoverageIsEstablished: Bool = true,
         historyScanIsPartial: Bool = false,
         historyLabel: String? = nil,
-        meteredCostUSD: Double? = nil,
         costProvenance: CostProvenance = .unknown,
         credentialScopeFingerprint: String? = nil,
         daily: [CostUsageDailyReport.Entry],
@@ -234,7 +226,6 @@ public struct CostUsageTokenSnapshot: Sendable, Equatable {
         self.historyCoverageIsEstablished = historyCoverageIsEstablished
         self.historyScanIsPartial = historyScanIsPartial
         self.historyLabel = historyLabel
-        self.meteredCostUSD = meteredCostUSD
         self.costProvenance = costProvenance
         self.credentialScopeFingerprint = credentialScopeFingerprint
         self.daily = daily
@@ -272,8 +263,6 @@ public struct CostUsageTokenSnapshot: Sendable, Equatable {
             mix.merge(.from(entry: entry))
             coverage.add(entry)
         }
-        let coversFullHistory = days >= self.historyDays
-        let windowMetered = coversFullHistory ? self.meteredCostUSD : nil
         let totalTokens = tokens.isEmpty ? nil : CheckedSum.integers(tokens)
         let totalRequests = requests.isEmpty ? nil : CheckedSum.integers(requests)
         return CostUsageWindowSummary(
@@ -286,9 +275,7 @@ public struct CostUsageTokenSnapshot: Sendable, Equatable {
             coverage: coverage.counts,
             provenance: CostProvenance.forWindow(
                 snapshot: self.costProvenance,
-                hasWindowCosts: !costs.isEmpty,
-                includesMetered: windowMetered != nil),
-            meteredCostUSD: windowMetered,
+                hasWindowCosts: !costs.isEmpty),
             incompleteRequestCount: CostUsageIncompleteRequests.sum(entries.map(\.incompleteRequestCount)))
     }
 

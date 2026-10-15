@@ -123,20 +123,18 @@ struct UsageMenuCardView: View {
             let isRefreshing: Bool
             let sessionLine: String
             let monthLine: String
-            let meteredLine: String?
             let comparisonLines: [String]
             var speedLines: [String] = []
             let hintLine: String?
             let errorLine: String?
             let errorCopyText: String?
 
-            /// Explicit initializer so `meteredLine`/`comparisonLines` default to empty: callers
+            /// Explicit initializer so `comparisonLines` defaults to empty: callers
             /// that predate them (and providers that never report them) keep their call sites.
             init(
                 isRefreshing: Bool = false,
                 sessionLine: String,
                 monthLine: String,
-                meteredLine: String? = nil,
                 comparisonLines: [String] = [],
                 hintLine: String?,
                 errorLine: String?,
@@ -145,7 +143,6 @@ struct UsageMenuCardView: View {
                 self.isRefreshing = isRefreshing
                 self.sessionLine = sessionLine
                 self.monthLine = monthLine
-                self.meteredLine = meteredLine
                 self.comparisonLines = comparisonLines
                 self.hintLine = hintLine
                 self.errorLine = errorLine
@@ -504,7 +501,7 @@ private struct CopyIconButton: View {
     }
 }
 
-/// Shared token-cost block (header, Today/window/metered/comparison lines, hint, error) used by
+/// Shared token-cost block (header, Today/window/comparison lines, hint, error) used by
 /// both the inline card body and the standalone cost section; only the value-line font differs.
 private struct TokenUsageSectionContent: View {
     let provider: UsageProvider
@@ -531,11 +528,6 @@ private struct TokenUsageSectionContent: View {
             Text(self.tokenUsage.monthLine)
                 .font(self.lineFont)
                 .lineLimit(1)
-            if let metered = self.tokenUsage.meteredLine, !metered.isEmpty {
-                Text(metered)
-                    .font(self.lineFont)
-                    .lineLimit(1)
-            }
             ForEach(self.tokenUsage.comparisonLines, id: \.self) { line in
                 Text(line)
                     .font(self.lineFont)

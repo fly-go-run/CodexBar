@@ -1190,7 +1190,6 @@ struct SpendDashboardExportPayload: Encodable, Sendable {
         let totalTokens: Int?
         let totalCost: Double?
         let incompleteRequestCount: Int?
-        let meteredCost: Double?
         let provenance: String
         let coverage: CostUsageCoverageCounts
         let tokenMix: CostUsageTokenMix
@@ -1231,7 +1230,6 @@ struct SpendDashboardExportPayload: Encodable, Sendable {
                     totalTokens: group.totalTokens,
                     totalCost: group.totalCost,
                     incompleteRequestCount: group.incompleteRequestCount > 0 ? group.incompleteRequestCount : nil,
-                    meteredCost: group.meteredCost,
                     provenance: group.provenance.rawValue,
                     coverage: group.coverage,
                     tokenMix: group.tokenMix,

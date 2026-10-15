@@ -99,7 +99,7 @@ extension UsageMenuCardView.Model {
         if menuCard.supportsInlineTokenCostDashboard,
            input.costSummaryInlineEnabled,
            let tokenSnapshot = input.tokenSnapshot,
-           !tokenSnapshot.daily.isEmpty || tokenSnapshot.meteredCostUSD != nil
+           !tokenSnapshot.daily.isEmpty
         {
             return Self.costHistoryInlineDashboard(input: input, snapshot: tokenSnapshot)
         }

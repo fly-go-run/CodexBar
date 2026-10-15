@@ -605,7 +605,6 @@ extension CodexBarCLI {
             historyCoverageIsEstablished: snapshot?.historyCoverageIsEstablished,
             last30DaysTokens: last30Days?.tokens,
             last30DaysCostUSD: last30Days?.costUSD,
-            meteredCostUSD: snapshot?.meteredCostUSD,
             daily: daily,
             projects: projects,
             totals: snapshot.flatMap { Self.costTotals($0, calendar: calendar) },
@@ -783,7 +782,6 @@ struct CostPayload: Encodable, Sendable {
     let historyCoverageIsEstablished: Bool?
     let last30DaysTokens: Int?
     let last30DaysCostUSD: Double?
-    let meteredCostUSD: Double?
     let daily: [CostDailyEntryPayload]
     let projects: [CostProjectPayload]
     let totals: CostTotalsPayload?
@@ -804,7 +802,6 @@ struct CostPayload: Encodable, Sendable {
         historyCoverageIsEstablished: Bool? = nil,
         last30DaysTokens: Int?,
         last30DaysCostUSD: Double?,
-        meteredCostUSD: Double? = nil,
         daily: [CostDailyEntryPayload],
         projects: [CostProjectPayload] = [],
         totals: CostTotalsPayload?,
@@ -828,7 +825,6 @@ struct CostPayload: Encodable, Sendable {
         self.historyCoverageIsEstablished = historyCoverageIsEstablished
         self.last30DaysTokens = last30DaysTokens
         self.last30DaysCostUSD = last30DaysCostUSD
-        self.meteredCostUSD = meteredCostUSD
         self.daily = daily
         self.projects = projects
         self.totals = totals
