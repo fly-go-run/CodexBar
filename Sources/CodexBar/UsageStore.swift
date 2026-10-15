@@ -335,7 +335,6 @@ final class UsageStore {
     @ObservationIgnored var widgetSnapshotPersistTask: Task<Void, Never>?
     @ObservationIgnored var lastQueuedWidgetSnapshot: WidgetSnapshot?
     @ObservationIgnored var lastQueuedWidgetSnapshotFingerprint: (fingerprint: Data, queuedAt: Date)?
-    @ObservationIgnored var lastPostedCloudSyncFingerprint: Data?
     @ObservationIgnored var invalidatedQueuedWidgetProviders: Set<ProviderInstanceID> = []
     @ObservationIgnored var lastWidgetSourceSnapshots: [ProviderInstanceID: UsageSnapshot] = [:]
     @ObservationIgnored let widgetSnapshotURL: URL?

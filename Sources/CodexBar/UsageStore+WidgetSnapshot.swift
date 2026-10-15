@@ -39,9 +39,13 @@ extension UsageStore {
         let snapshot = self.makeWidgetSnapshot(previousSnapshot: previousSnapshot)
         self.lastQueuedWidgetSnapshot = snapshot
         self.invalidatedQueuedWidgetProviders = self.widgetUsagePreservationBlockedProviders
-        self.postUsageSnapshotsDidChangeIfNeeded()
-        // One refresh tick persists several times; only a real content change is worth a file write,
-        // a WidgetKit reload and the work they trigger.
+        // Always posted: CloudSyncEngine retains the latest payload and skips records whose hash is already
+        // confirmed or in flight, so a dropped notification (sync off, low power) must not be deduped here.
+        NotificationCenter.default.post(
+            name: .codexbarUsageSnapshotsDidChange,
+            object: UsageSnapshotsDidChangeEvent(snapshots: self.cloudSyncAccountSnapshots()))
+        // One refresh tick persists several times; only a real content change is worth a file write
+        // and a WidgetKit reload.
         let fingerprint = Self.widgetSnapshotFingerprint(snapshot)
         guard !Self.canSkipWidgetSnapshotWrite(
             fingerprint: fingerprint,
@@ -93,20 +97,6 @@ extension UsageStore {
         guard let fingerprint, let previous, previous.fingerprint == fingerprint else { return false }
         let age = now.timeIntervalSince(previous.queuedAt)
         return age >= 0 && age < Self.widgetSnapshotMaximumSkipAge
-    }
-
-    /// Cloud sync only cares about the account payloads; skip the post (and the CloudKit work behind it)
-    /// when they are identical to the last ones posted.
-    private func postUsageSnapshotsDidChangeIfNeeded() {
-        let payloads = self.cloudSyncAccountSnapshots()
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.sortedKeys]
-        let fingerprint = try? encoder.encode(payloads)
-        if let fingerprint, fingerprint == self.lastPostedCloudSyncFingerprint { return }
-        self.lastPostedCloudSyncFingerprint = fingerprint
-        NotificationCenter.default.post(
-            name: .codexbarUsageSnapshotsDidChange,
-            object: UsageSnapshotsDidChangeEvent(snapshots: payloads))
     }
 
     static func saveWidgetSnapshot(
