@@ -11,11 +11,11 @@ struct JsonlParityRow: Codable, Equatable {
 
 struct JsonlParityOutcome: Codable, Equatable {
     var rows: [JsonlParityRow] = []
-    var committed: Int64? = nil
-    var read: Int64? = nil
-    var resume: Data? = nil
+    var committed: Int64?
+    var read: Int64?
+    var resume: Data?
     var events: [String] = []
-    var failure: String? = nil
+    var failure: String?
     var lineCount = 0
 }
 

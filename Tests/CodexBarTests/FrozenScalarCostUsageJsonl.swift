@@ -1,8 +1,8 @@
+import Foundation
+
 // Frozen e236a21bc27b4caf7bb0ff151059131c332b0ded scalar scanner.
 // Only the enum name and test-module import differ from that production source; do not modernize.
 @testable import CodexBarCore
-
-import Foundation
 
 enum FrozenScalarCostUsageJsonl {
     struct Line {

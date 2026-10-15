@@ -22,7 +22,7 @@ CONTEXT_INPUTS = (
     "Scripts/ci_swiftpm_cache.py", "Scripts/test.sh", "Scripts/test_environment.sh",
     "Scripts/ci_swift_test_by_suite.py", "Scripts/direct_swift_test_groups.py",
 )
-BUILD_INPUT_PREFIXES = ("Sources/", "Tests/", "WidgetExtension/")
+BUILD_INPUT_PREFIXES = ("Sources/", "Tests/", "TestsPlugin/", "WidgetExtension/")
 
 
 def build_context(root, lane):

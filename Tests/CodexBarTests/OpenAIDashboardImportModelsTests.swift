@@ -41,5 +41,4 @@ struct OpenAIDashboardImportModelsTests {
         #expect(result.signedInEmail == "test@example.invalid")
         #expect(!result.matchesCodexEmail)
     }
-
 }

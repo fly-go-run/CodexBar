@@ -126,7 +126,8 @@ struct CostUsageJsonlDifferentialTests {
         let sizes = [chunk - 1, chunk, chunk + 1, 2 * chunk + 1]
         for length in sizes {
             // The first LF falls immediately before, at, or after a read boundary.
-            let text = "{\"body\":\"" + String(repeating: "x", count: length - 12) + "\"}\r\n\n{\"next\":true}\n{\"partial\":\"\\u12"
+            let text = "{\"body\":\"" + String(repeating: "x", count: length - 12)
+                + "\"}\r\n\n{\"next\":true}\n{\"partial\":\"\\u12"
             let data = Data(text.utf8)
             try data.write(to: file)
             let splits = Array(Set([chunk - 1, chunk, chunk + 1, data.count])).sorted()

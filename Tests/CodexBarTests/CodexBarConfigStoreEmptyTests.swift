@@ -15,7 +15,6 @@ struct CodexBarConfigStoreEmptyTests {
         #expect(try fixture.contents() == contents.map { Data($0.utf8) })
     }
 
-
     @Test(arguments: ["{", " \n{\"providers\":", "null", "garbage", "\u{0000}"])
     func `nonempty malformed configs still fail closed and retain their bytes`(_ contents: String) throws {
         let fixture = try Fixture(contents)

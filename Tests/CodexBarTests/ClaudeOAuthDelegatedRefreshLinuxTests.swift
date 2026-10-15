@@ -84,15 +84,15 @@ struct ClaudeOAuthDelegatedRefreshLinuxTests {
             [String: String],
             Bool,
             Bool) async throws -> ClaudeOAuthCredentials = { _, _, _ in
-                throw ClaudeOAuthCredentialsError.refreshDelegatedToClaudeCLI
-            }
+            throw ClaudeOAuthCredentialsError.refreshDelegatedToClaudeCLI
+        }
         let delegatedOverride: @Sendable (
             Date,
             TimeInterval,
             [String: String]) async -> ClaudeOAuthDelegatedRefreshCoordinator.Outcome = { _, _, _ in
-                await counter.increment()
-                return .attemptedSucceeded
-            }
+            await counter.increment()
+            return .attemptedSucceeded
+        }
 
         do {
             _ = try await ClaudeOAuthKeychainPromptPreference.withTaskOverrideForTesting(promptMode) {
@@ -107,16 +107,16 @@ struct ClaudeOAuthDelegatedRefreshLinuxTests {
                 }
             }
             Issue.record("Expected delegated-refresh path to fail with mocked stale credentials")
-            return (await counter.current(), "")
+            return await (counter.current(), "")
         } catch let error as ClaudeUsageError {
             guard case let .oauthFailed(message) = error else {
                 Issue.record("Expected ClaudeUsageError.oauthFailed, got \(error)")
-                return (await counter.current(), "")
+                return await (counter.current(), "")
             }
-            return (await counter.current(), message)
+            return await (counter.current(), message)
         } catch {
             Issue.record("Expected ClaudeUsageError, got \(error)")
-            return (await counter.current(), "")
+            return await (counter.current(), "")
         }
     }
 
@@ -131,15 +131,14 @@ struct ClaudeOAuthDelegatedRefreshLinuxTests {
             [String: String],
             Bool,
             Bool) async throws -> ClaudeOAuthCredentials = { _, _, _ in
-                ClaudeOAuthCredentials(
-                    accessToken: "access-token",
-                    refreshToken: nil,
-                    expiresAt: Date(timeIntervalSinceNow: 3600),
-                    scopes: ["user:profile"],
-                    rateLimitTier: nil)
-            }
-        let fetchOverride: @Sendable (String, Bool) async throws -> OAuthUsageResponse = {
-            _, detectClaudeVersion in
+            ClaudeOAuthCredentials(
+                accessToken: "access-token",
+                refreshToken: nil,
+                expiresAt: Date(timeIntervalSinceNow: 3600),
+                scopes: ["user:profile"],
+                rateLimitTier: nil)
+        }
+        let fetchOverride: @Sendable (String, Bool) async throws -> OAuthUsageResponse = { _, detectClaudeVersion in
             await capture.record(detectClaudeVersion)
             return try Self.makeOAuthUsageResponse()
         }

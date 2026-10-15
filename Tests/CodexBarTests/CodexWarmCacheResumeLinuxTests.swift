@@ -65,7 +65,7 @@ struct CodexWarmCacheResumeLinuxTests {
 
         func jsonl(_ objects: [[String: Any]]) throws -> String {
             try objects
-                .map { try String(decoding: JSONSerialization.data(withJSONObject: $0), as: UTF8.self) }
+                .map { try String(bytes: JSONSerialization.data(withJSONObject: $0), encoding: .utf8) ?? "" }
                 .joined(separator: "\n") + "\n"
         }
     }

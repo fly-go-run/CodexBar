@@ -43,7 +43,7 @@ struct RemoteCodexCostsTests {
     private static func wire(_ summary: CodexCostSummary) throws -> String {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
-        return try String(decoding: encoder.encode([summary]), as: UTF8.self)
+        return try String(bytes: encoder.encode([summary]), encoding: .utf8) ?? ""
     }
 
     @Test
@@ -141,7 +141,8 @@ struct RemoteCodexCostsTests {
             return wire
         }
         let actual = try await fetcher.fetch(
-            host: "qa-linux", historyDays: 30,
+            host: "qa-linux",
+            historyDays: 30,
             environment: ["UNRELATED_TOKEN": "fixture-secret", "SSH_AUTH_SOCK": "/tmp/synthetic-agent"])
         #expect(actual == expected)
     }
@@ -183,8 +184,9 @@ struct RemoteCodexCostsTests {
         }
         row["today"] = today
         rows = mutation == "multiple" ? [row, row] : [row]
-        let wire = try mutation == "oversized" ? String(repeating: " ", count: 16385) : String(
-            decoding: JSONSerialization.data(withJSONObject: rows), as: UTF8.self)
+        let wire = try mutation == "oversized"
+            ? String(repeating: " ", count: 16385)
+            : String(bytes: JSONSerialization.data(withJSONObject: rows), encoding: .utf8) ?? ""
         let fetcher = RemoteCodexCostFetcher { _, _ in wire }
         await #expect(throws: RemoteCodexCostError.self) {
             try await fetcher.fetch(host: "qa-linux", historyDays: 30, environment: [:])
@@ -195,9 +197,16 @@ struct RemoteCodexCostsTests {
     func `host collection calls each scanner once and keeps totals separate`() async throws {
         let calls = CostHostCallRecorder()
         let reports = try await CodexBarCLI.collectCodexHostCosts(
-            remote: "qa-linux", historyDays: 30,
-            local: { await calls.add("local"); return Self.summary(tokens: 100) },
-            fetchRemote: { _ in await calls.add("remote"); return Self.summary(tokens: 900) })
+            remote: "qa-linux",
+            historyDays: 30,
+            local: {
+                await calls.add("local")
+                return Self.summary(tokens: 100)
+            },
+            fetchRemote: { _ in
+                await calls.add("remote")
+                return Self.summary(tokens: 900)
+            })
         #expect(await calls.values == ["local", "remote"])
         #expect(reports.map(\.summary?.today.totalTokens) == [100, 900])
         #expect(reports.map(\.source) == ["local", "ssh"])
@@ -206,7 +215,8 @@ struct RemoteCodexCostsTests {
     @Test
     func `remote failure preserves local results without disclosing stderr`() async throws {
         let reports = try await CodexBarCLI.collectCodexHostCosts(
-            remote: "qa-linux", historyDays: 30,
+            remote: "qa-linux",
+            historyDays: 30,
             local: { Self.summary() },
             fetchRemote: { _ in throw CostHostFixtureError() })
         #expect(reports.count == 2)
@@ -220,9 +230,13 @@ struct RemoteCodexCostsTests {
     func `cancelled local work never starts SSH`() async {
         await #expect(throws: CancellationError.self) {
             try await CodexBarCLI.collectCodexHostCosts(
-                remote: "qa-linux", historyDays: 30,
+                remote: "qa-linux",
+                historyDays: 30,
                 local: { throw CancellationError() },
-                fetchRemote: { _ in Issue.record("SSH started after cancellation"); return Self.summary() })
+                fetchRemote: { _ in
+                    Issue.record("SSH started after cancellation")
+                    return Self.summary()
+                })
         }
     }
 

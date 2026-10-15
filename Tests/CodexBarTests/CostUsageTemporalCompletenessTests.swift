@@ -294,8 +294,12 @@ struct CostUsageTemporalCompletenessTests {
                 costPriced: true)
             cache.days = [range.sinceKey: [model: [Int.max, 0, 0, 1, 0, 1, 1, 0]]]
             cache.files = ["/synthetic/claude.jsonl": CostUsageFileUsage(
-                mtimeUnixMs: millis, size: 1, days: cache.days, parsedBytes: 1,
-                codexCostCacheComplete: true, claudeRows: [row])]
+                mtimeUnixMs: millis,
+                size: 1,
+                days: cache.days,
+                parsedBytes: 1,
+                codexCostCacheComplete: true,
+                claudeRows: [row])]
             report = CostUsageScanner.buildClaudeReportFromCache(cache: cache, range: range)
             #expect(report.summary?.totalInputTokens == Int.max)
             #expect(report.summary?.totalOutputTokens == 1)

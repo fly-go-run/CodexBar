@@ -3,12 +3,6 @@ import Testing
 @testable import CodexBarCore
 
 struct ProviderNumericBoundaryTests {
-
-
-
-
-
-
     @Test
     func `monthly pacing retains its original window when inferred minutes overflow`() {
         let window = RateWindow(
@@ -31,5 +25,4 @@ struct ProviderNumericBoundaryTests {
         #expect(UsageFormatter.resetLine(for: window, style: .countdown, now: now) == nil)
         #expect(UsageFormatter.resetLine(for: window, style: .absolute, now: now) == nil)
     }
-
 }

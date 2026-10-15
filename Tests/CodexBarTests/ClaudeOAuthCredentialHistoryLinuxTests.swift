@@ -22,6 +22,6 @@ struct ClaudeOAuthCredentialHistoryLinuxTests {
         let secondIdentifier = try #require(second.historyOwnerIdentifier)
         #expect(firstIdentifier.count == 64)
         #expect(firstIdentifier != secondIdentifier)
-        #expect(firstIdentifier.allSatisfy { $0.isHexDigit })
+        #expect(firstIdentifier.allSatisfy(\.isHexDigit))
     }
 }

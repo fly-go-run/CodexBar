@@ -52,7 +52,11 @@ struct ClaudeJSONObjectTests {
 
     @Test
     func `decoded fields retain bytes and Foundation scalar coercions`() throws {
-        let raw = #"{"message":{"model":"claude-test-cafe\u0301","usage":{"input_tokens":true,"output_tokens":"2","cache_creation_input_tokens":2,"cache_creation":{"ephemeral_1h_input_tokens":false}}},"isSidechain":2,"empty":[],"object":{}}"#
+        let raw = [
+            #"{"message":{"model":"claude-test-cafe\u0301","usage":{"input_tokens":true,"output_tokens":"2","#,
+            #""cache_creation_input_tokens":2,"cache_creation":{"ephemeral_1h_input_tokens":false}}},"#,
+            #""isSidechain":2,"empty":[],"object":{}}"#,
+        ].joined()
         let view = try #require(try ClaudeJSONObject.decode(Data(raw.utf8)))
         let message = try #require(view.dictionary("message"))
         let usage = try #require(message.dictionary("usage"))

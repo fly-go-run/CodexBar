@@ -214,7 +214,7 @@ verify_tap_contents() {
         fi
         formula_sha_count="$(grep -Ec '^[[:space:]]*sha256 "[0-9a-f]{64}"' "$formula_file" || true)"
         cask_sha_count="$(grep -Ec '^[[:space:]]*sha256 "[0-9a-f]{64}"' "$cask_file" || true)"
-        if [[ "$content_matches" == "true" && "$formula_sha_count" == "4" && "$cask_sha_count" == "1" ]]; then
+        if [[ "$content_matches" == "true" && "$formula_sha_count" == "2" && "$cask_sha_count" == "1" ]]; then
           echo "Verified ${tap_repository}@${head_sha}: formula and cask contain ${RELEASE_TAG} with all expected assets."
           return 0
         fi

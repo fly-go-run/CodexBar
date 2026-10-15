@@ -4,7 +4,7 @@ import Testing
 
 @Suite(.serialized)
 struct ShellCommandOutputLimitTests {
-    @Test(arguments: [4096, 1048576, 1048577, 8388608])
+    @Test(arguments: [4096, 1_048_576, 1_048_577, 8_388_608])
     func `shell discovery rejects oversized output without returning a truncated path`(byteCount: Int) throws {
         let output = ShellCommandLocator.test_runShellCommand(
             shell: "/bin/sh",
@@ -20,7 +20,7 @@ struct ShellCommandOutputLimitTests {
     }
 
     @Test
-    func `shell discovery drains verbose stderr while preserving stdout`() throws {
+    func `shell discovery drains verbose stderr while preserving stdout`() {
         let output = ShellCommandLocator.test_runShellCommand(
             shell: "/bin/sh",
             arguments: ["-c", "head -c 8388608 /dev/zero >&2; printf '/synthetic/bin'"],

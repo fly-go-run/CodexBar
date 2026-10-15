@@ -62,7 +62,7 @@ struct HookDispatchTests {
         #expect(decoded == original)
         #expect(result.stdout ==
             "{\"event\":\"quota_reached\",\"provider\":\"claude\",\"resetAt\":\"2023-11-14T22:13:20Z\"," +
-                "\"timestamp\":\"2023-11-14T22:15:00Z\",\"usagePercent\":0.42,\"window\":\"session\"}")
+            "\"timestamp\":\"2023-11-14T22:15:00Z\",\"usagePercent\":0.42,\"window\":\"session\"}")
     }
 
     @Test

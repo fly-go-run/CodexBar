@@ -77,7 +77,6 @@ struct DashboardClaudeSwapCollectionTests {
         #expect(await operations.snapshot().operationCount == 0)
     }
 
-
     private var accounts: [ProviderTokenAccount] {
         (0..<2).map { index in
             ProviderTokenAccount(

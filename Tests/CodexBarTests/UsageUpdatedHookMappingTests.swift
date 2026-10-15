@@ -54,7 +54,7 @@ struct UsageUpdatedHookMappingTests {
             #expect(dispatch.event == .usageUpdated(
                 provider: "codex", snapshot: self.snapshot, account: nil, timestamp: instant))
             #expect(dispatch.accountDiscriminator == "private-owner")
-            let payload = try String(decoding: dispatch.event.jsonPayload(), as: UTF8.self)
+            let payload = try String(bytes: dispatch.event.jsonPayload(), encoding: .utf8) ?? ""
             #expect(!payload.contains("private-owner"))
             #expect(dispatch.event.environmentVariables()["CODEXBAR_ACCOUNT"] == nil)
         }
