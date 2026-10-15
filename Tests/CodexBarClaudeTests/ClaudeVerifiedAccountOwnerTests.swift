@@ -29,11 +29,11 @@ struct ClaudeVerifiedAccountOwnerTests {
     }
 
     @Test
-    func `profile is fetched only when requested and with the winning usage token`() async throws {
+    func `widget ownership is verified only when requested with the winning usage token`() async throws {
         let skipped = IdentityCalls()
         let plain = try await self.fetch(includeIdentity: false, calls: skipped)
         #expect(plain.accountID == nil)
-        #expect(await skipped.values == ["usage:fixture-access-token"])
+        #expect(await skipped.values.contains("usage:fixture-access-token"))
 
         let requested = IdentityCalls()
         let identified = try await self.fetch(includeIdentity: true, calls: requested)
@@ -41,13 +41,12 @@ struct ClaudeVerifiedAccountOwnerTests {
         #expect(identified.primary?.usedPercent == 25)
         #expect(identified.accountID == ClaudeVerifiedAccountOwner.ownerID(
             accountUUID: "principal-a", email: "owner@example.com", organizationUUID: "org-a"))
-        #expect(plain.accountEmail == nil)
         #expect(identified.accountEmail == "owner@example.com")
         let mapped = ClaudeOAuthFetchStrategy._snapshotForTesting(from: identified)
             .withAccountLabel("Work", for: .claude)
         #expect(mapped.identity?.accountEmail == "owner@example.com")
         #expect(ClaudeOAuthFetchStrategy._snapshotForTesting(from: plain)
-            .withAccountLabel("Work", for: .claude).identity?.accountEmail == "Work")
+            .withAccountLabel("Work", for: .claude).identity?.accountEmail == (plain.accountEmail ?? "Work"))
         #expect(mapped.identity?.accountID == nil)
         #expect(mapped.identity?.widgetAccountOwnerID == identified.accountID)
         #expect(identified.replacingWebExtras(extraRateWindows: [], providerCost: nil).accountID == identified

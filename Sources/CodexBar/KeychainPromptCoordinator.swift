@@ -3,6 +3,10 @@ import CodexBarCore
 import SweetCookieKit
 
 private enum KeychainPromptMessage {
+    static let providerCookie =
+        "CodexBar will ask macOS Keychain for your %@ cookie header " +
+        "so it can fetch usage. Click OK to continue."
+
     static let browserCookie =
         "CodexBar will ask macOS Keychain for “%@” so it can decrypt browser cookies " +
         "and authenticate your account. Click OK to continue."
