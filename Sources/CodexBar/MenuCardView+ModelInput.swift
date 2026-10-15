@@ -20,6 +20,7 @@ extension UsageMenuCardView.Model {
         let planOverride: PlanOverride
         let planEmphasis: PlanEmphasis
         let lastKnownUsageCapturedAt: Date?
+        let isOffline: Bool
         let isRefreshing: Bool
         let lastError: String?
         let limitsAvailability: UsageLimitsAvailability?
@@ -72,6 +73,7 @@ extension UsageMenuCardView.Model {
             planOverride: PlanOverride = .automatic,
             planEmphasis: PlanEmphasis = .none,
             lastKnownUsageCapturedAt: Date? = nil,
+            isOffline: Bool = false,
             isRefreshing: Bool,
             lastError: String?,
             limitsAvailability: UsageLimitsAvailability? = nil,
@@ -121,6 +123,7 @@ extension UsageMenuCardView.Model {
             self.planOverride = planOverride
             self.planEmphasis = planEmphasis
             self.lastKnownUsageCapturedAt = lastKnownUsageCapturedAt
+            self.isOffline = isOffline
             self.isRefreshing = isRefreshing
             self.lastError = lastError
             self.limitsAvailability = limitsAvailability

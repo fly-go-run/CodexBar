@@ -98,6 +98,7 @@ extension UsageStore {
         self.refreshingProviders.remove(instanceID)
         self.snapshots.removeValue(forKey: instanceID)
         self.errors.removeValue(forKey: instanceID)
+        self.offlineProviders.remove(instanceID)
         self.lastSourceLabels.removeValue(forKey: instanceID)
     }
 

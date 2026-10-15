@@ -50,7 +50,7 @@ struct CursorTransportIdentityTests {
         ProviderTransportRegressionSupport.expectPolicy(error, code: .cancelled)
     }
 
-    @Test(arguments: Route.allCases, [URLError.Code.badURL, .secureConnectionFailed])
+    @Test(arguments: Route.allCases, [URLError.Code.badURL, .serverCertificateUntrusted])
     func `Cursor does not broaden URL error retention`(route: Route, code: URLError.Code) async throws {
         let (error, _) = try await Self.failure(
             route: route,
@@ -84,7 +84,8 @@ struct CursorTransportIdentityTests {
             await store.refreshProvider(.cursor, allowDisabled: true)
             await store.refreshProvider(.cursor, allowDisabled: true)
             #expect(fetches == 2)
-            #expect(store.errors[.cursor] == error.localizedDescription)
+            #expect(store.errors[.cursor] == ProviderTransportRegressionSupport
+                .offlineError(preservingPriorData: hasPriorData))
             #expect((store.snapshot(for: .cursor) != nil) == hasPriorData)
             store.persistWidgetSnapshot(reason: "cursor-transport-after")
             await store.widgetSnapshotPersistTask?.value

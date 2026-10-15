@@ -2629,3 +2629,6 @@
 "token_speed_slowdown_help" = "أبطأ بنسبة %@%% من متوسط 24 ساعة";
 "plan_renews_short" = "التجديد %@";
 "menu_tokens_short" = "رموز %@";
+
+"Offline · %@" = "غير متصل · %@";
+"Offline · data may be outdated" = "غير متصل · قد تكون البيانات قديمة";

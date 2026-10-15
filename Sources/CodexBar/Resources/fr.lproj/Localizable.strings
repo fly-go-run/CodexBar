@@ -2624,3 +2624,6 @@
 "token_speed_slowdown_help" = "%@ %% plus lent que la moyenne sur 24 h";
 "plan_renews_short" = "renouvellement %@";
 "menu_tokens_short" = "Jetons %@";
+
+"Offline · %@" = "Hors ligne · %@";
+"Offline · data may be outdated" = "Hors ligne · les données peuvent être obsolètes";

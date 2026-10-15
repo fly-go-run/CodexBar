@@ -39,7 +39,7 @@ struct VertexTransportIdentityTests {
         #expect(UsageStore.errorIsCancellation(wrapper.wrap(CancellationError())))
     }
 
-    @Test(arguments: Wrapper.allCases, [URLError.Code.badURL, .secureConnectionFailed])
+    @Test(arguments: Wrapper.allCases, [URLError.Code.badURL, .serverCertificateUntrusted])
     func `Vertex transport allowlist stays bounded`(wrapper: Wrapper, code: URLError.Code) {
         let error = wrapper.wrap(ProviderTransportRegressionSupport.urlError(code))
         #expect(!UsageStore.shouldPreservePriorSnapshot(after: error, hadPriorData: true))
@@ -87,7 +87,8 @@ struct VertexTransportIdentityTests {
             await store.refreshProvider(.vertexai, allowDisabled: true)
             await store.refreshProvider(.vertexai, allowDisabled: true)
             #expect(fetches == 2)
-            #expect(store.errors[.vertexai] == error.localizedDescription)
+            #expect(store.errors[.vertexai] == ProviderTransportRegressionSupport
+                .offlineError(preservingPriorData: hasPriorData))
             #expect((store.snapshot(for: .vertexai) != nil) == hasPriorData)
             if hasPriorData {
                 #expect(store.snapshot(for: .vertexai)?.primary == nil)

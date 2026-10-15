@@ -2622,3 +2622,6 @@
 "token_speed_slowdown_help" = "%@%% trager dan het 24-uursgemiddelde";
 "plan_renews_short" = "verlengt %@";
 "menu_tokens_short" = "%@-tokens";
+
+"Offline · %@" = "Offline · %@";
+"Offline · data may be outdated" = "Offline · gegevens zijn mogelijk verouderd";

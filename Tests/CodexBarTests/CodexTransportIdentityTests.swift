@@ -70,7 +70,7 @@ struct CodexTransportIdentityTests {
         Self.expectPolicy(wrapper.wrap(CancellationError()), code: .cancelled)
     }
 
-    @Test(arguments: Wrapper.allCases, [URLError.Code.secureConnectionFailed, .badURL])
+    @Test(arguments: Wrapper.allCases, [URLError.Code.serverCertificateUntrusted, .badURL])
     func `other URL failures do not become preservable or retryable`(wrapper: Wrapper, code: URLError.Code) {
         let error = wrapper.wrap(Self.localizedError(code: code))
         #expect(!UsageStore.shouldPreservePriorSnapshot(after: error, hadPriorData: true))

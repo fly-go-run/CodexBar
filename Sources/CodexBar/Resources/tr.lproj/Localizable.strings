@@ -2628,3 +2628,6 @@
 "token_speed_slowdown_help" = "24 saat ortalamasından %%%@ yavaş";
 "plan_renews_short" = "yenileme %@";
 "menu_tokens_short" = "%@ token";
+
+"Offline · %@" = "Çevrimdışı · %@";
+"Offline · data may be outdated" = "Çevrimdışı · veriler güncel olmayabilir";

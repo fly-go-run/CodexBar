@@ -400,7 +400,7 @@ struct ClaudeResilienceTests {
     }
 
     @Test
-    func `repeated non probe transient failure still surfaces`() async throws {
+    func `repeated network loss with fresh prior data stays quiet and marks the provider offline`() async throws {
         try await ClaudeOAuthCredentialsStore.withIsolatedCredentialsFileTrackingForTesting {
             let tempDir = FileManager.default.temporaryDirectory
                 .appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -475,7 +475,8 @@ struct ClaudeResilienceTests {
                 }
 
                 #expect(secondResult.updatedAt == prior.updatedAt)
-                #expect(secondResult.hasError)
+                #expect(!secondResult.hasError)
+                #expect(await MainActor.run { store.offlineProviders.contains(.claude) })
             }
         }
     }

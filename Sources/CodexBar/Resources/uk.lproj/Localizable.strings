@@ -2625,3 +2625,6 @@
 "token_speed_slowdown_help" = "на %@%% повільніше за середнє за 24 год";
 "plan_renews_short" = "продовження %@";
 "menu_tokens_short" = "%@ токенів";
+
+"Offline · %@" = "Офлайн · %@";
+"Offline · data may be outdated" = "Офлайн · дані можуть бути застарілими";

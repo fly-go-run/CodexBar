@@ -2624,3 +2624,6 @@
 "token_speed_slowdown_help" = "%@ %% långsammare än 24 h-snittet";
 "plan_renews_short" = "förnyas %@";
 "menu_tokens_short" = "%@ token";
+
+"Offline · %@" = "Offline · %@";
+"Offline · data may be outdated" = "Offline · data kan vara inaktuella";

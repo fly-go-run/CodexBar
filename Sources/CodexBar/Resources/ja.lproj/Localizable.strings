@@ -2625,3 +2625,6 @@
 "token_speed_slowdown_help" = "24時間平均より %@%% 遅い";
 "plan_renews_short" = "%@ 更新";
 "menu_tokens_short" = "%@ トークン";
+
+"Offline · %@" = "オフライン · %@";
+"Offline · data may be outdated" = "オフライン · データが古い可能性があります";

@@ -2617,3 +2617,6 @@
 "token_speed_slowdown_help" = "比 24 小时平均慢 %@%%";
 "plan_renews_short" = "%@ 续订";
 "menu_tokens_short" = "%@ tokens";
+
+"Offline · %@" = "离线 · %@";
+"Offline · data may be outdated" = "离线 · 数据可能已过期";

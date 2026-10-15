@@ -2623,3 +2623,6 @@
 "token_speed_slowdown_help" = "%@ %% langsamer als der 24-h-Schnitt";
 "plan_renews_short" = "verlängert %@";
 "menu_tokens_short" = "%@ Token";
+
+"Offline · %@" = "Offline · %@";
+"Offline · data may be outdated" = "Offline · Daten sind möglicherweise veraltet";

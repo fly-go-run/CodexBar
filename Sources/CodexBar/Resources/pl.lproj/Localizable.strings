@@ -2628,3 +2628,6 @@
 "token_speed_slowdown_help" = "%@%% wolniej niż średnia z 24 h";
 "plan_renews_short" = "odnowienie %@";
 "menu_tokens_short" = "%@ tokenów";
+
+"Offline · %@" = "Brak połączenia · %@";
+"Offline · data may be outdated" = "Brak połączenia · dane mogą być nieaktualne";

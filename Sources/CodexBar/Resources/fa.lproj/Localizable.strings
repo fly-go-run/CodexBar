@@ -2629,3 +2629,6 @@
 "token_speed_slowdown_help" = "%@٪ کندتر از میانگین ۲۴ ساعت";
 "plan_renews_short" = "تمدید %@";
 "menu_tokens_short" = "توکن های %@";
+
+"Offline · %@" = "آفلاین · %@";
+"Offline · data may be outdated" = "آفلاین · ممکن است داده‌ها قدیمی باشند";

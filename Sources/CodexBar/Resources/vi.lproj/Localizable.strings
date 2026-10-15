@@ -2626,3 +2626,6 @@
 "token_speed_slowdown_help" = "chậm hơn %@%% so với trung bình 24 giờ";
 "plan_renews_short" = "gia hạn %@";
 "menu_tokens_short" = "%@ mã thông báo";
+
+"Offline · %@" = "Ngoại tuyến · %@";
+"Offline · data may be outdated" = "Ngoại tuyến · dữ liệu có thể đã cũ";

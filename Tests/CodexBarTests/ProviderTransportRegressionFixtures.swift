@@ -73,6 +73,11 @@ enum ProviderTransportRegressionSupport {
         ])
     }
 
+    /// What an offline outage publishes for fixtures whose prior data is far older than the stale-surface window.
+    static func offlineError(preservingPriorData: Bool) -> String {
+        preservingPriorData ? L("Offline · data may be outdated") : L("Offline")
+    }
+
     static func browser(root: URL) -> BrowserDetection {
         BrowserDetection(
             homeDirectory: root.path,

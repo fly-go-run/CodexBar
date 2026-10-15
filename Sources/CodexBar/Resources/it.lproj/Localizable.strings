@@ -2629,3 +2629,6 @@
 "token_speed_slowdown_help" = "%@%% più lento della media 24 h";
 "plan_renews_short" = "rinnovo %@";
 "menu_tokens_short" = "%@ token";
+
+"Offline · %@" = "Non in linea · %@";
+"Offline · data may be outdated" = "Non in linea · i dati potrebbero non essere aggiornati";

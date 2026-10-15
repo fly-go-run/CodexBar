@@ -2627,3 +2627,6 @@
 "token_speed_slowdown_help" = "ช้ากว่าค่าเฉลี่ย 24 ชม. %@%%";
 "plan_renews_short" = "ต่ออายุ %@";
 "menu_tokens_short" = "โทเค็น %@";
+
+"Offline · %@" = "ออฟไลน์ · %@";
+"Offline · data may be outdated" = "ออฟไลน์ · ข้อมูลอาจล้าสมัย";
