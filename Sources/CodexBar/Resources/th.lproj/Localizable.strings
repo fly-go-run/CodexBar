@@ -1234,7 +1234,7 @@
 "%@ cookies are disabled." = "คุกกี้ %@ ถูกปิดใช้งาน";
 "%@ web API access is disabled." = "%@ การเข้าถึง API เว็บถูกปิดใช้งาน";
 "Disable %@ dashboard cookie usage." = "ปิดใช้งานการใช้คุกกี้แดชบอร์ด %@";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "การเข้าถึง Keychain ถูกปิดใช้งานในขั้นสูง ดังนั้นการนําเข้าคุกกี้ของเบราว์เซอร์จึงไม่พร้อมใช้งาน";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "ปิดการเข้าถึงพวงกุญแจอยู่ จึงนำเข้าเฉพาะคุกกี้ของ Safari และ Firefox";
 "Manually paste an %@ from a browser session." = "วาง %@ จากเซสชันเบราว์เซอร์ด้วยตนเอง";
 "Paste a Cookie header captured from %@." = "วางส่วนหัวคุกกี้ที่บันทึกจาก %@";
 "Paste a Cookie header from %@." = "วางส่วนหัวคุกกี้จาก %@";
@@ -2633,3 +2633,5 @@
 "API credit" = "เครดิต API";
 "Purchased credit" = "เครดิตที่ซื้อ";
 "Claude Platform exposes Console credit balance and monthly spend, not local token cost history." = "Claude Platform แสดงยอดเครดิตและการใช้จ่ายรายเดือนของ Console ไม่ใช่ประวัติต้นทุนโทเค็นในเครื่อง";
+"token_speed_window_line" = "ความเร็ว (24 ชม.): %@";
+"token_speed_last_hour_line" = "ชั่วโมงล่าสุด: %@ tok/s · %@ คำขอ";

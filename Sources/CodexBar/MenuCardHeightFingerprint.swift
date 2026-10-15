@@ -154,6 +154,7 @@ extension UsageMenuCardView.Model.TokenUsageSection {
             MenuCardHeightFingerprint.field("month", self.monthLine),
             MenuCardHeightFingerprint.field("metered", self.meteredLine),
             MenuCardHeightFingerprint.field("comparisons", self.comparisonLines.joined(separator: "|")),
+            MenuCardHeightFingerprint.field("speed", self.speedLines.joined(separator: "|")),
             MenuCardHeightFingerprint.field("hint", self.hintLine),
             MenuCardHeightFingerprint.field("error", self.errorLine),
             MenuCardHeightFingerprint.field("errorCopy", self.errorCopyText),

@@ -75,13 +75,16 @@ extension CodexBarCLI {
                     refreshPricingInBackground: false).reporting(period)
                 switch format {
                 case .text:
-                    sections.append(Self.renderCostText(
+                    let costText = Self.renderCostText(
                         provider: provider,
                         snapshot: snapshot,
                         groupBy: groupBy,
                         useColor: useColor,
                         calendar: bucketCalendar,
-                        includeBreakdown: includeBreakdown))
+                        includeBreakdown: includeBreakdown)
+                    sections.append([costText, Self.renderOutputSpeedText(provider: provider, now: now)]
+                        .compactMap(\.self)
+                        .joined(separator: "\n"))
                 case .json:
                     payload.append(Self.makeCostPayload(
                         provider: provider,
@@ -134,6 +137,20 @@ extension CodexBarCLI {
             case .project, .session: true
             }
         }
+    }
+
+    static func renderOutputSpeedText(provider: UsageProvider, now: Date) -> String? {
+        guard let speed = TokenOutputSpeedScanner.shared.snapshot(provider: provider, now: now) else { return nil }
+        var lines = ["Output speed (24h, includes time to first token):"]
+        for bucket in speed.models {
+            let rate = String(format: "%.0f", bucket.tokensPerSecond)
+            lines.append("  \(bucket.model ?? "?"): \(rate) tok/s · \(bucket.requestCount) requests")
+        }
+        if let lastHour = speed.lastHour {
+            let rate = String(format: "%.0f", lastHour.tokensPerSecond)
+            lines.append("  Last hour: \(rate) tok/s · \(lastHour.requestCount) requests")
+        }
+        return lines.joined(separator: "\n")
     }
 
     static func renderCostText(

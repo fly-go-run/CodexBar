@@ -206,6 +206,7 @@ extension UsageMenuCardView.Model {
         if let topModel = Self.topCostModel(from: snapshot.daily) {
             details.append("\(L("Top model")): \(Self.shortModelName(topModel))")
         }
+        details.append(contentsOf: Self.tokenOutputSpeedLines(input.tokenOutputSpeed))
         let tokenCost = ProviderDescriptorRegistry.descriptor(for: input.provider).tokenCost
         let hintLines = Self.tokenUsageHintLines(provider: input.provider)
         if tokenCost.hintPlacement == .beforeRequestHistory {

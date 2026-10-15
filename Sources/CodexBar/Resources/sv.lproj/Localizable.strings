@@ -1136,7 +1136,7 @@
 "Automatically imports browser cookies." = "Importerar webbläsarcookies automatiskt.";
 "Open Volcengine Ark Console" = "Öppna Volcengine Ark-konsol";
 "Antigravity login failed" = "Antigravity-inloggning misslyckades";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "Åtkomst till Nyckelring är inaktiverad under Avancerat, så import av webbläsarcookies är inte tillgänglig.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "Nyckelringsåtkomst är avstängd, så endast cookies från Safari och Firefox importeras.";
 "Browser cookies" = "Webbläsarcookies";
 "Usage history (%d days)" = "Användningshistorik (%d dagar)";
 "Cache read" = "Cacheläsning";
@@ -2630,3 +2630,5 @@
 "API credit" = "API-kredit";
 "Purchased credit" = "Köpt kredit";
 "Claude Platform exposes Console credit balance and monthly spend, not local token cost history." = "Claude Platform visar Console-kreditsaldo och månadsutgifter, inte lokal tokenkostnadshistorik.";
+"token_speed_window_line" = "Hastighet (24 h): %@";
+"token_speed_last_hour_line" = "Senaste timmen: %@ tok/s · %@ förfrågningar";

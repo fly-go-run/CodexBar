@@ -113,6 +113,7 @@ extension UsageStore {
             dashboardError: isSettings ? codexProjection?.userFacingErrors.dashboard : nil,
             tokenSnapshot: tokenSnapshot,
             tokenError: isLive && supportsTokenCost ? self.tokenError(for: provider) : nil,
+            tokenOutputSpeed: isLive && supportsTokenCost ? self.tokenOutputSpeed(for: provider) : nil,
             account: account?.info ?? (isLive && metadata.usesAccountFallback
                 ? self.accountInfo(for: provider)
                 : AccountInfo(email: nil, plan: nil)),

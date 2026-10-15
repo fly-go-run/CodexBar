@@ -1217,7 +1217,7 @@
 "%@ cookies are disabled." = "Файли cookie %@ вимкнено.";
 "%@ web API access is disabled." = "Доступ до веб-API %@ вимкнено.";
 "Disable %@ dashboard cookie usage." = "Вимкнути використання файлів cookie панелі інструментів %@.";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "Доступ Keychain вимкнено в Advanced, тому імпорт файлів cookie браузера недоступний.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "Доступ до в’язки ключів вимкнено, тому імпортуються лише cookie Safari та Firefox.";
 "Manually paste an %@ from a browser session." = "Вручну вставте %@ із сеансу браузера.";
 "Paste a Cookie header captured from %@." = "Вставте заголовок файлу cookie, отриманий із %@.";
 "Paste a Cookie header from %@." = "Вставте заголовок файлу cookie з %@.";
@@ -2631,3 +2631,5 @@
 "API credit" = "Кредит API";
 "Purchased credit" = "Придбаний кредит";
 "Claude Platform exposes Console credit balance and monthly spend, not local token cost history." = "Claude Platform показує баланс кредитів і щомісячні витрати в Console, а не локальну історію витрат на токени.";
+"token_speed_window_line" = "Швидкість (24 год): %@";
+"token_speed_last_hour_line" = "Остання година: %@ tok/s · %@ запитів";

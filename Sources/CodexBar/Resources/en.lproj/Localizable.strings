@@ -1218,7 +1218,7 @@
 "%@ cookies are disabled." = "%@ cookies are disabled.";
 "%@ web API access is disabled." = "%@ web API access is disabled.";
 "Disable %@ dashboard cookie usage." = "Disable %@ dashboard cookie usage.";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "Keychain access is disabled in Advanced, so browser cookie import is unavailable.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "Keychain access is disabled, so only Safari and Firefox cookies are imported.";
 "Manually paste an %@ from a browser session." = "Manually paste an %@ from a browser session.";
 "Paste a Cookie header captured from %@." = "Paste a Cookie header captured from %@.";
 "Paste a Cookie header from %@." = "Paste a Cookie header from %@.";
@@ -2636,3 +2636,5 @@
 "API credit" = "API credit";
 "Purchased credit" = "Purchased credit";
 "Claude Platform exposes Console credit balance and monthly spend, not local token cost history." = "Claude Platform exposes Console credit balance and monthly spend, not local token cost history.";
+"token_speed_window_line" = "Speed (24h): %@";
+"token_speed_last_hour_line" = "Last hour: %@ tok/s · %@ requests";

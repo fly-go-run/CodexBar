@@ -125,6 +125,7 @@ struct UsageMenuCardView: View {
             let monthLine: String
             let meteredLine: String?
             let comparisonLines: [String]
+            var speedLines: [String] = []
             let hintLine: String?
             let errorLine: String?
             let errorCopyText: String?
@@ -532,6 +533,11 @@ private struct TokenUsageSectionContent: View {
                     .font(self.lineFont)
                     .lineLimit(1)
             }
+            ForEach(self.tokenUsage.speedLines, id: \.self) { line in
+                Text(line)
+                    .font(self.lineFont)
+                    .lineLimit(1)
+            }
             if self.provider != .codex || self.showsCodexHint,
                let hint = self.tokenUsage.hintLine,
                !hint.isEmpty
@@ -908,6 +914,11 @@ extension UsageMenuCardView.Model {
             error: input.tokenError,
             preferredCurrencyCode: input.preferredCurrencyCode,
             calendar: input.costUsageBucketCalendar)
+            .map { section in
+                var section = section
+                section.speedLines = Self.tokenOutputSpeedLines(input.tokenOutputSpeed)
+                return section
+            }
         let subtitle = input.subtitleOverride.map { (text: $0, style: SubtitleStyle.info) }
             ?? Self.subtitle(
                 snapshot: input.snapshot,

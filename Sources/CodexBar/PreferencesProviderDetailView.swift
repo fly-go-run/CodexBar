@@ -615,6 +615,9 @@ struct ProviderTokenUsageInlineView: View {
             title: UsageMenuCardView.Model.tokenUsageHeader(provider: self.provider),
             value: self.tokenUsage.sessionLine)
         ProviderMetricInlineTextRow(title: "", value: self.tokenUsage.monthLine)
+        ForEach(self.tokenUsage.speedLines, id: \.self) { line in
+            ProviderMetricInlineTextRow(title: "", value: line)
+        }
         if ProviderDescriptorRegistry.descriptor(for: self.provider).tokenCost.showsHintInProviderDetails,
            let hint = self.tokenUsage.hintLine, !hint.isEmpty
         {

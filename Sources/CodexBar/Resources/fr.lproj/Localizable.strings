@@ -1217,7 +1217,7 @@
 "%@ cookies are disabled." = "Les cookies %@ sont désactivés.";
 "%@ web API access is disabled." = "L'accès à l'API Web %@ est désactivé.";
 "Disable %@ dashboard cookie usage." = "Désactivez l'utilisation des cookies du tableau de bord %@.";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "L'accès au Trousseau est désactivé dans Advanced, donc l'importation des cookies du navigateur n'est pas disponible.";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "L’accès au trousseau est désactivé : seuls les cookies Safari et Firefox sont importés.";
 "Manually paste an %@ from a browser session." = "Collez manuellement un %@ à partir d'une session de navigateur.";
 "Paste a Cookie header captured from %@." = "Collez un en-tête de cookie capturé à partir de %@.";
 "Paste a Cookie header from %@." = "Collez un en-tête de cookie à partir de %@.";
@@ -2630,3 +2630,5 @@
 "API credit" = "Crédit API";
 "Purchased credit" = "Crédit acheté";
 "Claude Platform exposes Console credit balance and monthly spend, not local token cost history." = "Claude Platform affiche le solde de crédit et les dépenses mensuelles de la Console, et non l'historique local des coûts de jetons.";
+"token_speed_window_line" = "Vitesse (24 h) : %@";
+"token_speed_last_hour_line" = "Dernière heure : %@ tok/s · %@ requêtes";

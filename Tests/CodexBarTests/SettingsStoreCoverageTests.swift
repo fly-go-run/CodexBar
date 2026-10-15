@@ -291,6 +291,22 @@ struct SettingsStoreCoverageTests {
     }
 
     @Test
+    func `keychain disable keeps configured cookie sources`() throws {
+        let suite = "SettingsStoreCoverageTests-keychain-\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let configStore = testConfigStore(suiteName: suite)
+        let settings = Self.makeSettingsStore(userDefaults: defaults, configStore: configStore)
+
+        settings.codexCookieSource = .auto
+        settings.claudeCookieSource = .auto
+        settings.debugDisableKeychainAccess = true
+
+        #expect(settings.codexCookieSource == .auto)
+        #expect(settings.claudeCookieSource == .auto)
+    }
+
+    @Test
     func `claude keychain prompt mode defaults to only on user action`() {
         let settings = Self.makeSettingsStore()
         #expect(settings.claudeOAuthKeychainPromptMode == .onlyOnUserAction)

@@ -1195,7 +1195,7 @@
 "%@ cookies are disabled." = "%@ Cookie 已禁用。";
 "%@ web API access is disabled." = "%@ Web API 访问已禁用。";
 "Disable %@ dashboard cookie usage." = "禁用 %@ 仪表盘 Cookie 用法。";
-"Keychain access is disabled in Advanced, so browser cookie import is unavailable." = "高级设置中已禁用钥匙串访问，因此无法导入浏览器 Cookie。";
+"Keychain access is disabled, so only Safari and Firefox cookies are imported." = "钥匙串访问已禁用，只导入 Safari 和 Firefox 的 Cookie。";
 "Manually paste an %@ from a browser session." = "从浏览器会话中手动粘贴 %@。";
 "Paste a Cookie header captured from %@." = "粘贴从 %@ 捕获的 Cookie 标头。";
 "Paste a Cookie header from %@." = "粘贴来自 %@ 的 Cookie 标头。";
@@ -2623,3 +2623,5 @@
 "API credit" = "API 额度";
 "Purchased credit" = "已购买额度";
 "Claude Platform exposes Console credit balance and monthly spend, not local token cost history." = "Claude Platform 显示 Console 额度余额和每月支出，而不是本地 token 成本历史记录。";
+"token_speed_window_line" = "输出速度 (24h): %@";
+"token_speed_last_hour_line" = "近 1 小时: %@ tok/s · %@ 次请求";
