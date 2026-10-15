@@ -1188,7 +1188,7 @@ extension MenuBarLayoutRenderer {
         switch item {
         case .tokensPerMinute:
             self.optionalTextToken(
-                data.tokensPerMinute.map { ProviderThroughputSection.count($0) + "/min" },
+                data.tokensPerMinute.map { UsageFormatter.tokenCountString($0) + "/min" },
                 unavailableLabel: L("%@ unavailable", L("Tokens / min")),
                 attributes: style.attributes)
         case .tokensSparkline:
@@ -1221,7 +1221,7 @@ extension MenuBarLayoutRenderer {
             height: style.iconHeight)
         let value = NSMutableAttributedString(attachment: attachment)
         value.addAttributes(style.attributes, range: NSRange(location: 0, length: value.length))
-        return (value, L("Tokens per minute, latest %@", graph.latest.map(ProviderThroughputSection.count) ?? "—"))
+        return (value, L("Tokens per minute, latest %@", graph.latest.map(UsageFormatter.tokenCountString) ?? "—"))
     }
 
     /// Provider-declared menu bar tag for a lane; nil keeps the lane's percentage bare.
