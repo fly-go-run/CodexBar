@@ -3,6 +3,7 @@ import Foundation
 import SwiftUI
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 struct MenuBarPercentWindowPreferenceTests {
     @Test

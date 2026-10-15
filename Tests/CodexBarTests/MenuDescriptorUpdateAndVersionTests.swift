@@ -1,6 +1,7 @@
 import CodexBarCore
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @MainActor
 struct MenuDescriptorUpdateAndVersionTests {

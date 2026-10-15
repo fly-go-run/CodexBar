@@ -218,7 +218,8 @@ class DirectSwiftTestGroupsTests(unittest.TestCase):
 
     def test_direct_and_serial_shards_keep_identical_ordered_groups(self):
         selections = [runner.TestSelection(name, f"^{name}/", name) for name in [
-            "CodexBarTests.Alpha", "CodexBarTests.CLIEntryTests", "CodexBarTests.CostUsagePerformanceGateTests",
+            "CodexBarTests.Alpha", "CodexBarCLITests.CLIEntryTests",
+            "CodexBarCostUsageTests.CostUsagePerformanceGateTests",
             "CodexBarTests.Delta", "CodexBarTests.Epsilon", "CodexBarTests.Zeta"]]
         for shard_count in [2, 3]:
             for shard_index in range(shard_count):

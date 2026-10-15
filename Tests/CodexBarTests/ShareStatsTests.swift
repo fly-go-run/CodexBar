@@ -3,6 +3,7 @@ import CodexBarCore
 import Foundation
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 struct ShareStatsTests {
     @Test(arguments: [(0, "0 subscriptions"), (1, "1 subscription"), (2, "2 subscriptions"), (12, "12 subscriptions")])

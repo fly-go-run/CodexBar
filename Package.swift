@@ -125,24 +125,77 @@ let package = Package(
                 ]),
         ])
 
-        targets.append(.testTarget(
-            name: "CodexBarTests",
-            dependencies: [
-                "CodexBar", "CodexBarCore", "CodexBarCLI", "CodexBarCostStoreCrashProbe", "CodexBarWidget",
-                .product(name: "Sparkle", package: "Sparkle"),
-            ],
-            path: "Tests",
-            resources: [
-                .copy("CodexBarTests/Fixtures"),
-            ],
-            swiftSettings: [
-                .enableUpcomingFeature("StrictConcurrency"),
-                .enableExperimentalFeature("SwiftTesting"),
-            ],
-            linkerSettings: [
-                // XCTest's executable is three directories below its sibling framework products.
-                .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@loader_path/../../.."]),
-            ]))
+        let testSwiftSettings: [SwiftSetting] = [
+            .enableUpcomingFeature("StrictConcurrency"),
+            .enableExperimentalFeature("SwiftTesting"),
+        ]
+        // Test code is split by what it imports so an edit recompiles one test module instead of all of them.
+        // Only test targets may depend on the app executables, so shared helpers stay CodexBarCore-only:
+        // anything that needs `@testable import CodexBar` lives in CodexBarTests.
+        targets.append(contentsOf: [
+            // Helpers and fixtures shared by several test targets. Its sources are `#if DEBUG`-guarded because
+            // `swift build -c release` also compiles test targets that other test targets depend on.
+            .testTarget(
+                name: "CodexBarTestSupport",
+                dependencies: ["CodexBarCore"],
+                path: "Tests/CodexBarTestSupport",
+                swiftSettings: testSwiftSettings),
+            .testTarget(
+                name: "CodexBarCoreTests",
+                dependencies: [
+                    "CodexBarCore", "CodexBarTestSupport",
+                    .product(name: "Logging", package: "swift-log"),
+                    .product(name: "SweetCookieKit", package: "SweetCookieKit"),
+                ],
+                path: "Tests/CodexBarCoreTests",
+                resources: [.copy("Fixtures")],
+                swiftSettings: testSwiftSettings),
+            .testTarget(
+                name: "CodexBarCostUsageTests",
+                dependencies: ["CodexBarCore", "CodexBarCostStoreCrashProbe", "CodexBarTestSupport"],
+                path: "Tests/CodexBarCostUsageTests",
+                resources: [.copy("Fixtures")],
+                swiftSettings: testSwiftSettings),
+            .testTarget(
+                name: "CodexBarClaudeTests",
+                dependencies: [
+                    "CodexBarCore", "CodexBarTestSupport",
+                    .product(name: "SweetCookieKit", package: "SweetCookieKit"),
+                ],
+                path: "Tests/CodexBarClaudeTests",
+                resources: [.copy("Fixtures")],
+                swiftSettings: testSwiftSettings),
+            .testTarget(
+                name: "CodexBarCodexTests",
+                // CodexBarCLI is launched as a built product, not imported.
+                dependencies: ["CodexBarCore", "CodexBarCLI", "CodexBarTestSupport"],
+                path: "Tests/CodexBarCodexTests",
+                swiftSettings: testSwiftSettings),
+            .testTarget(
+                name: "CodexBarCLITests",
+                dependencies: [
+                    "CodexBarCLI", "CodexBarCore", "CodexBarTestSupport",
+                    .product(name: "Commander", package: "Commander"),
+                ],
+                path: "Tests/CodexBarCLITests",
+                resources: [.copy("Fixtures")],
+                swiftSettings: testSwiftSettings),
+            // App, menu, widget and store tests: everything that needs `@testable import CodexBar`.
+            .testTarget(
+                name: "CodexBarTests",
+                dependencies: [
+                    "CodexBar", "CodexBarCore", "CodexBarCLI", "CodexBarCostStoreCrashProbe", "CodexBarWidget",
+                    "CodexBarTestSupport",
+                    .product(name: "Sparkle", package: "Sparkle"),
+                ],
+                path: "Tests/CodexBarTests",
+                resources: [.copy("Fixtures")],
+                swiftSettings: testSwiftSettings,
+                linkerSettings: [
+                    // XCTest's executable is three directories below its sibling framework products.
+                    .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@loader_path/../../.."]),
+                ]),
+        ])
         #endif
 
         return targets

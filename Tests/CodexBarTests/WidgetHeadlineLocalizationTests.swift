@@ -3,6 +3,7 @@ import CodexBarCore
 import SwiftUI
 import Testing
 import Vision
+@testable import CodexBarTestSupport
 @testable import CodexBarWidget
 
 @MainActor

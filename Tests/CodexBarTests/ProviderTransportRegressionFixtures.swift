@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import CodexBar
 @testable import CodexBarCore
+@testable import CodexBarTestSupport
 
 struct ProviderTransportRegressionFixtures: TestTrait, SuiteTrait, TestScoping {
     @TaskLocal private static var currentRoot: URL?

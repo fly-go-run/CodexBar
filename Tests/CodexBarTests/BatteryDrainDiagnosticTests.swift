@@ -3,6 +3,7 @@ import CodexBarCore
 import Foundation
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 /// Regression coverage for battery drain caused by fallback-provider animation.
 /// See GitHub issues #269, #139.

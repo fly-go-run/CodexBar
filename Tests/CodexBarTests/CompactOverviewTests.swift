@@ -4,6 +4,7 @@ import Foundation
 import SwiftUI
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @MainActor
 struct CompactOverviewTests {

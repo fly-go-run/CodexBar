@@ -3,6 +3,7 @@ import Foundation
 import Testing
 @testable import CodexBar
 @testable import CodexBarCLI
+@testable import CodexBarTestSupport
 
 @MainActor
 struct CodexCreditVisibilityTests {

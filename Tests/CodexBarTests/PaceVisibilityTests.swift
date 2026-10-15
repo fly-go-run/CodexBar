@@ -2,6 +2,7 @@ import CodexBarCore
 import Foundation
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 struct PaceVisibilityTests {
     /// Claude session window that is well ahead of the sustainable rate, so the

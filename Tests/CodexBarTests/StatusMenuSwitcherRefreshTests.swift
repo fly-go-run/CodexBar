@@ -2,6 +2,7 @@ import AppKit
 import CodexBarCore
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @MainActor
 private final class SwitcherRefreshManualGate {

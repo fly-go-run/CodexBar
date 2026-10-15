@@ -3,6 +3,7 @@ import CodexBarCore
 import Foundation
 import XCTest
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @MainActor
 final class StatusMenuTokenAccountSwitcherTests: XCTestCase {

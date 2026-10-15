@@ -2,6 +2,7 @@ import CodexBarCore
 import Foundation
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @MainActor
 extension CodexAccountScopedRefreshTests {
@@ -1569,8 +1570,6 @@ extension CodexAccountScopedRefreshTests {
         #expect(store.codexAccountSnapshots.contains {
             $0.account.workspaceAccountID == "acct-provider-sibling"
         })
-        #expect(!snapshotStore.storedSnapshots.contains {
-            $0.account.workspaceAccountID == "acct-provider-email"
-        })
+        #expect(!snapshotStore.storedSnapshots.contains { $0.account.workspaceAccountID == "acct-provider-email" })
     }
 }

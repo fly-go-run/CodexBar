@@ -3,6 +3,7 @@ import CodexBarCore
 import SwiftUI
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 struct SettingsSidebarStatusDotTests {
     @Test

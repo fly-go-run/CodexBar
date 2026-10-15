@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import CodexBar
 @testable import CodexBarCore
+@testable import CodexBarTestSupport
 
 struct WidgetAccountSnapshotTests {
     private let date = Date(timeIntervalSince1970: 1_700_000_000)

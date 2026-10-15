@@ -3,6 +3,7 @@ import Foundation
 import os.lock
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @MainActor
 struct SpendDashboardCachedPresentationTests {

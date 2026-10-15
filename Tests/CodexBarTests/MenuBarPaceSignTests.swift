@@ -3,6 +3,7 @@ import CodexBarCore
 import Observation
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @MainActor
 struct MenuBarPaceSignTests {

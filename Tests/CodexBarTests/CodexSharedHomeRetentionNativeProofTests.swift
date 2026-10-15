@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import CodexBar
 @testable import CodexBarCore
+@testable import CodexBarTestSupport
 
 /// Exercise the production JSON store and managed-home cleanup against synthetic files only.
 @Suite(.serialized, CodexCredentialFixtures())

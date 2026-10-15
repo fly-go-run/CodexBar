@@ -110,7 +110,9 @@ CodexBar/
 ├── Sources/CodexBarCLI/       # Bundled codexbar command-line tool
 ├── Sources/CodexBarWidget/    # WidgetKit support
 ├── WidgetExtension/           # Xcode wrapper for the packaged widget extension
-├── Tests/CodexBarTests/       # macOS app/core test suite (XCTest + Swift Testing)
+├── Tests/CodexBarTests/       # App, menu, widget and store tests (need @testable import CodexBar)
+├── Tests/CodexBar*Tests/      # Core-only test targets: Claude, Codex, CostUsage, CLI, Core
+├── Tests/CodexBarTestSupport/ # Shared CodexBarCore-level test helpers
 └── Scripts/                   # Build and packaging scripts
 ```
 
@@ -127,7 +129,7 @@ See the canonical [provider authoring guide](provider.md#adding-a-new-provider) 
    protocol defaults when no custom UI or macOS integration is needed.
 5. Run `Scripts/regenerate-provider-manifests.sh` to update the Core descriptor manifest and the immutable app catalog.
 6. Add icon assets under `Sources/CodexBar/Resources/`.
-7. Add focused tests under `Tests/CodexBarTests/`.
+7. Add focused tests to the matching test target (see [Test targets](#test-targets)).
 
 ### Debug Cookie Issues
 1. Enable Debug → Logging → "Enable file logging" or raise verbosity in the app settings.
@@ -641,6 +643,29 @@ defaults delete com.steipete.codexbar debugMainThreadHangWatchdog
 - Parallel provider fetches
 - First failure can be suppressed when prior data exists
 - WidgetKit snapshot for macOS widgets
+
+### Test targets
+
+Tests are split into SwiftPM test targets by what they import, so an edit recompiles one test module:
+
+| Target | Contents | Depends on |
+| --- | --- | --- |
+| `CodexBarTests` | App, menu, widget, store and settings tests; anything that needs `@testable import CodexBar` or `CodexBarWidget` | app executables, Core, CLI |
+| `CodexBarClaudeTests` | Claude provider tests that only need CodexBarCore | Core |
+| `CodexBarCodexTests` | Codex provider tests that only need CodexBarCore | Core (launches the built CLI) |
+| `CodexBarCostUsageTests` | Cost scanner, cost store and models.dev pricing tests | Core, cost-store crash probe |
+| `CodexBarCLITests` | `CodexBarCLI` tests that do not need the app | CLI, Core |
+| `CodexBarCoreTests` | Remaining CodexBarCore tests (Keychain, config, sessions, logging, …) | Core |
+| `CodexBarTestSupport` | Helpers shared by several targets (`LockIsolated`, `InMemoryUserDefaults`, `CostUsageTestEnvironment`, …) | Core |
+
+Pick the target from the file's imports: a test that needs `@testable import CodexBar` goes in `CodexBarTests`.
+Helpers that use app types stay in `CodexBarTests`; SwiftBuild does not order a shared test target after the app
+executable, so `CodexBarTestSupport` depends only on CodexBarCore. Its sources are wrapped in `#if DEBUG` because
+`swift build -c release` also compiles test targets that other test targets depend on, and it carries no resources so
+no test bundle is copied into the packaged app. Use `@testable import CodexBarTestSupport` to reach its helpers.
+Each target owns the fixtures it reads through `Bundle.module` under its own `Fixtures/` directory.
+Every target builds its own `.xctest` bundle; `swift test`, `make test-fast FILTER=…` and the direct runner
+discover all of them, and suite names carry the target module (for example `CodexBarClaudeTests.ClaudeSwapListParserTests`).
 
 ### macOS direct test groups
 

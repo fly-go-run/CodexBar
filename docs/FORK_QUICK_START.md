@@ -94,7 +94,7 @@ git push origin feature/my-feature
 - `Sources/CodexBar/` - Swift 6 menu bar app
 - `Sources/CodexBarCore/` - Core logic, providers, utilities
 - `Sources/CodexBarCore/Providers/Augment/` - Augment provider implementation
-- `Tests/CodexBarTests/` - XCTest coverage
+- `Tests/` - XCTest and Swift Testing targets (see `docs/DEVELOPMENT.md#test-targets`)
 
 ### Scripts
 - `Scripts/compile_and_run.sh` - Main development script

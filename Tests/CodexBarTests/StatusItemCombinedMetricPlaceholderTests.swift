@@ -2,6 +2,7 @@ import AppKit
 import CodexBarCore
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 /// Regression coverage for the combined "Session + Weekly" menu-bar metric ignoring Claude web's
 /// synthetic `five_hour: null` session placeholder. Claude web parses an account with no live session

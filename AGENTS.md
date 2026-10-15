@@ -2,7 +2,7 @@
 
 ## Project Structure & Modules
 - `Sources/CodexBar`: Swift 6 menu bar app (usage/credits probes, icon renderer, settings). Keep changes small and reuse existing helpers.
-- `Tests/CodexBarTests`: XCTest coverage for usage parsing, status probes, icon patterns; mirror new logic with focused tests.
+- `Tests/`: one SwiftPM test target per area (`CodexBarTests` for app/menu/widget code, plus Core-only `CodexBarClaudeTests`, `CodexBarCodexTests`, `CodexBarCostUsageTests`, `CodexBarCLITests`, `CodexBarCoreTests`, and shared `CodexBarTestSupport`; see `docs/DEVELOPMENT.md#test-targets`). Mirror new logic with focused tests.
 - `Scripts`: build/package helpers (`package_app.sh`, `sign-and-notarize.sh`, `make_appcast.sh`, `build_icon.sh`, `compile_and_run.sh`). Release wrappers call `Scripts/mac-release`, which resolves `MAC_RELEASE_TOOL` or the shared `agent-scripts` checkout.
 - `docs`: release notes and process (`docs/RELEASING.md`, screenshots). Root-level zips/appcast are generated artifacts—avoid editing except during releases.
 
@@ -17,7 +17,7 @@
 - Favor small, typed structs/enums; maintain existing `MARK` organization. Use descriptive symbols; match current commit tone.
 
 ## Testing Guidelines
-- Add/extend XCTest cases under `Tests/CodexBarTests/*Tests.swift` (`FeatureNameTests` with `test_caseDescription` methods).
+- Add/extend XCTest cases under the matching `Tests/<Target>/*Tests.swift` (`FeatureNameTests` with `test_caseDescription` methods).
 - Swift Testing: prefer backticked sentence names; no camelCase.
 - Model names in tests/code: released models or clearly fictitious names only; never expose unreleased names.
 - Iterate with focused runs (`make test-fast FILTER='SuiteName'` or `swift test --filter ...`) covering the touched suites. For a local full run use `./Scripts/test.sh --direct-workers 8` (parallel isolated groups, ~10 min) instead of serial `make test` (~45 min). The full suite is not a handoff gate: run it in the background or leave it to PR CI; never block on it in the foreground.

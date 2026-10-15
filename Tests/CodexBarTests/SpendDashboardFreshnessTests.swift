@@ -3,6 +3,7 @@ import Observation
 import Testing
 @testable import CodexBar
 @testable import CodexBarCore
+@testable import CodexBarTestSupport
 
 @MainActor
 @Suite(.serialized)

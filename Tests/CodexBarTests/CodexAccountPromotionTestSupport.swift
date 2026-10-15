@@ -1,6 +1,7 @@
 import CodexBarCore
 import Foundation
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @MainActor
 final class CodexAccountPromotionTestContainer {

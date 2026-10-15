@@ -5,6 +5,7 @@ import SwiftUI
 import Testing
 import Vision
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @MainActor
 struct CloudSyncDeviceRemovalTests {

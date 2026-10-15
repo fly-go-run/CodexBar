@@ -4,6 +4,7 @@ import SwiftUI
 import Testing
 import Vision
 import WidgetKit
+@testable import CodexBarTestSupport
 @testable import CodexBarWidget
 
 @MainActor

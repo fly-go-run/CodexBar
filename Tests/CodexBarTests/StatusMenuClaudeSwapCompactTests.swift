@@ -3,6 +3,7 @@ import CodexBarCore
 import Foundation
 import XCTest
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 /// Menu-structure coverage for the compact claude-swap layout: with four or more
 /// accounts the active account keeps its card, inactive accounts become compact
