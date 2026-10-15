@@ -244,9 +244,7 @@ extension CodexBarCLI {
 
         let accounts: [ProviderTokenAccount]
         do {
-            accounts = try tokenContext.resolvedAccounts(
-                for: provider,
-                sourceMode: command.sourceModeOverride ?? tokenContext.preferredSourceMode(for: provider))
+            accounts = try tokenContext.resolvedAccounts(for: provider)
         } catch {
             return Self.usageOutputForAccountResolutionError(
                 provider: provider,
@@ -263,7 +261,6 @@ extension CodexBarCLI {
             accounts: selections.map { account in
                 account.map { .token($0, active: $0.id == activeID) }
             },
-            minimumDelay: TokenAccountSupportCatalog.support(for: provider)?.minimumDelayBetweenAccountRefreshes,
             publishPartial: publishPartial)
         { index in
             await Self.fetchUsageOutput(

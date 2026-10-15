@@ -119,8 +119,8 @@ struct DashboardMultiAccountTests {
             config: config,
             verbose: false,
             baseEnvironment: [:])
-        #expect(try selected.resolvedAccounts(for: .claude, sourceMode: .web).map(\.id) == [accounts[1].id])
-        #expect(try all.resolvedAccounts(for: .claude, sourceMode: .web).map(\.id) == accounts.map(\.id))
+        #expect(try selected.resolvedAccounts(for: .claude).map(\.id) == [accounts[1].id])
+        #expect(try all.resolvedAccounts(for: .claude).map(\.id) == accounts.map(\.id))
         #expect(CodexBarCLI.serveIncludesConfiguredAccounts(provider: .claude, config: config, allAccounts: true))
         #expect(!CodexBarCLI.serveIncludesConfiguredAccounts(provider: .claude, config: config, allAccounts: false))
         #expect(!CodexBarCLI.serveIncludesConfiguredAccounts(provider: .claude, config: self.config, allAccounts: true))

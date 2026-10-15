@@ -222,12 +222,8 @@ enum ProvidersPaneTestHarness {
             activeIndex: { 0 },
             setActiveIndex: { _ in },
             showsOrganizationField: false,
-            showsTeamModeControls: false,
-            addAccount: { _, _, _, _, _ in },
-            updateAccount: { _, _, _, _ in },
+            addAccount: { _, _, _ in },
             removeAccount: { _ in },
-            primaryAddActionTitle: nil,
-            primaryAddAction: nil,
             openConfigFile: {},
             reloadFromDisk: {})
 

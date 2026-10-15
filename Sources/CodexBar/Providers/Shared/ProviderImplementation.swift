@@ -79,10 +79,6 @@ protocol ProviderImplementation: Sendable {
     func settingsSnapshot(context: ProviderSettingsSnapshotContext)
         -> ProviderSettingsSnapshotContribution?
 
-    /// Optional primary action for the shared token-account editor.
-    @MainActor
-    func runTokenAccountPrimaryAction(context: ProviderSettingsContext) async
-
     /// Return true if the provider opened its own token file. False keeps the CodexBar config.
     @MainActor
     func openTokenFile(context: ProviderSettingsContext) -> Bool
@@ -222,9 +218,6 @@ extension ProviderImplementation {
             tokenOverride: context.tokenOverride)
         return contribution(settings)
     }
-
-    @MainActor
-    func runTokenAccountPrimaryAction(context _: ProviderSettingsContext) async {}
 
     @MainActor
     func openTokenFile(context _: ProviderSettingsContext) -> Bool {
