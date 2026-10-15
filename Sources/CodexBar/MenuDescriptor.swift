@@ -312,7 +312,7 @@ struct MenuDescriptor {
                 }
             }
             if labels.showsTertiary, let opus = snap.tertiary {
-                // Perplexity purchased credits don't reset; show the balance as plain text.
+                // Some providers' tertiary windows carry a description that replaces the reset text.
                 let opusResetOverride: String? = presentation.menu.tertiaryDescriptionOverridesReset
                     ? opus.resetDescription?.trimmingCharacters(in: .whitespacesAndNewlines)
                     : nil

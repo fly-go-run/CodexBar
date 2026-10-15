@@ -29,7 +29,7 @@ struct WidgetTilePlan: Equatable {
     ///   - lanes: every lane the provider reports. The headline is chosen from all of them, so a
     ///     provider's compact row cap can never hide the lane that is actually binding.
     ///   - displayCandidates: the lanes a compact tile is allowed to list, already curated by the
-    ///     provider (row caps, Antigravity's one-row-per-model-family selection). Defaults to
+    ///     provider (for example per-provider row caps). Defaults to
     ///     `lanes` when the tile lists everything.
     ///   - reservesOverflowRow: when the tile is too tight to absorb the "+N more" line on top of a
     ///     full lane list, the line takes one of the lane slots instead of overflowing the tile.

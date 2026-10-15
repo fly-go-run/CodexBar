@@ -71,10 +71,8 @@ struct MenuBarLayoutRenderData: Hashable {
     /// `.scopedWeekly` token with the real model rather than assuming Fable.
     let scopedWeeklyTitle: String?
     let automatic: MenuBarLayoutRenderWindow?
-    /// Provider-specific text that replaces the automatic percent token: Mistral spend when its
-    /// automatic lane has no percentage window, balance-only providers (DeepSeek, DeepInfra) whose
-    /// window percent is meaningless, or no-window providers (Moonshot, Poe, OpenCode Go,
-    /// OpenRouter) surfacing their balance instead of a missing-value placeholder.
+    /// Provider-specific text that replaces the automatic percent token, for example a balance
+    /// surfaced instead of a missing-value placeholder when the window percent is meaningless.
     let automaticText: String?
     /// Signed pace deltas per window, already formatted (`+11%`, `-8%`, `0%`). Pace needs the store's
     /// historical dataset and work-day setting, so it is resolved upstream like `runsOut` rather than
@@ -1274,7 +1272,7 @@ extension MenuBarLayoutRenderer {
         -> (value: NSAttributedString, accessibilityText: String?)
     {
         let accessibilityPrefix = self.windowAccessibilityLabel(window, data: data)
-        // Balance-backed automatic lanes (DeepSeek, DeepInfra, …) override the automatic percent with
+        // Balance-backed automatic lanes override the automatic percent with
         // text because the quota percent is meaningless. Never turn that override into a fake bar.
         if window == .automatic, let automaticText = data.automaticText {
             return self.textToken(

@@ -27,7 +27,7 @@ extension CodexBarCLI {
                         [--provider \(ProviderHelp.list)]
                         [--account <label>] [--account-index <index>] [--all-accounts]
                         [--no-credits] [--no-color] [--status] [--source <auto|web|cli|oauth|api>]
-                        [--web-timeout <seconds>] [--web-debug-dump-html] [--antigravity-plan-debug] [--augment-debug]
+                        [--web-timeout <seconds>] [--web-debug-dump-html]
                         [--brief]
 
         Description:
@@ -69,7 +69,7 @@ extension CodexBarCLI {
                        [--provider \(ProviderHelp.list)]
                        [--account <label>] [--account-index <index>] [--all-accounts]
                        [--no-credits] [--no-color] [--pretty] [--status] [--source <auto|web|cli|oauth|api>]
-                       [--web-timeout <seconds>] [--web-debug-dump-html] [--antigravity-plan-debug] [--augment-debug]
+                       [--web-timeout <seconds>] [--web-debug-dump-html]
 
         Description:
           Print usage from enabled providers as text (default), JSON, or TOON. Honors your in-app toggles.
@@ -81,8 +81,6 @@ extension CodexBarCLI {
             Auto falls back to Codex CLI only when cookies are missing.
           - Claude: claude.ai API.
             Auto falls back to Claude CLI only when cookies are missing.
-          - Kilo: app.kilo.ai API.
-            Auto falls back to Kilo CLI when API credentials are missing or unauthorized.
           Token accounts are loaded from the resolved CodexBar config file.
           Use --account or --account-index to select a specific token account.
           Use --all-accounts to fetch every token account, or every visible Codex account for Codex.
@@ -99,7 +97,7 @@ extension CodexBarCLI {
         Examples:
           codexbar usage
           codexbar usage --provider claude
-          codexbar usage --provider gemini
+          codexbar usage --provider codex
           codexbar usage --format json --provider all --pretty
           codexbar usage --provider all --json
           codexbar usage --status
@@ -141,8 +139,6 @@ extension CodexBarCLI {
           codexbar cost --provider codex --group-by project
           codexbar cost --provider codex --group-by session
           codexbar cost --provider claude --format json --pretty
-          codexbar cost --provider antigravity --format json
-          codexbar cost --provider muse --format json
           codexbar cost --provider codex --remote build-host --format json
           codexbar cost --provider codex --identified-only --format json --remote build-host
         """
@@ -482,7 +478,7 @@ extension CodexBarCLI {
                   [--provider \(ProviderHelp.list)]
                   [--account <label>] [--account-index <index>] [--all-accounts]
                   [--no-credits] [--no-color] [--pretty] [--status] [--source <auto|web|cli|oauth|api>]
-                  [--web-timeout <seconds>] [--web-debug-dump-html] [--antigravity-plan-debug] [--augment-debug]
+                  [--web-timeout <seconds>] [--web-debug-dump-html]
           codexbar cards [--provider \(ProviderHelp.list)] [--brief] [--no-color] [--status]
           codexbar cost [--format text|json]
                        [--json]
@@ -528,7 +524,7 @@ extension CodexBarCLI {
           codexbar --format json --provider all --pretty
           codexbar --format toon --provider claude
           codexbar --provider all --json
-          codexbar --provider gemini
+          codexbar --provider codex
           codexbar cards --provider all --status
           codexbar cards --brief
           codexbar cost --provider claude --format json --pretty

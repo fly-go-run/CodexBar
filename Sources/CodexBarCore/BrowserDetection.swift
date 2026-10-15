@@ -151,7 +151,7 @@ public final class BrowserDetection: Sendable {
         return self.profileAccessIssue(profilePath)
     }
 
-    /// Cursor interactive login needs a concrete readable Safari source before it can safely pin Safari. Keep the
+    /// Interactive login needs a concrete readable Safari source before it can safely pin Safari. Keep the
     /// general Safari importer best-effort because it can discover new storage paths at read time.
     func hasReadableSafariCookieSource() -> Bool {
         let homeURL = URL(fileURLWithPath: self.homeDirectory, isDirectory: true)
@@ -276,7 +276,7 @@ public final class BrowserDetection: Sendable {
         return nil
     }
 
-    /// Directories Cursor's Safari importer may need to traverse. Probing directory metadata detects Full Disk Access
+    /// Directories the Safari importer may need to traverse. Probing directory metadata detects Full Disk Access
     /// failures without opening or parsing the cookie files themselves.
     private func safariCookieAccessProbePaths() -> [String] {
         [

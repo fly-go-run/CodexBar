@@ -265,7 +265,7 @@ extension UsageMenuCardView.Model {
             return "\(windowLabel): \(monthCost)"
         }()
         // Plan-metered spend over the same window (what the provider actually deducts);
-        // only providers that report it (currently Cursor) populate `meteredCostUSD`.
+        // only providers that report it populate `meteredCostUSD`.
         let meteredLine: String? = (tokensOnly ? nil : snapshot.meteredCostUSD).map {
             let amount = UsageFormatter.convertedCostString(
                 $0,
@@ -493,7 +493,7 @@ extension UsageMenuCardView.Model {
         let percentUsed = Self.clamped((cost.used / cost.limit) * 100)
         let periodLabel = Self.localizedPeriodLabel(cost.period ?? "This month")
 
-        // When the headline budget is a shared pool (e.g. Cursor team on-demand), show the
+        // When the headline budget is a shared pool (e.g. a team on-demand pool), show the
         // account's own contribution underneath it.
         let personalSpendLine: String? = cost.personalUsed.flatMap { personal in
             personal > 0

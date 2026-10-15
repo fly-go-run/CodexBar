@@ -1175,8 +1175,7 @@ extension UsageStore {
         #endif
     }
 
-    /// Version probes can spawn subprocesses (Antigravity's `ps` scan trips a TCC
-    /// prompt, CLI providers exec their binaries), so disabled providers must not
+    /// Version probes can spawn subprocesses (CLI providers exec their binaries), so disabled providers must not
     /// be probed (#2267). Settings changes re-run this when the enabled set changes.
     static func versionDetectionImplementations(
         enabled: Set<UsageProvider>) -> [any ProviderImplementation]

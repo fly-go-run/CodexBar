@@ -982,7 +982,7 @@ struct SpendDashboardModel: Equatable, Sendable {
             }
             guard coverage.contains(day) else { continue }
             guard let cost = validCost(entry.costUSD) else {
-                // Provider-specific by design: Codex and Cursor can omit prices on some model/day rows.
+                // Provider-specific by design: Codex can omit prices on some model/day rows.
                 let isKnownUnpriced = entry.hasOnlyIncompleteRequests ||
                     Self.hasExplicitlyUnpriceableLedgerCost(input.provider, entry) ||
                     (input.snapshot.costProvenance == .listPriceEstimate

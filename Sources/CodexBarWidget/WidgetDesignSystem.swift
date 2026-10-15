@@ -102,7 +102,7 @@ enum WidgetLayout {
 /// a fixed-width monogram that can never wrap or truncate.
 enum ProviderMonogram {
     /// Provider-specific by design: the widget-selectable providers get curated marks because a
-    /// mechanical abbreviation collides (Codex/Copilot/Cursor/Claude all start with "C").
+    /// mechanical abbreviation collides (Codex and Claude both start with "C").
     private static let curated: [UsageProvider: String] = [
         .claude: "CL",
         .codex: "CX",
@@ -133,8 +133,8 @@ enum WidgetContrast {
     /// it a black label wins. Solving 1.05/(L+0.05) = (L+0.05)/0.05 gives L ≈ 0.1791.
     private static let crossoverLuminance: Double = 0.1791
 
-    /// Highest-contrast label colour for text drawn on `color`. Brand palettes span very light
-    /// (Gemini lilac) to mid (Claude terracotta); picking per colour keeps every mark legible.
+    /// Highest-contrast label colour for text drawn on `color`. Brand palettes span light
+    /// to mid (Claude terracotta); picking per colour keeps every mark legible.
     static func label(on color: ProviderColor) -> Color {
         self.relativeLuminance(of: color) > self.crossoverLuminance ? .black : .white
     }

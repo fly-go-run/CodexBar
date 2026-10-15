@@ -535,7 +535,7 @@ extension StatusItemController {
             return false
         }
 
-        // OpenRouter always gets a meter here — the brand-logo fallback was removed on purpose.
+        // Providers always get a meter here — the brand-logo fallback was removed on purpose.
         let resolved = self.resolvedMenuBarIconPercents(
             provider: provider,
             snapshot: snapshot,
@@ -1100,9 +1100,8 @@ extension StatusItemController {
     }
 
     /// The window the weekly pace is computed on in pace/both modes. Codex paces on its projected weekly
-    /// lane; the combined Session + Weekly metric paces on the weekly lane too (matching Codex); Abacus
-    /// has no secondary window so it paces on the primary monthly credits; everything else paces on the
-    /// selected percent window.
+    /// lane; the combined Session + Weekly metric paces on the weekly lane too (matching Codex); everything else
+    /// paces on the selected percent window.
     private func menuBarPaceWindow(
         for provider: UsageProvider,
         snapshot: UsageSnapshot?,

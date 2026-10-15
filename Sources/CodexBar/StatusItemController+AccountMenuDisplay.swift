@@ -41,7 +41,7 @@ extension StatusItemController {
 
     func tokenAccountMenuDisplay(for provider: UsageProvider) -> TokenAccountMenuDisplay? {
         guard TokenAccountSupportCatalog.support(for: provider) != nil else { return nil }
-        // Retained Cursor manual accounts are dormant while Automatic browser discovery owns the live snapshot.
+        // Retained manual accounts are dormant while Automatic discovery owns the live snapshot.
         guard self.settings.effectiveSelectedTokenAccount(for: provider) != nil else { return nil }
         // Eligible claude-swap rows are the selected Claude account source, so do not mix them
         // with token-account cards or the segmented token-account switcher.

@@ -5,9 +5,9 @@ import Foundation
 /// and next controls move to.
 ///
 /// The switcher used to lay every provider out as a chip in a single row. That never fit: names
-/// wrapped mid-word on large tiles, truncated to indistinguishable stems on medium ("Co…" is both
-/// Codex and Copilot), and collapsed to a single letter on small, where four of five common
-/// providers are a "C". Widgets cannot host a menu or picker, so the control that replaces it pages
+/// wrapped mid-word on large tiles, truncated to indistinguishable stems on medium, and collapsed to a
+/// single letter on small, where both providers are a "C". Widgets cannot host a menu or picker, so the control that
+/// replaces it pages
 /// through providers one at a time — which costs one line instead of a whole row and lets the
 /// selected provider always be spelled out in full.
 struct ProviderPager: Equatable {

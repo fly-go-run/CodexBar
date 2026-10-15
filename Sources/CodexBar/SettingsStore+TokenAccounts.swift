@@ -19,8 +19,8 @@ extension SettingsStore {
     }
 
     /// Returns the saved account that currently owns provider fetches and account-scoped state.
-    /// Cursor keeps saved manual credentials when browser login switches back to Automatic, but those credentials
-    /// stay passive until the user explicitly selects one again.
+    /// Saved manual credentials stay passive while Automatic discovery owns the account, until the user explicitly
+    /// selects one again.
     func effectiveSelectedTokenAccount(for provider: UsageProvider) -> ProviderTokenAccount? {
         let support = TokenAccountSupportCatalog.support(for: provider)
         if support?.passiveSourceModes.contains(self.providerConfig(for: provider)?.source ?? .auto) == true {

@@ -12,8 +12,7 @@ extension UsageStore {
         codexOwnerKey: CodexSessionQuotaOwnerKey? = nil,
         now: Date = Date()) -> Bool
     {
-        // Session quota notifications are tied to the primary session window. Copilot free plans can
-        // expose only chat quota, so allow Copilot to fall back to secondary for transition tracking.
+        // Session quota notifications are tied to the primary session window.
         // Hooks have their own enable switch, so a configured quota_reached hook must fire on a
         // real depletion even when session quota notifications are off. Run transition detection
         // whenever notifications OR a matching hook rule is active; gate the OS notification post

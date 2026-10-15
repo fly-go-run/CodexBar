@@ -157,11 +157,6 @@ public struct ProviderIconDecorations: OptionSet, Sendable {
 
     public static let face = Self(rawValue: 1 << 0)
     public static let notches = Self(rawValue: 1 << 1)
-    public static let gemini = Self(rawValue: 1 << 2)
-    public static let antigravity = Self(rawValue: 1 << 3)
-    public static let factory = Self(rawValue: 1 << 4)
-    public static let warp = Self(rawValue: 1 << 5)
-    public static let grok = Self(rawValue: 1 << 6)
 }
 
 public struct ProviderIconWindowContext: Sendable {
@@ -463,7 +458,6 @@ public struct ProviderUsagePresentation: Sendable {
     private let widgetRowLimitResolver: WidgetRowLimitResolver
     private let widgetRowResolver: WidgetRowResolver?
     public let iconDecorations: ProviderIconDecorations
-    public let treatsExhaustedSecondaryIconWindowAsMissing: Bool
     public let reservesMissingSecondaryIconLane: Bool
     public let primarySemanticWindow: ProviderSemanticWindow
     public let secondarySemanticWindow: ProviderSemanticWindow
@@ -494,7 +488,6 @@ public struct ProviderUsagePresentation: Sendable {
             ProviderUsageWindowPair(primary: context.snapshot.primary, secondary: context.snapshot.secondary)
         },
         iconDecorations: ProviderIconDecorations = [],
-        treatsExhaustedSecondaryIconWindowAsMissing: Bool = false,
         reservesMissingSecondaryIconLane: Bool = false,
         semanticWindowResolver: @escaping SemanticWindowResolver = Self.standardSemanticWindows,
         primarySemanticWindow: ProviderSemanticWindow = .session,
@@ -526,7 +519,6 @@ public struct ProviderUsagePresentation: Sendable {
         self.creditResolver = creditResolver
         self.iconWindowResolver = iconWindowResolver
         self.iconDecorations = iconDecorations
-        self.treatsExhaustedSecondaryIconWindowAsMissing = treatsExhaustedSecondaryIconWindowAsMissing
         self.reservesMissingSecondaryIconLane = reservesMissingSecondaryIconLane
         self.semanticWindowResolver = semanticWindowResolver
         self.primarySemanticWindow = primarySemanticWindow
