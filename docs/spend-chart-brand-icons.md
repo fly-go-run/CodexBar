@@ -10,7 +10,6 @@ Chart legends and amount inspectors request `ProviderBrandIcon.Style.brand`. Bra
 their original colors; a separate account color swatch matches the chart. Provider headings and
 subscription summaries also use brand artwork, while account/source and model child rows retain
 adaptive monochrome artwork. Menu bar and other settings callers keep the default monochrome style.
-OpenCodex sources retain their branch symbol.
 
 All production Usage & Spend provider icons share a 20-point square slot, including chart legends,
 amount inspectors, provider headings, account/source rows, model rows and subscription summaries.

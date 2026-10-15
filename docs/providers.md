@@ -53,10 +53,7 @@ Token sums that exceed the supported integer range remain unavailable for that a
 restore a partial count. Other token classes, pricing, and explicit totals retain their existing meaning. Materialized
 missing values continue to follow the existing partial-data rules; no overflow metadata is added to stored reports.
 
-OpenCodex `~/.opencodex/usage.jsonl` is an opt-in, read-only spend source (off by default). It is not a quota
-Provider. When both OpenCodex logs and native Codex sessions are present they stay on separate rows; merging would
-double-count the same traffic. An optional toggle can hide native Codex while OpenCodex data is present. Export JSON
-emits the currently aggregated model (provenance, mix, coverage). Invalid numeric fields are omitted while valid
+Export JSON emits the currently aggregated model (provenance, mix, coverage). Invalid numeric fields are omitted while valid
 neighboring fields remain available. Existing cached rows are reparsed once after the numeric parser update;
 subsequent unchanged reads continue to reuse the corrected cache.
 The view stays local and does not upload usage history. Refreshes retain the last successful model if a replacement

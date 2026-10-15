@@ -562,23 +562,6 @@ extension SettingsStore {
         CostUsageBucketTimeZone.calendar(identifier: self.costUsageBucketTimeZoneIdentifier)
     }
 
-    var openCodexUsageLogsEnabled: Bool {
-        get { self.defaultsState.openCodexUsageLogsEnabled }
-        set {
-            self.setCostDefault(\.openCodexUsageLogsEnabled, newValue, key: "openCodexUsageLogsEnabled")
-        }
-    }
-
-    var hideNativeCodexCostWhenOpenCodexPresent: Bool {
-        get { self.defaultsState.hideNativeCodexCostWhenOpenCodexPresent }
-        set {
-            self.setCostDefault(
-                \.hideNativeCodexCostWhenOpenCodexPresent,
-                newValue,
-                key: "hideNativeCodexCostWhenOpenCodexPresent")
-        }
-    }
-
     var spendDashboardHiddenSourceIDs: [String] {
         get { self.defaultsState.spendDashboardHiddenSourceIDs }
         set {

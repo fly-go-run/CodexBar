@@ -1266,7 +1266,7 @@ extension CostUsageScanner {
                     dayKey: row.day,
                     since: range.sinceKey,
                     until: range.untilKey)
-                && OpenCodexRouteDispatcher.countsTowardCodexSubscription(modelName: row.model)
+                && CodexSubscriptionModel.countsTowardSubscription(modelName: row.model)
             {
                 pricing.rowsByDayModel[row.day, default: [:]][row.model, default: []].append(row)
             }

@@ -32,7 +32,7 @@ Timing follows completion day in the selected cost calendar. Selecting a chart
 day filters timing; clearing it restores the range. A turn may complete after
 midnight while all its billed requests remain on the preceding day. Billing
 keeps the original request dates, pricing, and existing range totals. Other
-providers and OpenCodex do not acquire timing from native Codex samples.
+providers do not acquire timing from native Codex samples.
 
 Parser revision 12 uses the existing bounded reparse and saved-pricing migration.
 Compatible predecessor stores retain their rows and checkpoints while timing is

@@ -338,7 +338,6 @@ token record. CodexBar cannot convert a quota percentage into dollars or recover
 | Source | Local token/cost coverage |
 | --- | --- |
 | Native Codex | Supported session and archived-session records in the selected home. |
-| OpenCodex | Opt-in `~/.opencodex/usage.jsonl` (or `$OPENCODEX_HOME/usage.jsonl`), with recorded provider provenance. This is distinct from OpenCode's session database. |
 | OpenCode using OpenAI/Codex | No native session import; reusing its OAuth credentials only enables remote quota. The OpenCode Go SQLite reader selects `opencode-go` records. |
 | Amp | Account allowances and credits are supported, but Amp session-token history is not imported into Codex costs. |
 | Dots / cloud tasks | Included only when supported usage records are available in a scanned local source. There is no dots/cloud usage-history importer. |
@@ -630,8 +629,7 @@ this is display masking and does not remove metadata from local history or sanit
 ### Usage & Spend account rows
 
 Projects, Chats, and Sessions stay available for configured, visible native Codex accounts, including while a scan
-has no rows. When OpenCodex replaces combined totals, these tabs still show local Codex details without adding them
-to the combined totals. Bounded refreshes retain the last complete detail snapshot in memory for the same account,
+has no rows. Bounded refreshes retain the last complete detail snapshot in memory for the same account,
 cache identity, history window, and bucket time zone; a completed empty scan clears the old rows. This retention
 does not add another persisted history format.
 

@@ -92,7 +92,7 @@ extension CostUsageScanner {
         pricing: CodexReportDayPricingContext) -> CostUsageDailyReport.Entry?
     {
         let modelNames = models.keys
-            .filter { OpenCodexRouteDispatcher.countsTowardCodexSubscription(modelName: $0) }
+            .filter { CodexSubscriptionModel.countsTowardSubscription(modelName: $0) }
             .sorted()
         if modelNames.isEmpty {
             return Self.unmeteredForkReportEntry(day: day, unmetered: unmetered)
@@ -108,7 +108,7 @@ extension CostUsageScanner {
         var dayUnpricedRequests = 0
 
         for model in modelNames {
-            guard OpenCodexRouteDispatcher.countsTowardCodexSubscription(modelName: model) else { continue }
+            guard CodexSubscriptionModel.countsTowardSubscription(modelName: model) else { continue }
             let packed = models[model] ?? [0, 0, 0]
             let input = packed[safe: 0] ?? 0
             let cached = packed[safe: 1] ?? 0

@@ -21,7 +21,6 @@ but must not share the Codex application's product artwork.
 If no curated asset exists, or it cannot be decoded, use the existing adaptive template. Existing
 provider SVGs often contain white silhouettes and must not simply be switched to original rendering.
 This fallback does not assert that the provider has an officially monochrome-only identity.
-The OpenCodex source retains its existing branch symbol.
 
 All production Usage & Spend icons share a 20-point slot, including account/source and model child
 rows. Transparent padding is compensated for in both brand and monochrome artwork; see

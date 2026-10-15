@@ -544,9 +544,6 @@ extension SettingsStore {
                 forKey: "codexLocalSessionCostLedgerEnabled") as? Bool ?? false,
             costReportingPeriod: costReportingPeriod,
             costUsageBucketTimeZoneIdentifier: costUsageBucketTimeZoneIdentifier,
-            openCodexUsageLogsEnabled: userDefaults.object(forKey: "openCodexUsageLogsEnabled") as? Bool ?? false,
-            hideNativeCodexCostWhenOpenCodexPresent: userDefaults.object(
-                forKey: "hideNativeCodexCostWhenOpenCodexPresent") as? Bool ?? false,
             spendDashboardHiddenSourceIDs: userDefaults.stringArray(forKey: "spendDashboardHiddenSourceIDs") ?? [],
             costComparisonPeriodsEnabled: userDefaults.object(
                 forKey: "costComparisonPeriodsEnabled") as? Bool ?? false,

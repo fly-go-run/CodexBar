@@ -22,7 +22,6 @@ struct SpendSessionPerformanceTests {
         for (provider, source) in [
             (UsageProvider.codex, SpendDashboardModel.SourceKind.native),
             (.claude, .native),
-            (.codex, .openCodex),
         ] {
             let group = try Self.group(
                 now: now,
@@ -92,7 +91,6 @@ struct SpendSessionPerformanceTests {
         for (provider, source) in [
             (UsageProvider.codex, SpendDashboardModel.SourceKind.native),
             (.claude, .native),
-            (.codex, .openCodex),
         ] {
             let group = try Self.group(
                 now: now,

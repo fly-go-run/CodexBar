@@ -102,15 +102,6 @@ extension CodexBarCLI {
             }
         }
 
-        if format == .json,
-           let openCodex = await Self.loadOpenCodexCostPayload(
-               period: period,
-               calendar: bucketCalendar,
-               now: now)
-        {
-            payload.append(openCodex)
-        }
-
         switch format {
         case .text:
             if !sections.isEmpty {
@@ -627,34 +618,6 @@ extension CodexBarCLI {
             historyLabel: snapshot?.periodLabel)
     }
 
-    static func makeOpenCodexCostPayload(
-        snapshot: CostUsageTokenSnapshot,
-        calendar: Calendar = .current) -> CostPayload
-    {
-        let summary = snapshot.summary(forLastDays: snapshot.historyDays, calendar: calendar)
-        let last30Days = self.last30DaysTotals(from: snapshot, calendar: calendar)
-        return CostPayload(
-            provider: OpenCodexUsageLog.sourceID,
-            source: "opencodex",
-            updatedAt: snapshot.updatedAt,
-            currencyCode: snapshot.currencyCode,
-            sessionTokens: snapshot.sessionTokens,
-            sessionCostUSD: snapshot.sessionCostUSD,
-            historyDays: snapshot.historyDays,
-            historyCoverageIsEstablished: snapshot.historyCoverageIsEstablished,
-            last30DaysTokens: last30Days.tokens,
-            last30DaysCostUSD: last30Days.costUSD,
-            meteredCostUSD: nil,
-            daily: snapshot.daily.map(self.costDailyPayload(from:)),
-            projects: [],
-            totals: self.costTotals(snapshot, calendar: calendar),
-            provenance: CostProvenance.listPriceEstimate.rawValue,
-            coverage: summary.coverage,
-            error: nil,
-            reportingPeriod: (snapshot.reportingPeriod ?? .rolling(days: snapshot.historyDays)).rawValue,
-            historyLabel: snapshot.periodLabel)
-    }
-
     private static func last30DaysTotals(
         from snapshot: CostUsageTokenSnapshot,
         calendar: Calendar) -> (tokens: Int?, costUSD: Double?)
@@ -669,26 +632,6 @@ extension CodexBarCLI {
             return (snapshot.last30DaysTokens == nil ? nil : 0, snapshot.last30DaysCostUSD == nil ? nil : 0)
         }
         return (summary.totalTokens, summary.totalCostUSD)
-    }
-
-    private static func loadOpenCodexCostPayload(
-        period: CostReportingPeriod,
-        calendar: Calendar,
-        now: Date = Date()) async -> CostPayload?
-    {
-        guard boolFromAppDefaults("openCodexUsageLogsEnabled") == true else { return nil }
-        let environment = ProcessInfo.processInfo.environment
-        guard let logURL = OpenCodexUsageLog.usageLogURL(environment: environment) else { return nil }
-        let store = OpenCodexUsageStore(cacheRoot: OpenCodexUsageLog.cacheRoot())
-        guard let entries = try? store.loadEntries(logURL: logURL), !entries.isEmpty else { return nil }
-        await OpenCodexUsageStore.refreshPricingIfNeeded(entries: entries, now: now)
-        guard let snapshot = try? store.loadSnapshot(
-            logURL: logURL,
-            now: now,
-            historyDays: period.days(now: now, calendar: calendar),
-            calendar: calendar)
-        else { return nil }
-        return self.makeOpenCodexCostPayload(snapshot: snapshot.reporting(period), calendar: calendar)
     }
 
     private static func costDailyPayload(from entry: CostUsageDailyReport.Entry) -> CostDailyEntryPayload {

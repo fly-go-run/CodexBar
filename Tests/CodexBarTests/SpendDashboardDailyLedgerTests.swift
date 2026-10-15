@@ -21,39 +21,6 @@ struct SpendDashboardDailyLedgerTests {
         #expect(expanded == Array(summaries.reversed()))
     }
 
-    @Test(arguments: [7, 60])
-    func `OpenCodex aggregates and ledger counts cover the full declared history`(days: Int) throws {
-        let entries = [0, 45].map { age in
-            OpenCodexUsageEntry(
-                requestID: "synthetic-\(age)",
-                timestamp: Self.now.addingTimeInterval(-Double(age) * 86400),
-                provider: "openai",
-                model: "gpt-5.2",
-                usageStatus: .reported,
-                usage: OpenCodexTokenUsage(inputTokens: 100, outputTokens: 50, totalTokens: 150),
-                totalTokens: 150)
-        }
-        let snapshot = OpenCodexUsageAggregator.snapshot(
-            entries: entries,
-            now: Self.now,
-            historyDays: days,
-            calendar: Self.calendar,
-            modelsDevCatalog: ModelsDevCatalog(providers: [:]))
-        let expectedRequests = days == 60 ? 2 : 1
-        #expect(snapshot.last30DaysRequests == expectedRequests)
-        #expect(snapshot.last30DaysTokens == expectedRequests * 150)
-        #expect(snapshot.last30DaysCostUSD == snapshot.daily.compactMap(\.costUSD).reduce(0, +))
-        let model = SpendDashboardModel.build(
-            inputs: [.init(provider: .codex, displayName: "Codex", snapshot: snapshot, sourceKind: .openCodex)],
-            requestedDays: days,
-            now: Self.now,
-            calendar: Self.calendar)
-        let group = try #require(model.groups.first)
-        #expect(group.dailySummaries.allSatisfy { $0.requestCount != nil })
-        #expect(group.dailySummaries.compactMap(\.requestCount).reduce(0, +) == expectedRequests)
-        #expect(group.dailySummaries.allSatisfy { $0.totalCost != nil })
-    }
-
     @Test
     func `daily ledger date text follows the selected app locale`() {
         let day = Self.date(day: 16)

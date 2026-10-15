@@ -906,54 +906,16 @@ extension SpendDashboardModelTests {
     }
 
     @Test
-    func `openCodex stays on a separate ledger from native Codex`() {
-        let now = Date(timeIntervalSince1970: 1_784_179_200)
-        let native = SpendDashboardModel.ProviderInput(
-            id: "codex:main",
-            provider: .codex,
-            displayName: "Codex",
-            snapshot: Self.snapshot(currency: "USD", entries: [Self.entry(day: "2026-07-16", cost: 4)]),
-            sourceKind: .native)
-        let openCodex = SpendDashboardModel.ProviderInput(
-            id: SpendDashboardModel.openCodexSourceID,
-            provider: .codex,
-            displayName: "OpenCodex",
-            snapshot: Self.snapshot(currency: "USD", entries: [Self.entry(day: "2026-07-16", cost: 9)]),
-            sourceKind: .openCodex)
-        let sideBySide = SpendDashboardModel.build(
-            inputs: [native, openCodex],
-            requestedDays: 7,
-            now: now)
-        #expect(Set(sideBySide.groups[0].providers.map(\.id)) == ["opencodex", "codex:main"])
-        #expect(sideBySide.groups[0].providers.count == 2)
-
-        let hiddenNative = SpendDashboardModel.build(
-            inputs: [native, openCodex],
-            requestedDays: 7,
-            now: now,
-            hideNativeCodexWhenOpenCodexPresent: true)
-        #expect(hiddenNative.groups[0].providers.map(\.id) == [SpendDashboardModel.openCodexSourceID])
-
-        let filtered = SpendDashboardModel.build(
-            inputs: [native, openCodex],
-            requestedDays: 7,
-            now: now,
-            hiddenSourceIDs: [SpendDashboardModel.openCodexSourceID])
-        #expect(filtered.groups[0].providers.map(\.id) == ["codex:main"])
-        #expect(Set(filtered.availableSources.map(\.id)) == ["codex:main", SpendDashboardModel.openCodexSourceID])
-    }
-
-    @Test
     func `hourly points come from request buckets instead of session last activity`() {
         let now = Date(timeIntervalSince1970: 1_784_179_200)
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
         let firstHour = calendar.dateInterval(of: .hour, for: now)?.start ?? now
         let secondHour = calendar.date(byAdding: .hour, value: 1, to: firstHour) ?? firstHour
-        let openCodex = SpendDashboardModel.ProviderInput(
-            id: SpendDashboardModel.openCodexSourceID,
+        let hourlyInput = SpendDashboardModel.ProviderInput(
+            id: "codex-hourly",
             provider: .codex,
-            displayName: "OpenCodex",
+            displayName: "Codex",
             snapshot: CostUsageTokenSnapshot(
                 sessionTokens: 17,
                 sessionCostUSD: 2,
@@ -978,8 +940,7 @@ extension SpendDashboardModelTests {
                     CostUsageHourlyEntry(hour: firstHour, totalTokens: 12, costUSD: 1.2),
                     CostUsageHourlyEntry(hour: secondHour, totalTokens: 5, costUSD: 0.8),
                 ],
-                updatedAt: now),
-            sourceKind: .openCodex)
+                updatedAt: now))
         let native = SpendDashboardModel.ProviderInput(
             id: "codex",
             provider: .codex,
@@ -1006,16 +967,16 @@ extension SpendDashboardModelTests {
                 ],
                 updatedAt: now))
         let combined = SpendDashboardModel.build(
-            inputs: [openCodex, native],
+            inputs: [hourlyInput, native],
             requestedDays: 7,
             now: now,
             calendar: calendar)
         #expect(combined.groups[0].hourlyPoints.map(\.hour) == [firstHour, secondHour])
         #expect(combined.groups[0].hourlyPoints.map(\.cost) == [1.2, 0.8])
-        #expect(Set(combined.groups[0].hourlyPoints.map(\.sourceID)) == [SpendDashboardModel.openCodexSourceID])
+        #expect(Set(combined.groups[0].hourlyPoints.map(\.sourceID)) == ["codex-hourly"])
 
         let selected = SpendDashboardModel.build(
-            inputs: [openCodex],
+            inputs: [hourlyInput],
             requestedDays: 7,
             now: now,
             calendar: calendar,

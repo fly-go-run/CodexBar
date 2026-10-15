@@ -63,9 +63,8 @@ struct SpendToolActivityTests {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = try #require(TimeZone(identifier: "America/Los_Angeles"))
         for (provider, kind) in [
-            (UsageProvider.codex, SpendDashboardModel.SourceKind.native), (.codex, .openCodex), (
-                .claude,
-                .native),
+            (UsageProvider.codex, SpendDashboardModel.SourceKind.native),
+            (.claude, .native),
         ] {
             let model = SpendDashboardModel.build(
                 inputs: [.init(

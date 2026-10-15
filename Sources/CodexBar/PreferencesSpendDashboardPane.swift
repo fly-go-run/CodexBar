@@ -495,16 +495,6 @@ struct SpendDashboardPane: View {
                 .toggleStyle(.switch)
                 .controlSize(.small)
             if self.settings.costUsageEnabled {
-                Toggle(L("Include OpenCodex usage logs"), isOn: self.$settings.openCodexUsageLogsEnabled)
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
-                if self.settings.openCodexUsageLogsEnabled {
-                    Toggle(
-                        L("Hide native Codex when OpenCodex is present"),
-                        isOn: self.$settings.hideNativeCodexCostWhenOpenCodexPresent)
-                        .toggleStyle(.switch)
-                        .controlSize(.small)
-                }
                 if !self.controller.model.groups.isEmpty {
                     SpendDashboardSourceFilter(settings: self.settings, model: self.controller.model)
                 }

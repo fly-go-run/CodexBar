@@ -602,7 +602,7 @@ public struct CostUsageFetcher: Sendable {
                 guard breakdown.costUSD == nil else { continue }
                 let pricingTargets: [(providerID: String, modelID: String)]
                 if provider == .codex {
-                    guard OpenCodexRouteDispatcher.countsTowardCodexSubscription(modelName: breakdown.modelName)
+                    guard CodexSubscriptionModel.countsTowardSubscription(modelName: breakdown.modelName)
                     else { continue }
                     guard !CostUsagePricing.isCodexUnattributedModel(breakdown.modelName) else { continue }
                     pricingTargets = CostUsagePricing.codexModelsDevPricingTargets(for: breakdown.modelName)
@@ -715,7 +715,7 @@ public struct CostUsageFetcher: Sendable {
                 .map { day -> CostUsageDailyReport.Entry in
                     var total = 0
                     for (model, packed) in cache.days[day, default: [:]] {
-                        guard OpenCodexRouteDispatcher.countsTowardCodexSubscription(modelName: model) else {
+                        guard CodexSubscriptionModel.countsTowardSubscription(modelName: model) else {
                             continue
                         }
                         for value in [packed[safe: 0] ?? 0, packed[safe: 2] ?? 0] {

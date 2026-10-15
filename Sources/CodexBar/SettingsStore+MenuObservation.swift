@@ -52,8 +52,6 @@ extension SettingsStore {
         _ = self.codexLocalSessionCostLedgerEnabled
         _ = self.costUsageHistoryDays
         _ = self.costUsageBucketTimeZoneIdentifier
-        _ = self.openCodexUsageLogsEnabled
-        _ = self.hideNativeCodexCostWhenOpenCodexPresent
         _ = self.spendDashboardHiddenSourceIDs
         _ = self.costComparisonPeriodsEnabled
         _ = self.costSummaryDisplayStyle

@@ -122,7 +122,7 @@ public struct CodexRequestLedger: Codable, Sendable {
                 range: range,
                 inheritedTotalsResolver: resolver.inheritedTotals(for:atOrBefore:),
                 ownedRequestObserver: { observation, model in
-                    guard OpenCodexRouteDispatcher.countsTowardCodexSubscription(modelName: model) else { return }
+                    guard CodexSubscriptionModel.countsTowardSubscription(modelName: model) else { return }
                     guard let timestamp = CostUsageScanner.dateFromTimestamp(observation.timestamp) else {
                         ledger.partial = true
                         ledger.excludedCount += 1
@@ -163,7 +163,7 @@ public struct CodexRequestLedger: Codable, Sendable {
             ledger.excludedCount += parsed.rows.filter {
                 $0.responseID == nil && $0.day >= range.sinceKey && $0.day <= range.untilKey
                     && ($0.timestampUnixMs.map { (startUnixMs...endUnixMs).contains($0) } ?? true)
-                    && OpenCodexRouteDispatcher.countsTowardCodexSubscription(modelName: $0.model)
+                    && CodexSubscriptionModel.countsTowardSubscription(modelName: $0.model)
             }.count
             ledger.partial = ledger.partial || parsed.jsonlResumeState != nil
                 || parsed.bufferedUnresolvedForkLines != nil || parsed.bufferedSubagentLines != nil

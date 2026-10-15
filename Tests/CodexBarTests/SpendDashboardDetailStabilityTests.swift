@@ -28,53 +28,6 @@ struct SpendDashboardDetailStabilityTests {
     }
 
     @Test
-    func `OpenCodex replaces totals while native projects and performance survive`() throws {
-        let native = Self.input(cost: 8, details: true)
-        let replacement = SpendDashboardModel.ProviderInput(
-            id: SpendDashboardModel.openCodexSourceID,
-            provider: .codex,
-            displayName: "OpenCodex",
-            snapshot: Self.input(cost: 13).snapshot,
-            sourceKind: .openCodex)
-        let expected = try #require(SpendDashboardModel.build(inputs: [replacement], now: Self.now).groups.first)
-        let actual = try #require(SpendDashboardModel.build(
-            inputs: [native, replacement],
-            now: Self.now,
-            hideNativeCodexWhenOpenCodexPresent: true).groups.first)
-        #expect(actual.totalCost == expected.totalCost)
-        #expect(actual.totalTokens == expected.totalTokens)
-        #expect(actual.providers == expected.providers)
-        #expect(actual.dailyPoints == expected.dailyPoints)
-        #expect(actual.models == expected.models)
-        #expect(actual.projects.count == 2)
-        #expect(actual.projects.filter(\.isProjectless).count == 1)
-        #expect(actual.sessions.first?.turnPerformance?.sampleCount == 1)
-        var retained = Self.input(cost: 9, detailsComplete: false)
-        retained.retainedDetailSnapshot = native.snapshot
-        let retainedGroup = try #require(SpendDashboardModel.build(
-            inputs: [retained, replacement],
-            now: Self.now,
-            hideNativeCodexWhenOpenCodexPresent: true).groups.first)
-        #expect(retainedGroup.retainedDetailUpdatedAt == Self.now)
-        #expect(retainedGroup.projects.count == 2)
-        #expect(retainedGroup.providers == expected.providers)
-        let hidden = SpendDashboardModel.build(
-            inputs: [native, replacement],
-            now: Self.now,
-            hiddenSourceIDs: [native.id],
-            hideNativeCodexWhenOpenCodexPresent: true)
-        #expect(hidden.groups.first?.projects.isEmpty == true)
-        let selected = SpendDashboardModel.build(
-            inputs: [native, replacement],
-            now: Self.now,
-            hideNativeCodexWhenOpenCodexPresent: true,
-            selectedDay: Self.now.addingTimeInterval(-7 * 86400))
-        #expect(selected.groups.first?.projects.isEmpty == true)
-        #expect(selected.groups.first?.sessions.count == 1)
-        #expect(selected.groups.first?.sessions.first?.turnPerformance == nil)
-    }
-
-    @Test
     func `unestablished refresh retains complete totals and details`() async throws {
         let controller = try await Self.refreshed(
             old: Self.input(cost: 8, details: true),
@@ -224,25 +177,6 @@ struct SpendDashboardDetailStabilityTests {
             now: Self.now,
             selectedDay: Self.now.addingTimeInterval(-7 * 86400))
         #expect(model.groups.first?.projects.isEmpty == true)
-    }
-
-    @Test
-    func `replacement totals ignore older native detail history`() {
-        let native = Self.input(cost: 8, details: true, day: "2026-07-01")
-        let replacement = SpendDashboardModel.ProviderInput(
-            id: SpendDashboardModel.openCodexSourceID,
-            provider: .codex,
-            displayName: "OpenCodex",
-            snapshot: Self.input(cost: 13).snapshot,
-            sourceKind: .openCodex)
-        let expected = SpendDashboardModel.build(inputs: [replacement], reportingPeriod: .allTime, now: Self.now)
-        let actual = SpendDashboardModel.build(
-            inputs: [native, replacement],
-            reportingPeriod: .allTime,
-            now: Self.now,
-            hideNativeCodexWhenOpenCodexPresent: true)
-        #expect(actual.requestedDays == expected.requestedDays)
-        #expect(actual.groups.first?.chartDomain == expected.groups.first?.chartDomain)
     }
 
     private static func refreshed(

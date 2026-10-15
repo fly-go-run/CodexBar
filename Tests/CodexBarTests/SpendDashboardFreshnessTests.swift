@@ -334,7 +334,6 @@ final class SpendDashboardFreshnessFixture {
         self.settings.costUsageEnabled = true
         self.settings.costUsageHistoryDays = 30
         self.settings.costUsageBucketTimeZoneIdentifier = "UTC"
-        self.settings.openCodexUsageLogsEnabled = false
         let environment = ["HOME": self.env.root.path, "CODEX_HOME": self.env.codexHomeRoot.path]
         self.settings._test_codexReconciliationEnvironment = environment
         self.store = UsageStore(

@@ -30,12 +30,6 @@ which ignore the sidecar and use its embedded fetch time. Successful saves inval
 
 Refreshes preserve cached pricing for removed models using a provider-local stable-identity index. The index and model-ID normalization memo exist only during the merge; lookups likewise build their normalized-ID index only for the current provider and call. These indexes do not change cache lifetimes, provider boundaries, alias precedence, or dated snapshot pricing.
 
-Fresh OpenCodex dashboard loads and the opt-in CLI OpenCodex payload also refresh the catalog, even when
-no native Codex or Claude scan runs. Missing exact provider/model targets may trigger an earlier refresh,
-subject to the shared 15-minute retry cooldown. Cached dashboard publication and synchronous snapshot
-reads remain network-free. OpenCodex stores raw usage and recomputes estimates from the current catalog;
-updating a price does not require rereading unchanged usage logs.
-
 ## Lookup rules
 
 Pricing is scoped by provider id and model id. This prevents two providers with the same model id or display name from sharing pricing accidentally.
@@ -56,31 +50,6 @@ Local cost scanners preserve that scope when selecting a catalog:
 Dated Codex usage retains the prior bundled GPT-5.6 Sol rates before **2026-08-21 UTC**, the repricing date in the
 [OpenAI changelog](https://developers.openai.com/api/docs/changelog). Current and undated usage use the published
 current rates. Terra and Luna retain their separate July 30 cutoff. Custom-pricing overlays retain precedence.
-
-### Explicit provider identity in OpenCodex
-
-OpenCodex estimates use the recorded provider and model together. An unqualified model on `opencode-go`
-uses that provider's rates, not OpenAI's bundled prices. `provider=openrouter` with
-`model=openai/gpt-5.4` looks up the exact `openai/gpt-5.4` model inside the `openrouter` catalog.
-Only a redundant outer `openrouter/` prefix is removed. Router lookups do not fall back to bare model IDs,
-another provider, or OpenAI's bundled/historical tables.
-
-The shared target resolver preserves the existing Kimi/OpenCode provider aliases. Legacy OpenCodex rows
-with an `openai` transport label and an explicit supported subscription-route prefix retain that route.
-Other providers cannot borrow subscription attribution from a model namespace: an OpenRouter-hosted
-OpenAI model does not consume a Codex subscription.
-
-The CLI's separate OpenCodex payload can price any exact recorded provider/model present in the catalog.
-This does not enable new ingestion sources or add API providers to the dashboard's subscription fan-out.
-Existing Pi provider support and the opt-in OpenCodex setting are unchanged. Dollar amounts remain
-list-price estimates; recorded token usage is not a billing receipt. Rows lacking input/output counts,
-an exact price, or a consumed cache class's rate stay unpriced. An unpriced current day is not shown as $0.
-
-OpenCodex retains the recorded input, output, cache-read, and cache-creation counters. Non-OpenAI catalog
-prices and caller-supplied custom prices charge these independent classes without clamping cache usage
-to the input count. Historical OpenAI catalog pricing and all application-overlay calculations retain their
-inclusive input convention, including legacy routed rows. No convention is inferred from aggregate total tokens;
-missing cache prices remain unknown.
 
 ## Units
 
@@ -121,9 +90,7 @@ Values are USD per million tokens. For native Codex session scans, resolution or
 
 [Free Codex Auto-review requests](codex.md#cost-usage-local-log-scan) use **overlay > Auto-review waiver ($0) > models.dev > builtin**. A `codex-auto-review` or `openai/codex-auto-review` entry prices them at that rate. Without one, they cost $0, and models.dev and bundled rates never apply.
 
-The overlay applies to native Codex/OpenAI-compatible pricing and OpenCodex estimates. OpenCodex checks
-the recorded provider/model identity before its provider catalog; its caller-supplied snapshot overlay
-takes precedence over the app-level overlay. Bare model keys remain global overrides with the documented
+The overlay applies to native Codex/OpenAI-compatible pricing. Bare model keys remain global overrides with the documented
 bare-key precedence below. Use full keys such as `openrouter/openai/gpt-5.4` to scope routed prices.
 Claude's local scanner and Cursor do not read this file. A key such as `anthropic/claude-…` does not change
 Claude scanner list prices.

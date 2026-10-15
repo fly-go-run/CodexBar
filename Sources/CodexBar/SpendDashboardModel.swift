@@ -22,11 +22,9 @@ private final class SpendHourlyDaysMemo: @unchecked Sendable, Equatable {
 struct SpendDashboardModel: Equatable, Sendable {
     enum SourceKind: String, Sendable, Equatable {
         case native
-        case openCodex
         case localHistory
     }
 
-    static let openCodexSourceID = "opencodex"
     struct ProviderInput: Sendable {
         let id: String
         let provider: UsageProvider
@@ -407,7 +405,6 @@ struct SpendDashboardModel: Equatable, Sendable {
         calendar: Calendar = .current,
         preferredCurrencyCode: String = "auto",
         hiddenSourceIDs: Set<String> = [],
-        hideNativeCodexWhenOpenCodexPresent: Bool = false,
         selectedDay: Date? = nil) -> Self
     {
         let calculationCalendar = Self.gregorianCalendar(timeZone: calendar.timeZone)
@@ -416,8 +413,7 @@ struct SpendDashboardModel: Equatable, Sendable {
             .sorted { $0.id < $1.id }
         let aggregateInputs = Self.visibleInputs(
             inputs,
-            hiddenSourceIDs: hiddenSourceIDs,
-            hideNativeCodexWhenOpenCodexPresent: hideNativeCodexWhenOpenCodexPresent)
+            hiddenSourceIDs: hiddenSourceIDs)
         let detailInputs = inputs.filter { !hiddenSourceIDs.contains($0.id) }
         let aggregateIDs = Set(aggregateInputs.map(\.id))
         var conversionCache: [String: Double?] = [:]
@@ -484,20 +480,9 @@ struct SpendDashboardModel: Equatable, Sendable {
 
     static func visibleInputs(
         _ inputs: [ProviderInput],
-        hiddenSourceIDs: Set<String>,
-        hideNativeCodexWhenOpenCodexPresent: Bool) -> [ProviderInput]
+        hiddenSourceIDs: Set<String>) -> [ProviderInput]
     {
-        var filtered = inputs.filter { !hiddenSourceIDs.contains($0.id) }
-        // Provider-specific by design: only a canonical OpenCodex Codex row may replace native Codex rows.
-        let hasOpenCodex = filtered.contains {
-            $0.id == Self.openCodexSourceID &&
-                $0.provider == .codex &&
-                $0.sourceKind == .openCodex
-        }
-        if hideNativeCodexWhenOpenCodexPresent, hasOpenCodex {
-            filtered.removeAll { $0.sourceKind == .native && $0.provider == .codex }
-        }
-        return filtered
+        inputs.filter { !hiddenSourceIDs.contains($0.id) }
     }
 
     private struct ClassifiedInput {

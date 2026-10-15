@@ -284,10 +284,7 @@ struct SpendProviderIcon: View {
 
     var body: some View {
         Group {
-            if self.sourceKind == .openCodex {
-                Image(systemName: "arrow.triangle.branch")
-                    .resizable().scaledToFit()
-            } else if let icon = ProviderBrandIcon.image(for: self.provider, style: self.style) {
+            if let icon = ProviderBrandIcon.image(for: self.provider, style: self.style) {
                 Image(nsImage: icon)
                     .resizable()
                     .renderingMode(icon.isTemplate ? .template : .original)

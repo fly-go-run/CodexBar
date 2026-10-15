@@ -8,8 +8,8 @@ not classify the user's task as failed.
 
 ## Data contract
 
-- The native cost scanner supplies the selected rollout URL and session identity. Other providers and
-  OpenCodex sources do not expose this section. No global home discovery occurs in the view.
+- The native cost scanner supplies the selected rollout URL and session identity. Other providers do not
+  expose this section. No global home discovery occurs in the view.
 - Only native `event_msg/item_completed` operations are indexed: command execution, MCP, dynamic tools,
   file changes, web search, image operations, and extensions. Model orchestration calls are not added.
 - Explicit thread ownership is required. Identity is `(thread, turn, item)`; later observations update
