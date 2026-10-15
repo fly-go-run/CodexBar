@@ -4,6 +4,7 @@ import Foundation
 import SwiftUI
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 private final class OverviewScrollEvent: NSEvent {
     private let delta: CGFloat

@@ -2,6 +2,7 @@ import AppKit
 import CodexBarCore
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @MainActor
 @Suite(.serialized)
@@ -35,12 +36,10 @@ struct StatusItemControllerShutdownTests {
             settings: settings,
             startupBehavior: .testing,
             environmentBase: environment)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: AccountInfo(email: nil, plan: nil),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
 
         let menu = controller.makeMenu()

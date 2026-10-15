@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import CodexBar
 @testable import CodexBarCore
+@testable import CodexBarTestSupport
 
 struct ClaudeWebRefreshResilienceTests {
     @Test

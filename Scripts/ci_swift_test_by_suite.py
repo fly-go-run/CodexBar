@@ -652,10 +652,10 @@ def print_timing_summary(stats: RunStats) -> None:
 
 
 ISOLATED_SUITES = {
-    "CodexBarTests.CostUsageBoundedProgressTests",
-    "CodexBarTests.CostUsageCacheWideMigrationTests",
-    "CodexBarTests.CostUsageFairSchedulingTests",
-    "CodexBarTests.CostUsagePerformanceGateTests",
+    "CodexBarCostUsageTests.CostUsageBoundedProgressTests",
+    "CodexBarCostUsageTests.CostUsageCacheWideMigrationTests",
+    "CodexBarCostUsageTests.CostUsageFairSchedulingTests",
+    "CodexBarCostUsageTests.CostUsagePerformanceGateTests",
     "CodexBarTests.KiroStatusProbeTests",
     "CodexBarTests.StatusMenuTests",
     "CodexBarTests.TTYIntegrationTests",
@@ -693,7 +693,7 @@ def shard_groups(groups: list[list[TestSelection]], shard_index: int | None, sha
 
 
 def prioritized_suites(suites: list[TestSelection]) -> list[TestSelection]:
-    priority = ["CodexBarTests.CLIEntryTests"]
+    priority = ["CodexBarCLITests.CLIEntryTests"]
     ordered = [suite for name in priority for suite in suites if suite.suite_name == name]
     ordered.extend(suite for suite in suites if suite.suite_name not in priority)
     return ordered

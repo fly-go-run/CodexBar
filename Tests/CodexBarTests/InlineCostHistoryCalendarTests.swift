@@ -4,6 +4,7 @@ import Testing
 import XCTest
 @testable import CodexBar
 @testable import CodexBarCore
+@testable import CodexBarTestSupport
 
 @Suite(.serialized)
 struct InlineCostHistoryCalendarTests {

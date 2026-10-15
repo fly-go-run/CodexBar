@@ -2,6 +2,7 @@ import AppKit
 import CodexBarCore
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @MainActor
 @Suite(.serialized)
@@ -58,12 +59,10 @@ struct StatusMenuLocalizationRefreshTests {
                     modelBreakdowns: nil),
             ],
             updatedAt: Date()), provider: .codex)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: Self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 

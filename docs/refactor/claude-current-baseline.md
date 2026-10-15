@@ -144,8 +144,8 @@ inside `applyWebExtrasIfNeeded`.
 
 Stable automated coverage for this baseline lives in:
 
-- `Tests/CodexBarTests/ClaudeBaselineCharacterizationTests.swift`
-- `Tests/CodexBarTests/ClaudeOAuthFetchStrategyAvailabilityTests.swift`
+- `Tests/CodexBarClaudeTests/ClaudeBaselineCharacterizationTests.swift`
+- `Tests/CodexBarClaudeTests/ClaudeOAuthFetchStrategyAvailabilityTests.swift`
 - `Tests/CodexBarTests/ClaudeUsageTests.swift`
 - `Tests/CodexBarTests/TokenAccountEnvironmentPrecedenceTests.swift`
 - `Tests/CodexBarTests/SettingsStoreCoverageTests.swift`

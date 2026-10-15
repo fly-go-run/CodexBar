@@ -3,6 +3,7 @@ import CodexBarCore
 import Foundation
 import XCTest
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @MainActor
 final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
@@ -126,12 +127,10 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let blocker = BlockingTokenAccountFetchStrategy()
         self.installBlockingClaudeProvider(on: store, blocker: blocker)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -332,12 +331,10 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         let blocker = BlockingTokenAccountFetchStrategy()
         self.installBlockingClaudeProvider(on: store, blocker: blocker)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -406,12 +403,10 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
         ]
         let blocker = BlockingTokenAccountFetchStrategy()
         self.installBlockingClaudeProvider(on: store, blocker: blocker)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -461,12 +456,10 @@ final class StatusMenuTokenAccountSwitcherTests: XCTestCase {
         ]
         let blocker = BlockingTokenAccountFetchStrategy()
         self.installBlockingClaudeProvider(on: store, blocker: blocker)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 

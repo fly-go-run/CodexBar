@@ -5,6 +5,7 @@ import Testing
 @testable import CodexBar
 @testable import CodexBarCLI
 @testable import CodexBarCore
+@testable import CodexBarTestSupport
 
 @Suite(ClaudeOAuthDefaultsFixtures())
 struct ClaudeExternalLoginPresentationTests {

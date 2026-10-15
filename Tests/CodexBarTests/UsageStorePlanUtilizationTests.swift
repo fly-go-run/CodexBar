@@ -2,6 +2,7 @@ import CodexBarCore
 import Foundation
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 // swiftlint:disable:next type_body_length
 struct UsageStorePlanUtilizationTests {

@@ -2,6 +2,7 @@ import CodexBarCore
 import Foundation
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 /// Regression coverage for issue #2731: with two (or more) claude-swap accounts the
 /// menu showed real per-account usage while the menu-bar indicator kept rendering the

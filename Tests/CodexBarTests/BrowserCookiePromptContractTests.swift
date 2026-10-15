@@ -6,6 +6,7 @@ import SQLite3
 import Testing
 @testable import CodexBar
 @testable import CodexBarCore
+@testable import CodexBarTestSupport
 @testable import SweetCookieKit
 
 @Suite(.serialized, CodexCredentialFixtures())

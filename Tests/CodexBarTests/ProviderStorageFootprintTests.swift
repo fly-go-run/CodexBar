@@ -4,6 +4,7 @@ import Foundation
 import Observation
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 struct ProviderStorageFootprintTests {
     private final class ObservationFlag: @unchecked Sendable {

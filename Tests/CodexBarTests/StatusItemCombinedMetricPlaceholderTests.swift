@@ -2,6 +2,7 @@ import AppKit
 import CodexBarCore
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 /// Regression coverage for the combined "Session + Weekly" menu-bar metric ignoring Claude web's
 /// synthetic `five_hour: null` session placeholder. Claude web parses an account with no live session
@@ -41,12 +42,10 @@ struct StatusItemCombinedMetricPlaceholderTests {
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         return (controller, store)
     }

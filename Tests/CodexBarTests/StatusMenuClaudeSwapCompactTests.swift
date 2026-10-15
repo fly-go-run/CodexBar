@@ -3,6 +3,7 @@ import CodexBarCore
 import Foundation
 import XCTest
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 /// Menu-structure coverage for the compact claude-swap layout: with four or more
 /// accounts the active account keeps its card, inactive accounts become compact
@@ -33,12 +34,10 @@ final class StatusMenuClaudeSwapCompactTests: XCTestCase {
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         store.claudeSwapAccountSnapshots = accounts
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         return (controller, store)
     }

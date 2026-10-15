@@ -3,6 +3,7 @@ import CodexBarCore
 import Foundation
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @Suite(.serialized)
 @MainActor
@@ -196,12 +197,10 @@ struct StatusMenuCodexSwitcherPresentationTests {
                 error: nil,
                 sourceLabel: "test")
         }
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 

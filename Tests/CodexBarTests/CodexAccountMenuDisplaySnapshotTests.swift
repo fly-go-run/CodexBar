@@ -3,6 +3,7 @@ import CodexBarCore
 import Foundation
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @Suite(.serialized)
 @MainActor
@@ -193,12 +194,10 @@ struct CodexAccountMenuDisplaySnapshotTests {
         store.codexAccountSnapshots = [runtimeEnrichedLegacy, siblingProjected].map {
             CodexAccountUsageSnapshot(account: $0, snapshot: nil, error: nil, sourceLabel: "test")
         }
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: AccountInfo(email: nil, plan: nil),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -284,12 +283,10 @@ struct CodexAccountMenuDisplaySnapshotTests {
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
         store._cancelPlanUtilizationHistoryLoadForTesting()
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: AccountInfo(email: nil, plan: nil),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 

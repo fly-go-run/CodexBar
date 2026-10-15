@@ -44,12 +44,10 @@ extension StatusMenuTests {
                     updatedAt: Date()),
                 provider: .codex)
 
-            let controller = StatusItemController(
+            let controller = makeStatusItemControllerForTesting(
                 store: store,
                 settings: settings,
                 account: fetcher.loadAccountInfo(),
-                updater: DisabledUpdaterController(),
-                preferencesSelection: PreferencesSelection(),
                 statusBar: self.makeStatusBarForTesting())
             defer { controller.releaseStatusItemsForTesting() }
 

@@ -3,6 +3,7 @@ import CodexBarCore
 import Dispatch
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @MainActor
 struct MemoryPressureCacheTrimTests {

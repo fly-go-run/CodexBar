@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import CodexBar
 @testable import CodexBarCore
+@testable import CodexBarTestSupport
 
 /// Coverage for the #2634 consent gate: reading Claude Code's own Keychain item is allowed only after an
 /// explicit opt-in, and every production read path (direct read, freshness sync, delegated-refresh

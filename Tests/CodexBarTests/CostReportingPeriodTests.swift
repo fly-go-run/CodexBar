@@ -4,6 +4,7 @@ import Testing
 @testable import CodexBar
 @testable import CodexBarCLI
 @testable import CodexBarCore
+@testable import CodexBarTestSupport
 
 struct CostReportingPeriodTests {
     private let calendar = CostUsageBucketTimeZone.calendar(identifier: "America/Los_Angeles")

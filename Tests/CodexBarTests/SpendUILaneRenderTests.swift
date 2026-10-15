@@ -3,6 +3,7 @@ import CodexBarCore
 import SwiftUI
 import XCTest
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @MainActor
 final class SpendUILaneRenderTests: XCTestCase {

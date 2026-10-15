@@ -3,6 +3,7 @@ import CodexBarCore
 import Foundation
 import Testing
 @testable import CodexBar
+@testable import CodexBarTestSupport
 
 @MainActor
 struct MenuCardOverrideIsolationTests {
@@ -122,12 +123,10 @@ struct MenuCardOverrideIsolationTests {
                 accountEmail: "bob@example.com",
                 accountOrganization: nil,
                 loginMethod: "max"))
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: store.settings,
             account: AccountInfo(email: nil, plan: nil),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 

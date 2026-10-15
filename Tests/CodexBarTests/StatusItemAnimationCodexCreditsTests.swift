@@ -24,12 +24,10 @@ struct StatusItemAnimationCodexCreditsTests {
         store._setSnapshotForTesting(nil, provider: .codex)
         store.credits = CreditsSnapshot(remaining: 80, events: [], updatedAt: Date())
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 
