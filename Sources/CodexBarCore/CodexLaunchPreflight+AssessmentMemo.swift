@@ -1,7 +1,5 @@
-import Foundation
-
-#if os(macOS)
 import Darwin
+import Foundation
 
 extension CodexLaunchPreflight {
     /// Remembers Gatekeeper verdicts for standalone Mach-O launch candidates.
@@ -203,4 +201,3 @@ extension CodexLaunchPreflight {
         }
     }
 }
-#endif

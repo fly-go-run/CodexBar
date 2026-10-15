@@ -1,12 +1,7 @@
+import Darwin
 import Foundation
 import Testing
 @testable import CodexBarCore
-
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#endif
 
 /// Subprocess proof for the synchronous read/write bridges under the legacy executor check.
 /// The test control suppresses macOS 26's current-context answer so the legacy path is exercised.

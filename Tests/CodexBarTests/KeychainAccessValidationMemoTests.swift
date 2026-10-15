@@ -1,10 +1,8 @@
 import Foundation
-import Testing
-@testable import CodexBarCore
-
-#if os(macOS)
 import Security
 import SweetCookieKit
+import Testing
+@testable import CodexBarCore
 
 struct KeychainAccessValidationMemoTests {
     private typealias Memo = KeychainAccessPreflight.ValidationMemo
@@ -392,4 +390,3 @@ struct KeychainAccessValidationMemoTests {
         #expect(calls.count == 4)
     }
 }
-#endif

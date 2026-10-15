@@ -1,14 +1,6 @@
-import Foundation
-
-#if canImport(CryptoKit)
 import CryptoKit
-#else
-import Crypto
-#endif
-
-#if os(macOS)
+import Foundation
 import Security
-#endif
 
 public struct ClaudeOAuthCredentials: Sendable {
     public let accessToken: String
@@ -275,7 +267,6 @@ public enum ClaudeOAuthCredentialsError: LocalizedError, Sendable {
             return "Claude Keychain access was revoked by Claude Code's token rotation. "
                 + "Click Refresh to re-grant access, or switch Claude Usage source to CLI/Web."
         case let .keychainError(status):
-            #if os(macOS)
             if status == Int(errSecUserCanceled)
                 || status == Int(errSecAuthFailed)
                 || status == Int(errSecInteractionNotAllowed)
@@ -285,7 +276,6 @@ public enum ClaudeOAuthCredentialsError: LocalizedError, Sendable {
                     + "via a user action (menu open / manual refresh). "
                     + "Switch Claude Usage source to Web/CLI, or allow access in Keychain Access."
             }
-            #endif
             return "Claude OAuth keychain error: \(status)"
         case let .readFailed(message):
             return "Claude OAuth credentials read failed: \(message)"

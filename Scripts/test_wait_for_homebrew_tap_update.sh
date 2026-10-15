@@ -129,10 +129,6 @@ class Codexbar < Formula
   sha256 "1111111111111111111111111111111111111111111111111111111111111111"
   url "https://github.com/steipete/CodexBar/releases/download/v#{version}/CodexBarCLI-v#{version}-macos-x86_64.tar.gz"
   sha256 "2222222222222222222222222222222222222222222222222222222222222222"
-  url "https://github.com/steipete/CodexBar/releases/download/v#{version}/CodexBarCLI-v#{version}-linux-aarch64.tar.gz"
-  sha256 "3333333333333333333333333333333333333333333333333333333333333333"
-  url "https://github.com/steipete/CodexBar/releases/download/v#{version}/CodexBarCLI-v#{version}-linux-x86_64.tar.gz"
-  sha256 "4444444444444444444444444444444444444444444444444444444444444444"
 end
 RUBY
 cat > "$fixture_dir/Cask.rb" <<'RUBY'

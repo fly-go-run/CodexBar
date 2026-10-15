@@ -2,7 +2,6 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
-#if os(macOS)
 struct CodexLaunchPreflightAssessmentMemoTests {
     private typealias Memo = CodexLaunchPreflight.AssessmentMemo
     private typealias Assessment = CodexLaunchPreflight.GatekeeperAssessment
@@ -557,4 +556,3 @@ struct CodexLaunchPreflightAssessmentMemoTests {
         #expect(!CodexLaunchPreflight.isDefinitiveAssessment("", path: path))
     }
 }
-#endif

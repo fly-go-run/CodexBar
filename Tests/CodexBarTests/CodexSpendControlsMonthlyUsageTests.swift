@@ -1,9 +1,6 @@
 import Foundation
 import Testing
 @testable import CodexBarCore
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
 @Suite(.serialized)
 struct CodexSpendControlsMonthlyUsageTests {
@@ -673,7 +670,6 @@ struct CodexSpendControlsMonthlyUsageTests {
         #expect(await transport.requests().count == 1)
     }
 
-    #if os(macOS)
     @MainActor
     @Test
     func `dashboard education path fetches and maps monthly usage in two requests`() async {
@@ -750,10 +746,8 @@ struct CodexSpendControlsMonthlyUsageTests {
                 logger: { _ in })?.apiData
         }
     }
-    #endif
 }
 
-#if os(macOS)
 private final class DashboardSpendControlsURLProtocol: URLProtocol {
     enum Scenario {
         case educationSuccess
@@ -851,4 +845,3 @@ private final class DashboardSpendControlsURLProtocol: URLProtocol {
 
     override func stopLoading() {}
 }
-#endif

@@ -2,7 +2,6 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
-#if os(macOS)
 struct CodexLaunchPreflightDescriptorRaceTests {
     @TaskLocal private static var deliveryReadMayPause = false
 
@@ -187,4 +186,3 @@ struct CodexLaunchPreflightDescriptorRaceTests {
         print("descriptor binding: freshAssessments=\(targetCalls.total) oldestAssessments=\(oldestCalls.total)")
     }
 }
-#endif

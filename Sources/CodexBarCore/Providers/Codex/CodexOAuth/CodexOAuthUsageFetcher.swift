@@ -1,7 +1,4 @@
 import Foundation
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
 public struct CodexUsageResponse: Decodable, Sendable {
     public let accountId: String?

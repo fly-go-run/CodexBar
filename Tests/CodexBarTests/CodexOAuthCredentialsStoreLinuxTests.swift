@@ -6,7 +6,6 @@ import Testing
 struct CodexOAuthCredentialsStoreLinuxTests {
     @Test
     func saveKeepsAuthJSONPrivate() throws {
-        #if os(macOS) || os(Linux)
         let codexHome = FileManager.default.temporaryDirectory
             .appendingPathComponent("codex-oauth-permissions-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: codexHome) }
@@ -26,8 +25,5 @@ struct CodexOAuthCredentialsStoreLinuxTests {
         let attributes = try FileManager.default.attributesOfItem(atPath: authURL.path)
         let permissions = try #require(attributes[.posixPermissions] as? NSNumber)
         #expect(permissions.intValue & 0o777 == 0o600)
-        #else
-        #expect(Bool(true))
-        #endif
     }
 }

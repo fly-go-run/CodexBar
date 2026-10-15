@@ -2,7 +2,6 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
-#if os(macOS)
 @Suite(.serialized, ClaudeOAuthDefaultsFixtures())
 struct ClaudeOAuthRefreshFailureGateTests {
     private let legacyBlockedUntilKey = "claudeOAuthRefreshBackoffBlockedUntilV1"
@@ -578,4 +577,3 @@ struct ClaudeOAuthRefreshFailureGateTests {
         }
     }
 }
-#endif

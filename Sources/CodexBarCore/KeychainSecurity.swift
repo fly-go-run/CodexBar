@@ -18,9 +18,7 @@ enum KeychainTestSafety {
         guard !self.didApplyBlockedProcessSideEffects else { return }
         self.didApplyBlockedProcessSideEffects = true
         setenv(self.suppressAccessEnvironmentKey, "1", 1)
-        #if os(macOS)
         KeychainLegacyInteraction.disableProcessWideInteraction()
-        #endif
     }
 
     static func shouldBlockRealKeychainAccess(
@@ -65,7 +63,6 @@ enum KeychainTestSafety {
     }
 }
 
-#if os(macOS)
 import Security
 
 /// Process-wide legacy-keychain interaction switch. `KeychainNoUIQuery` marks
@@ -164,4 +161,3 @@ public enum KeychainSecurity {
         return SecItemDelete(query)
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 import Security
 import Testing
@@ -527,4 +526,3 @@ private final class ClaudeOAuthRefreshRecoveryStubURLProtocol: URLProtocol {
 
     override func stopLoading() {}
 }
-#endif

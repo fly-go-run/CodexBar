@@ -1,7 +1,4 @@
 import Foundation
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
 /// Shared, lock-guarded ISO8601 formatters for status feeds. Allocating a fresh
 /// `ISO8601DateFormatter` per decoded date field is a measurable share of decoding the

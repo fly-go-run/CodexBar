@@ -1,9 +1,5 @@
 import Foundation
-#if canImport(SQLite3)
 import SQLite3
-#elseif canImport(CSQLite3)
-import CSQLite3
-#endif
 import Testing
 @testable import CodexBar
 @testable import CodexBarCore
@@ -472,7 +468,6 @@ struct CodexSessionRolloutTests {
             ])
     }
 
-    #if canImport(SQLite3) || canImport(CSQLite3)
     @Test
     func `scanner resolves relative sqlite homes for multiple session projects`() async throws {
         let fileManager = FileManager.default
@@ -560,5 +555,4 @@ struct CodexSessionRolloutTests {
         case open
         case exec
     }
-    #endif
 }

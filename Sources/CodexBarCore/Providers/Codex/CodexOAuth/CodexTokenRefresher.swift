@@ -1,7 +1,4 @@
 import Foundation
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
 public enum CodexTokenRefresher {
     private static let refreshEndpoint = URL(string: "https://auth.openai.com/oauth/token")!

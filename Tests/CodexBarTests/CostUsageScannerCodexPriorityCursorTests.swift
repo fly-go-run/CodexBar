@@ -1,6 +1,5 @@
 import CryptoKit
 import Foundation
-#if canImport(SQLite3)
 import SQLite3
 import Testing
 @testable import CodexBarCore
@@ -1642,4 +1641,3 @@ extension CostUsageScannerCodexPriorityCursorTests {
         var anchorDigest: String
     }
 }
-#endif

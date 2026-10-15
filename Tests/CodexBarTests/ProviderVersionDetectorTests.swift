@@ -1,11 +1,6 @@
+import Darwin
 import XCTest
 @testable import CodexBarCore
-
-#if canImport(Darwin)
-import Darwin
-#else
-import Glibc
-#endif
 
 final class ProviderVersionDetectorTests: XCTestCase {
     func test_run_returnsFirstLineForSuccessfulCommand() {

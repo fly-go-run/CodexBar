@@ -38,7 +38,6 @@ struct ClaudeOAuthCredentialsStoreTemporaryKeychainCacheTests {
         }
     }
 
-    #if os(macOS)
     @Test
     func `credentials file invalidation preserves keychain cache when temporarily unavailable`() throws {
         let service = "com.steipete.codexbar.cache.tests.\(UUID().uuidString)"
@@ -198,7 +197,6 @@ struct ClaudeOAuthCredentialsStoreTemporaryKeychainCacheTests {
             }
         }
     }
-    #endif
 
     @Test
     func `invalid keychain cache is cleared by load`() throws {

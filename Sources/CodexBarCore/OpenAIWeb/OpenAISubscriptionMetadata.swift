@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 import WebKit
 
@@ -169,4 +168,3 @@ enum OpenAISubscription {
         return try? JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
     }
 }
-#endif

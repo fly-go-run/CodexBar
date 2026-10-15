@@ -87,22 +87,7 @@ CodexBar ships a Homebrew **Cask** in `../homebrew-tap`. When installed via Home
 must be updated via `brew`; the app polls the tap's cask version and offers a one-click `brew upgrade`, so the tap cask
 is what users are prompted to install.
 
-After publishing the GitHub release, `.github/workflows/release-cli.yml` builds the macOS, glibc Linux, and static musl Linux CLI tarballs for arm64 and x86_64, uploads them plus checksums, then dispatches the Homebrew tap update for both the CLI formula and app cask. Homebrew continues to use the glibc Linux assets. If the final dispatch is rate-limited, the tarballs and app zip may still be present; rerun or manually update the tap formula/cask from the published assets.
-
-The independent `.github/workflows/release-linux-desktop.yml` workflow also runs
-on `release.published`. It checks out the release tag, builds and tests the Qt
-desktop natively on Ubuntu 24.04 x86_64 and ARM64, embeds the tag's version, and
-uploads both `CodexBarDesktop-v<version>-linux-<arch>.tar.gz` archives and their
-SHA-256 files only after both builds succeed. `.mac-release.env` includes these
-four assets in the release wait/check contract. The desktop archives include the
-Omarchy adapter and installer; the CLI remains a separate download.
-
-A manual **Release Linux desktop** run builds the selected workflow ref with the
-provided version label and uploads workflow artifacts only. Use it to validate
-packaging before a release. Rerun a failed published-release workflow to retry
-asset upload; it replaces assets with the same names. Do not publish a new release
-just to test this workflow. Existing releases whose tags predate the integration
-are not automatically backfilled.
+After publishing the GitHub release, `.github/workflows/release-cli.yml` builds the macOS CLI tarballs for arm64 and x86_64, uploads them plus checksums, then dispatches the Homebrew tap update for both the CLI formula and app cask. Homebrew continues to use the glibc Linux assets. If the final dispatch is rate-limited, the tarballs and app zip may still be present; rerun or manually update the tap formula/cask from the published assets.
 
 If a published release's CLI build fails on a source bug, rerunning it rebuilds the broken tag. Instead push a branch from the tag carrying only the fix, run `gh workflow run release-cli.yml --ref <branch> -f tag=<tag>`, upload the workflow artifacts to the release, and dispatch the tap's `update-formula.yml` with the inputs from the workflow's `Dispatch tap update` step.
 
@@ -117,7 +102,7 @@ Each Homebrew handoff uses the release tag, workflow run ID, and run attempt as 
 - [ ] `./Scripts/sign-and-notarize.sh`
 - [ ] Generate Sparkle appcast via `Scripts/release.sh` or `Scripts/make_appcast.sh`; use `SPARKLE_PRIVATE_KEY_FILE` only if overriding Keychain signing.
   - Upload the dSYM archive alongside the app zip on the GitHub release; the release script now automates this and will fail if it’s missing.
-  - After publishing the release and the Release CLI workflow finishes, run `Scripts/check-release-assets.sh <tag>` on macOS to confirm the app zip, dSYM zip, CLI tarballs/checksums and Linux desktop tarballs/checksums are present on GitHub. It also downloads the app zip, extracts it with `ditto`, and strictly verifies the app and nested code signatures across all architectures, requiring CodexBar's bundle ID and Developer ID team `Y5PE65HELJ`, without launching the app or reading signing keys; any failed download, extraction, or signature check fails the command.
+  - After publishing the release and the Release CLI workflow finishes, run `Scripts/check-release-assets.sh <tag>` on macOS to confirm the app zip, dSYM zip, CLI tarballs/checksums/checksums are present on GitHub. It also downloads the app zip, extracts it with `ditto`, and strictly verifies the app and nested code signatures across all architectures, requiring CodexBar's bundle ID and Developer ID team `Y5PE65HELJ`, without launching the app or reading signing keys; any failed download, extraction, or signature check fails the command.
   - Generate the appcast + HTML release notes: `./Scripts/make_appcast.sh CodexBar-macos-universal-<ver>.zip https://raw.githubusercontent.com/steipete/CodexBar/main/appcast.xml`
   - Beta channel: prefix the command with `SPARKLE_CHANNEL=beta` to tag the entry.
   - Verify the enclosure signature + size: `./Scripts/verify_appcast.sh <ver>`
@@ -134,7 +119,7 @@ Each Homebrew handoff uses the release tag, workflow run ID, and run attempt as 
 - [ ] Changelog/release notes are user-facing: avoid internal-only bullets (build numbers, script bumps) and keep entries concise
 - [ ] Download uploaded `CodexBar-macos-universal-<ver>.zip`, unzip via `ditto`, run, and verify signature (`spctl -a -t exec -vv CodexBar.app` + `stapler validate`)
 - [ ] Confirm `appcast.xml` points to the new zip/version and renders the HTML release notes (not escaped tags)
-- [ ] Verify on GitHub Releases: app zip, dSYM, CLI archives, Linux desktop archives, and checksums are present; release notes match the changelog and the version/tag are correct
+- [ ] Verify on GitHub Releases: app zip, dSYM, CLI archives, and checksums are present; release notes match the changelog and the version/tag are correct
 - [ ] Open the appcast URL in browser to confirm the new entry is visible and enclosure URL is reachable
 - [ ] Manually visit the enclosure URL (curl -I) to ensure 200/OK (no 404) after publishing assets/release
 - [ ] Ensure `sparkle:edSignature` is present for the enclosure in appcast (generated by `generate_appcast` with the ed25519 key)

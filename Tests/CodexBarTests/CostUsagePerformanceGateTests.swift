@@ -1,11 +1,7 @@
+import Darwin
+
 // swiftlint:disable file_length
 import Foundation
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#endif
-#if canImport(SQLite3)
 import SQLite3
 import Testing
 @testable import CodexBarCore
@@ -1916,4 +1912,3 @@ private final class HeadParseCounter: @unchecked Sendable {
         self.lock.withLock { self.count += 1 }
     }
 }
-#endif

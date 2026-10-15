@@ -1,10 +1,4 @@
-#if canImport(Darwin)
 import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
 import Foundation
 
 enum PosixSpawnFileActionsCloseFrom {
@@ -37,25 +31,4 @@ enum PosixSpawnFileActionsCloseFrom {
             .filter { $0 >= minimumFileDescriptor }
             .sorted()
     }
-
-    #if canImport(Glibc) || canImport(Musl)
-    static func addCloseFrom(
-        _ fileActions: inout posix_spawn_file_actions_t,
-        startingAt minimumFileDescriptor: Int32) throws
-    {
-        #if canImport(Glibc)
-        try self.check(PosixSpawnFileActionsCompatibility.addCloseFrom(&fileActions, startingAt: minimumFileDescriptor))
-        #else
-        for descriptor in try self.descriptorsToClose(startingAt: minimumFileDescriptor) {
-            try self.check(posix_spawn_file_actions_addclose(&fileActions, descriptor))
-        }
-        #endif
-    }
-
-    private static func check(_ result: Int32) throws {
-        guard result == 0 else {
-            throw CloseFromError.actionFailed(result)
-        }
-    }
-    #endif
 }

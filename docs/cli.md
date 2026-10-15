@@ -27,12 +27,10 @@ before helper validation or failure handling. This shell mode does not elevate p
 approval is still required. The installer uses absolute system tools, clears the inherited environment before
 requesting approval, and stops on installation failure. The in-app installer is separate and uses Foundation symlinks.
 
-### Release tarball install (macOS/Linux)
-- Homebrew formula (Linux today): `brew install steipete/tap/codexbar`.
+### Release tarball install (macOS)
+- Homebrew formula: `brew install steipete/tap/codexbar`.
 - Download release tarballs from GitHub Releases:
   - macOS: `CodexBarCLI-v<tag>-macos-arm64.tar.gz`, `CodexBarCLI-v<tag>-macos-x86_64.tar.gz`
-  - Linux (glibc): `CodexBarCLI-v<tag>-linux-aarch64.tar.gz`, `CodexBarCLI-v<tag>-linux-x86_64.tar.gz`
-  - Linux (static musl): `CodexBarCLI-v<tag>-linux-musl-aarch64.tar.gz`, `CodexBarCLI-v<tag>-linux-musl-x86_64.tar.gz`
 - Extract and run `./codexbar` (symlink) or `./CodexBarCLI`.
 
 ```
@@ -114,7 +112,7 @@ sources and setup guide. The [provider ID list](provider-ids.md) is generated fr
   - Failed providers are summarized in a footer (not rendered as error cards).
   - When the opt-in Claude claude-swap integration returns two or more accounts—or one account with
     `claudeSwapShowSingleAccount` enabled—cards renders every account in active-first/slot order instead of the
-    ambient or token-account Claude cards. This applies on macOS and Linux, including an explicit
+    ambient or token-account Claude cards. This includes an explicit
     `--provider claude`; `--source auto` remains eligible.
   - `--account`, `--account-index`, `--all-accounts`, and explicit non-auto source flags preserve their requested
     ambient behavior and do not invoke claude-swap. Zero-account lists always retain ambient Claude output;
@@ -135,12 +133,11 @@ sources and setup guide. The [provider ID list](provider-ids.md) is generated fr
   - `--output <path>` atomically writes the snapshot to a file (`0644`) instead of stdout — staged in the destination directory, fsync'd, then renamed over the target so readers never observe a partial document. The parent directory must already exist (it is not created), and stdout stays silent on success.
   - Starts no HTTP server and requires no dashboard bearer token. See `docs/dashboard-api.md` for the shared payload contract.
 - `codexbar serve` starts a foreground HTTP server for usage and cost JSON, a token-gated dashboard snapshot, and a built-in web UI at `/`.
-  - On Linux, exited Codex RPC children release their output pipes after each refresh, preventing descriptor accumulation during long-running server sessions. Child-tree cleanup also reads empty procfs child lists without retaining Foundation read buffers.
   - `--all-accounts` expands visible Codex profiles and configured token accounts in dashboard snapshots, with neutral numbered labels, no identity and generic errors by default. Explicit `--identity full` includes identifying details; `--identity redacted` exposes only masked emails/plan labels, not account aliases or raw errors. It is a startup opt-in, not a query parameter; `/usage` keeps its existing Codex enumeration and `/cost` is unchanged.
   - `GET /accounts` and `GET /accounts/<id>` discover saved provider token accounts and managed Codex accounts without fetching usage or exporting credentials. IDs are stable opaque lookup keys; `active` means the configured selection. Discovery includes saved accounts for disabled providers, excludes system/profile-home discovery, follows the same identity setting, and requires bearer authentication on non-loopback binds. See [account discovery](dashboard-api.md#account-discovery).
   - Web usage bars follow the app's **Usage bars fill** setting, read per request on macOS. Dashboard snapshots from
     both `serve` and `codexbar dashboard` expose it as `host.usageBarsShowUsed`. An absent setting defaults to remaining
-    percentages, including on Linux; earlier web dashboards always showed used percentages. Quota values are unchanged.
+    percentages ; earlier web dashboards always showed used percentages. Quota values are unchanged.
   - Without `--all-accounts`, dashboard snapshot identity follows the app's "Hide personal information" setting when `--identity` is absent: the toggle on redacts email local parts, off keeps full emails. The setting is read per request, so a change applies without a serve restart. Pass `--identity redacted` or `--identity full` to pin the mode and ignore the app setting, especially when responses cross a network.
   - `--host <host>` accepts `localhost` or an IPv4 address and defaults to `127.0.0.1`; `localhost` is normalized to `127.0.0.1`. Binding a non-loopback host requires a dashboard token **and** `--allow-plain-http` (see `docs/dashboard-api.md` for the threat model).
   - `--port <port>` defaults to `8080`.
@@ -152,7 +149,6 @@ sources and setup guide. The [provider ID list](provider-ids.md) is generated fr
   - Provider config is reloaded for each usage/cost request; cache entries are keyed by the loaded config so provider toggles and source changes do not require restarting `serve`.
   - Transient refresh failures fall back to the last good response for up to ten refresh intervals (minimum five minutes) so polling clients do not flicker between data and errors; disabled when `--refresh-interval 0`.
   - After a cached response expires, `serve` returns the last-good response immediately while rebuilding it in the background; `--refresh-interval 0` keeps every request blocking.
-  - On glibc Linux, `serve` periodically returns freed heap pages to the operating system (30-second maintenance interval). Allocator arena settings remain controlled by the environment. macOS and musl keep their normal allocator behavior.
   - The default loopback bind rejects non-loopback `Host` headers; a configured non-loopback `--host` additionally accepts its own name. No CORS, TLS, or daemon mode.
   - Endpoints: `GET /` (web UI), `GET /health`, `GET /usage`, `GET /usage?provider=<id|both|all>`, `GET /cost`, `GET /cost?provider=<id|both|all>`, `GET /dashboard/v1/snapshot` (plus `provider=<id>` and `detail=<full|shell>`).
   - `GET /dashboard/v1/snapshot` requires `Authorization: Bearer YOUR_TOKEN`; responses (and all `401`s) carry `Cache-Control: no-store`. The token is never accepted via query string. See `docs/dashboard-api.md` for the payload contract.
@@ -187,7 +183,7 @@ sources and setup guide. The [provider ID list](provider-ids.md) is generated fr
   - `--status` (fetch provider status pages and include them in output).
 - `--source <auto|web|cli|oauth|api>` (default: `auto`).
     - `auto`: provider-specific fallback order from `docs/providers.md`.
-    - `web`: web-only where that provider exposes an explicit web source; no CLI/API fallback. Browser import is macOS-only, while supported providers can use configured manual cookies on Linux.
+    - `web`: web-only where that provider exposes an explicit web source; no CLI/API fallback. Browser import needs a supported macOS browser; manual cookies are the alternative.
     - `cli`: CLI/local-helper source where the provider exposes one (for example Codex RPC/PTy, Claude PTY).
     - `oauth`: OAuth-backed source where supported (Codex, Claude).
     - `api`: API-backed flow where supported; credentials may be API keys or existing tokens. See the complete [provider source table](providers.md#fetch-strategies-current) and each provider's guide for supported modes.

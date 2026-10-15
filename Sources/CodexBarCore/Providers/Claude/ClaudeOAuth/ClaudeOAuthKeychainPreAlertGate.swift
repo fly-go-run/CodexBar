@@ -1,6 +1,4 @@
 import Foundation
-
-#if os(macOS)
 import os.lock
 
 enum ClaudeOAuthKeychainPreAlertGate {
@@ -133,37 +131,3 @@ enum ClaudeOAuthKeychainPreAlertGate {
         }
     }
 }
-#else
-enum ClaudeOAuthKeychainPreAlertGate {
-    static let cooldownInterval: TimeInterval = 60 * 60 * 6
-
-    #if DEBUG
-    final class StateStore: @unchecked Sendable {}
-    #endif
-
-    @discardableResult
-    static func presentIfNeeded(
-        now _: Date = Date(),
-        completedAt _: Date? = nil,
-        present _: () -> Bool) -> Bool
-    {
-        false
-    }
-
-    #if DEBUG
-    static func withStateStoreOverrideForTesting<T>(
-        _: StateStore?,
-        operation: () throws -> T) rethrows -> T
-    {
-        try operation()
-    }
-
-    static func withStateStoreOverrideForTesting<T>(
-        _: StateStore?,
-        operation: () async throws -> T) async rethrows -> T
-    {
-        try await operation()
-    }
-    #endif
-}
-#endif

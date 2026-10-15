@@ -1,11 +1,4 @@
-#if os(macOS)
 import SweetCookieKit
-#else
-public struct Browser: Sendable, Hashable {
-    public init() {}
-}
-
-#endif
 
 public typealias BrowserCookieImportOrder = [Browser]
 
@@ -21,19 +14,15 @@ extension [Browser] {
     func lazyCookieImportCandidates(using detection: BrowserDetection) -> some Sequence<Browser> {
         self.lazy.filter { browser in
             if KeychainAccessGate.isDisabled, browser.usesKeychainForCookieDecryption {
-                #if os(macOS)
                 if KeychainAccessGate.isExplicitlyDisabled {
                     BrowserCookieAccessGate.recordAccessFailure(for: browser)
                 }
-                #endif
                 return false
             }
             let available = detection.isCookieSourceAvailable(browser)
-            #if os(macOS)
             if !available, detection.cookieSourceProfileAccessIssue(browser) == .accessDenied {
                 BrowserCookieAccessGate.recordAccessFailure(for: browser, profileDenied: true)
             }
-            #endif
             return available && BrowserCookieAccessGate.shouldAttempt(browser)
         }
     }
@@ -44,16 +33,8 @@ extension [Browser] {
     }
 }
 
-#if os(macOS)
 extension Browser {
     var usesKeychainForCookieDecryption: Bool {
         self != .safari && !self.usesGeckoProfileStore
     }
 }
-#else
-extension Browser {
-    var usesKeychainForCookieDecryption: Bool {
-        false
-    }
-}
-#endif

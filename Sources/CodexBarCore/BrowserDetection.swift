@@ -1,7 +1,6 @@
-import Foundation
-#if os(macOS)
 @preconcurrency import AppKit
 import Darwin
+import Foundation
 import os.lock
 import SweetCookieKit
 
@@ -405,42 +404,3 @@ public final class BrowserDetection: Sendable {
         return Self.isPermissionError(underlying)
     }
 }
-
-#else
-
-// MARK: - Non-macOS stub
-
-public struct BrowserDetection: Sendable {
-    public static let defaultCacheTTL: TimeInterval = 0
-
-    public init(
-        homeDirectory: String = "",
-        cacheTTL: TimeInterval = BrowserDetection.defaultCacheTTL,
-        now: @escaping @Sendable () -> Date = Date.init,
-        fileExists: @escaping @Sendable (String) -> Bool = { _ in false },
-        directoryContents: @escaping @Sendable (String) -> [String]? = { _ in nil })
-    {
-        _ = homeDirectory
-        _ = cacheTTL
-        _ = now
-        _ = fileExists
-        _ = directoryContents
-    }
-
-    public func isAppInstalled(_ browser: Browser) -> Bool {
-        false
-    }
-
-    public func isCookieSourceAvailable(_ browser: Browser, applicationURL: URL? = nil) -> Bool {
-        _ = applicationURL
-        return false
-    }
-
-    public func hasUsableProfileData(_ browser: Browser) -> Bool {
-        false
-    }
-
-    public func clearCache() {}
-}
-
-#endif

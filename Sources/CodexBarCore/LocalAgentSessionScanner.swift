@@ -1,7 +1,5 @@
 import Foundation
-#if os(macOS)
 import Security
-#endif
 
 final class FutureModificationDateClamp: @unchecked Sendable {
     private let lock = NSLock()
@@ -24,7 +22,6 @@ final class FutureModificationDateClamp: @unchecked Sendable {
 }
 
 enum ChatGPTCodexProcessTrust {
-    #if os(macOS)
     static func isTrusted(
         _ pid: Int32,
         executablePath: (Int32) -> String? = DarwinProcessEnumerator.executablePath,
@@ -54,14 +51,8 @@ enum ChatGPTCodexProcessTrust {
         else { return false }
         return SecCodeCheckValidity(code, SecCSFlags(), requirement) == errSecSuccess
     }
-    #else
-    static func isTrusted(_: Int32) -> Bool {
-        false
-    }
-    #endif
 }
 
-#if os(macOS)
 final class ChatGPTBundleTrustCache: @unchecked Sendable {
     typealias Identity = [URL: NSDictionary]
     static let shared = ChatGPTBundleTrustCache()
@@ -112,7 +103,6 @@ final class ChatGPTBundleTrustCache: @unchecked Sendable {
         return identity
     }
 }
-#endif
 
 public struct LocalAgentSessionScanner: Sendable {
     typealias ProcessOutputProvider = @Sendable ([String: String]) async -> String
@@ -403,16 +393,11 @@ public struct LocalAgentSessionScanner: Sendable {
         if let processOutputProvider = self.processOutputProvider {
             return await AgentPSOutputParser.parse(processOutputProvider(environment))
         }
-        #if canImport(Darwin)
         return DarwinProcessEnumerator.allPIDs().compactMap { pid in
             Self.darwinProcessRecord(pid: pid)
         }
-        #else
-        return await AgentPSOutputParser.parse(self.processOutput(environment: environment))
-        #endif
     }
 
-    #if canImport(Darwin)
     /// Builds a process record from libproc data. `proc_pidpath` fails with ENOENT once an updater deletes the
     /// running binary (for example the old package directory after a Claude Code update), so argv is preferred
     /// and the executable path is only the fallback command when argv is unavailable.
@@ -432,51 +417,13 @@ public struct LocalAgentSessionScanner: Sendable {
             command: command,
             arguments: arguments)
     }
-    #endif
-
-    #if !canImport(Darwin)
-    private func processOutput(environment: [String: String]) async -> String {
-        let binary = ["/bin/ps", "/usr/bin/ps"].first { FileManager.default.isExecutableFile(atPath: $0) }
-        guard let binary,
-              let result = try? await SubprocessRunner.run(
-                  binary: binary,
-                  arguments: ["-axo", "pid=,ppid=,lstart=,command="],
-                  environment: environment,
-                  timeout: 5,
-                  label: "agent session process scan")
-        else { return "" }
-        return result.stdout
-    }
-    #endif
 
     private func cwdByPID(_ pids: [Int32], environment: [String: String]) async -> [Int32: String] {
         if let cwdProvider = self.cwdProvider { return await cwdProvider(pids, environment) }
         guard !pids.isEmpty else { return [:] }
-        #if canImport(Darwin)
         return Dictionary(uniqueKeysWithValues: pids.compactMap { pid in
             DarwinProcessEnumerator.currentWorkingDirectory(pid: pid).map { (pid, $0) }
         })
-        #else
-        if let lsof = self.findExecutable("lsof", environment: environment) {
-            let joinedPIDs = pids.map(String.init).joined(separator: ",")
-            if let result = try? await SubprocessRunner.run(
-                binary: lsof,
-                arguments: ["-a", "-d", "cwd", "-Fn", "-p", joinedPIDs],
-                environment: environment,
-                timeout: 5,
-                acceptsNonZeroExit: true,
-                label: "agent session cwd scan")
-            {
-                return LSOFCWDOutputParser.parse(result.stdout)
-            }
-        }
-
-        return Dictionary(uniqueKeysWithValues: pids.compactMap { pid in
-            let path = "/proc/\(pid)/cwd"
-            guard let destination = try? FileManager.default.destinationOfSymbolicLink(atPath: path) else { return nil }
-            return (pid, destination)
-        })
-        #endif
     }
 
     private func codexRolloutCandidates(

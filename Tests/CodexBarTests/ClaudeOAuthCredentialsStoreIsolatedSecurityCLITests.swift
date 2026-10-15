@@ -2,7 +2,6 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
-#if os(macOS)
 @Suite(.serialized)
 struct ClaudeOAuthCredentialsStoreIsolatedSecurityCLITests {
     @Test
@@ -124,4 +123,3 @@ struct ClaudeOAuthCredentialsStoreIsolatedSecurityCLITests {
         #expect(!blockedViaSecurityFramework)
     }
 }
-#endif

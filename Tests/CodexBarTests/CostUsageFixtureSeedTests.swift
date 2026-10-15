@@ -1,9 +1,5 @@
-import Foundation
-#if canImport(Darwin)
 import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#endif
+import Foundation
 import Testing
 
 struct CostUsageFixtureSeedTests {

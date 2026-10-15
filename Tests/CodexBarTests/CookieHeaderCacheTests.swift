@@ -327,7 +327,6 @@ struct CookieHeaderCacheTests {
         }
     }
 
-    #if os(macOS)
     @Test
     func `temporary keychain unavailability returns nil without migrating legacy file`() {
         KeychainCacheStore.setTestStoreForTesting(true)
@@ -364,7 +363,6 @@ struct CookieHeaderCacheTests {
             }
         }
     }
-    #endif
 
     @Test
     func `invalid keychain cache is cleared`() {
@@ -551,7 +549,6 @@ struct CookieHeaderCacheTests {
         }
     }
 
-    #if os(macOS)
     @Test
     func `loadForDisplay throttles temporary keychain unavailability then retries`() async throws {
         KeychainCacheStore.setTestStoreForTesting(true)
@@ -698,7 +695,6 @@ struct CookieHeaderCacheTests {
             #expect(CookieHeaderCache.hasLegacyEntryForTesting(provider: provider))
         }
     }
-    #endif
 
     @Test
     func `store and clear update the display snapshot immediately`() {
@@ -871,8 +867,6 @@ struct CookieHeaderCacheTests {
     }
 }
 
-#if os(macOS)
 extension CookieHeaderCacheTests {}
-#endif
 
 extension CookieHeaderCacheTests {}

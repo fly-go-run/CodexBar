@@ -21,7 +21,6 @@ extension CodexBarCLI {
     static func runConfigPreferences(_ values: ParsedValues, importing: Bool) {
         let output = CLIOutputPreferences.from(values: values)
         do {
-            #if os(macOS)
             let domain = values.options["defaultsDomain"]?.last ?? PreferencesDocument.defaultsDomain
             guard let defaults = UserDefaults(suiteName: domain) else {
                 throw PreferencesDocument.Error.invalid("Cannot open preferences domain")
@@ -52,9 +51,6 @@ extension CodexBarCLI {
                     FileHandle.standardOutput.write(data + Data("\n".utf8))
                 }
             }
-            #else
-            throw PreferencesDocument.Error.invalid("UI preferences import/export requires macOS")
-            #endif
         } catch {
             Self.exit(code: .failure, message: error.localizedDescription, output: output, kind: .config)
         }

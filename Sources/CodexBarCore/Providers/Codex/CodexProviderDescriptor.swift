@@ -13,12 +13,8 @@ public enum CodexProviderDescriptor {
 
     /// Preserve the legacy prompt behavior before probing Chromium variants that may trigger Safe Storage prompts.
     private static var browserCookieOrder: BrowserCookieImportOrder? {
-        #if os(macOS)
         let preferredPrefix: [Browser] = [.safari, .chrome, .firefox]
         return preferredPrefix + Browser.defaultImportOrder.filter { !preferredPrefix.contains($0) }
-        #else
-        return nil
-        #endif
     }
 
     static func makeDescriptor() -> ProviderDescriptor {

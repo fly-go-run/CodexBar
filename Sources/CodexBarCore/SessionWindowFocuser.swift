@@ -1,4 +1,3 @@
-#if os(macOS)
 import AppKit
 import ApplicationServices
 import Foundation
@@ -94,4 +93,3 @@ public enum SessionWindowFocuser {
         DarwinProcessEnumerator.bsdInfo(pid: pid)?.ppid
     }
 }
-#endif

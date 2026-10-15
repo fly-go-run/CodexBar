@@ -1,10 +1,5 @@
-import Foundation
-
-#if canImport(CryptoKit)
 import CryptoKit
-#else
-import Crypto
-#endif
+import Foundation
 
 /// Prompt-free Claude profile identity derived only from Claude-owned plain-text configuration.
 public enum ClaudeAccountProfile {

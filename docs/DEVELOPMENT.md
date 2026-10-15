@@ -111,7 +111,6 @@ CodexBar/
 ├── Sources/CodexBarWidget/    # WidgetKit support
 ├── WidgetExtension/           # Xcode wrapper for the packaged widget extension
 ├── Tests/CodexBarTests/       # macOS app/core test suite (XCTest + Swift Testing)
-├── TestsLinux/                # Portable and Linux-specific CLI/core tests (target exists on macOS too)
 └── Scripts/                   # Build and packaging scripts
 ```
 
@@ -128,7 +127,7 @@ See the canonical [provider authoring guide](provider.md#adding-a-new-provider) 
    protocol defaults when no custom UI or macOS integration is needed.
 5. Run `Scripts/regenerate-provider-manifests.sh` to update the Core descriptor manifest and the immutable app catalog.
 6. Add icon assets under `Sources/CodexBar/Resources/`.
-7. Add focused tests under `Tests/CodexBarTests/` and, for CLI/core behavior that must run on Linux, `TestsLinux/`.
+7. Add focused tests under `Tests/CodexBarTests/`.
 
 ### Debug Cookie Issues
 1. Enable Debug → Logging → "Enable file logging" or raise verbosity in the app settings.
@@ -310,8 +309,8 @@ provider-toggle actions under test on the production setter; the fixture helper 
 
 ### Cost scanner CPU regressions
 
-`CostUsageJsonl` finds complete physical LF spans with bounded libc `memchr` on Darwin, Glibc, and
-Musl, using the same span algorithm with scalar LF search elsewhere. Borrowed pointers stay inside
+`CostUsageJsonl` finds complete physical LF spans with bounded libc `memchr` on Darwin, using the same
+span algorithm with scalar LF search elsewhere. Borrowed pointers stay inside
 the current `withUnsafeBytes` call; search counts and distances fit the existing 256 KiB read chunk.
 Complete spans keep the original prefix-copy and flush path. Unfinished chunk suffixes still run the
 original scalar JSON tail updater, preserving exact resumable state and EOF validation. CR bytes,
@@ -323,7 +322,7 @@ and nonnegative literal indices. Otherwise the same scalar updater runs before t
 this preserves its checked operations and state when the flush does not reset a negative line count.
 Do not replace this guard with checkpoint normalization or a new corrupt-cache recovery policy.
 
-`CostUsageJsonlDifferentialTests` in the portable `TestsLinux` target compares exact bytes, offsets,
+`CostUsageJsonlDifferentialTests` compares exact bytes, offsets,
 sorted full Codable state, callback order, and error domain/code with the frozen e236a21b scalar scanner.
 Its bounded default matrix covers every short-input split, threshold/chunk boundaries, mutations,
 cross-version resumes, and safe unusual checkpoints. Keep that oracle frozen and the older scanner
@@ -536,27 +535,14 @@ The check names each drifted package and prints this repair command before packa
 resolved file when automatic resolution is disabled.
 
 The `lint-build-test` check in `.github/workflows/ci.yml` keeps its existing name and requires successful lint,
-change detection, and the full `build-linux-cli` glibc matrix (x86_64 and ARM64 build, tests, and smoke checks)
-when the shared macOS/Linux path gate requires it. Both platforms use the same docs/site allowlist; source,
-test, widget, and workflow paths always require builds, including Markdown resources and fixtures. Linux has
-no draft deferral. Only `required=true / result=success` or `required=false / result=skipped` passes; failure,
-cancellation, missing or unknown values, and unexpected skips or executions fail verification.
-The musl build retains its separate path gate; required macOS
-tests deferred for a draft still leave the aggregate incomplete. Whole-workflow cancellation retains the existing
-`always() && !cancelled()` condition, so the verifier does not run in that case.
+change detection and the macOS Swift test shards. Source, test, widget, and workflow paths always require builds,
+including Markdown resources and fixtures. Only `required=true / result=success` or `required=false / result=skipped`
+passes; failure, cancellation, missing or unknown values, and unexpected skips or executions fail verification.
+Required macOS tests deferred for a draft still leave the aggregate incomplete. Whole-workflow cancellation retains the
+existing `always() && !cancelled()` condition, so the verifier does not run in that case.
 
-`Scripts/test_ci_path_gate.sh` checks these result combinations, shared path decisions, and the workflow's Linux
-dependency, condition, and verifier arguments. `CodexBarLinuxTests` includes the portable `AntigravityLocalhostSessionLifetimeTests` suite on
-both macOS and Linux. It checks session reuse and concurrent synthetic loopback failures without credentials;
-this coverage does not establish or fix the cause of Linux dispatch crashes.
-
-### Static Linux SDK
-
-CI and release builds install the static Linux SDK through `Scripts/install_swift_static_sdk.sh`. It downloads with
-`curl`, verifies the pinned SHA-256, and passes a local archive to `swift sdk install`, avoiding SwiftPM's Linux
-FoundationNetworking/TLS teardown crash. Portable lint checks cover checksum rejection, download failures, and installer
-failure propagation without downloading an SDK.
-Changes to the installer require a musl CI build.
+`Scripts/test_ci_path_gate.sh` checks these result combinations, the shared path decisions, and the workflow's aggregate
+dependency and verifier arguments.
 
 ### Format Code
 

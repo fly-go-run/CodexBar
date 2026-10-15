@@ -1,12 +1,7 @@
 import Foundation
+import SQLite3
 import Testing
 @testable import CodexBarCore
-
-#if canImport(SQLite3)
-import SQLite3
-#elseif canImport(CSQLite3)
-import CSQLite3
-#endif
 
 extension CostUsageStoreReadWorkTests {
     @Test(arguments: [2, 16])

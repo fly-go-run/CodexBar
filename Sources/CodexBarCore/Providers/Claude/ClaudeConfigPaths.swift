@@ -37,13 +37,7 @@ public enum ClaudeConfigPaths {
         }
 
         let legacy = ownerHome.appendingPathComponent(".claude-swap-backup/sessions", isDirectory: true)
-        #if os(Linux)
-        let xdg = environment["XDG_DATA_HOME"].flatMap { $0.hasPrefix("/") ? URL(fileURLWithPath: $0) : nil }
-            ?? ownerHome.appendingPathComponent(".local/share", isDirectory: true)
-        let swapRoots = [legacy, xdg.appendingPathComponent("claude-swap/sessions", isDirectory: true)]
-        #else
         let swapRoots = [legacy]
-        #endif
         // cswap run stores profiles one level below sessions; shared-history projects may be symlinks.
         for root in swapRoots {
             let slots = (try? fileManager.contentsOfDirectory(

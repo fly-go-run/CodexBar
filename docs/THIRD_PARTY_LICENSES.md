@@ -9,7 +9,7 @@ read_when:
 
 Settings → About → Acknowledgements displays the full notices bundled in
 `Sources/CodexBarCore/Resources/Acknowledgements.json`. This generated resource ships with the app,
-widget and CLI. CLI and Linux desktop release archives also carry a readable `THIRD_PARTY_NOTICES` file.
+widget and CLI. CLI release archives also carry a readable `THIRD_PARTY_NOTICES` file.
 The desktop links system Qt libraries; it does not bundle Qt.
 
 This inventory covers SwiftPM and the vendored application sources. The static Linux SDK also
@@ -26,7 +26,7 @@ python3 Scripts/acknowledgements.py --verify-upstream
 
 The generator reads immutable revisions from both lockfiles, retrieves exact LICENSE and NOTICE files,
 and keeps their text and SHA-256 hashes. It includes Sparkle's external notices and ed25519 license,
-Swift Crypto's BoringSSL/Fiat and XKCP notices for Linux.
+Swift Crypto's BoringSSL/Fiat and XKCP notices.
 
 `make check` checks both lockfiles, required vendored notices and source-text hashes
 without network access. Adding a SwiftPM dependency requires adding its license source to the generator.

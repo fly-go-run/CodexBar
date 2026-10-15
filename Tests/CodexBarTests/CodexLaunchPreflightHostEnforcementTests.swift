@@ -2,7 +2,6 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
-#if os(macOS)
 struct CodexLaunchPreflightHostEnforcementTests {
     private typealias Host = CodexLaunchPreflight.HostEnforcement
 
@@ -77,4 +76,3 @@ struct CodexLaunchPreflightHostEnforcementTests {
         print("host gate bypass: requests=100 assessments=\(calls) signatureReads=\(signatureReads.total)")
     }
 }
-#endif

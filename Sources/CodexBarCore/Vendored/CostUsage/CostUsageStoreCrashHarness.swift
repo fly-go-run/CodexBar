@@ -1,10 +1,5 @@
-import Foundation
-
-#if canImport(Darwin)
 import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#endif
+import Foundation
 
 /// Crash-safety harness for the SQLite cost store. The `CodexBarCostStoreCrashProbe`
 /// executable drives these entry points so tests can SIGKILL a real process at a

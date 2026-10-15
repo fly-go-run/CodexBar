@@ -1,4 +1,3 @@
-#if os(macOS)
 import AppKit
 import Foundation
 import WebKit
@@ -709,5 +708,3 @@ private final class OffscreenWebViewHost {
             })
     }
 }
-
-#endif

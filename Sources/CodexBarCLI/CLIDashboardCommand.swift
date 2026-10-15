@@ -1,12 +1,6 @@
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
 import CodexBarCore
 import Commander
+import Darwin
 import Foundation
 
 struct DashboardOptions: CommanderParsable {

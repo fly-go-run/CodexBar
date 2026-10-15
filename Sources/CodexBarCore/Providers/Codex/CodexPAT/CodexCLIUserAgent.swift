@@ -28,13 +28,7 @@ enum CodexCLIUserAgent {
     }
 
     private static var platformName: String {
-        #if os(macOS)
         "Mac OS"
-        #elseif os(Linux)
-        "Linux"
-        #else
-        "Darwin"
-        #endif
     }
 
     private static var operatingSystemVersionString: String {

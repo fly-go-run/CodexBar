@@ -1,4 +1,3 @@
-#if os(macOS)
 import AppKit
 import Foundation
 import WebKit
@@ -105,4 +104,3 @@ public enum WebKitTeardown {
         UInt64(interval * 1_000_000_000)
     }
 }
-#endif

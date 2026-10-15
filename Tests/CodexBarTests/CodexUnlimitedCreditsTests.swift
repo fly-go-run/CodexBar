@@ -7,9 +7,7 @@ struct CodexUnlimitedCreditsTests {
     enum Route: CaseIterable {
         case oauth
         case pat
-        #if os(macOS)
         case dashboard
-        #endif
     }
 
     private struct Observation {
@@ -121,7 +119,6 @@ struct CodexUnlimitedCreditsTests {
                     accountId: "fixture-workspace",
                     email: "fixture@example.com",
                     planType: "business"))
-        #if os(macOS)
         case .dashboard:
             let response = try JSONDecoder().decode(CodexUsageResponse.self, from: data)
             let snapshot = OpenAIDashboardFetcher.snapshotByMergingAPI(
@@ -133,7 +130,6 @@ struct CodexUnlimitedCreditsTests {
                 primary: snapshot.primaryLimit,
                 credits: credits,
                 cost: CodexExtraUsageCost.providerCost(from: credits))
-        #endif
         }
         return Observation(primary: result.usage.primary, credits: result.credits, cost: result.usage.providerCost)
     }

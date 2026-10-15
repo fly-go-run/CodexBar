@@ -1,4 +1,3 @@
-#if os(macOS)
 import CoreGraphics
 import Foundation
 import WebKit
@@ -1278,39 +1277,3 @@ extension OpenAIDashboardFetcher {
         }
     }
 }
-
-#else
-import Foundation
-
-@MainActor
-public struct OpenAIDashboardFetcher {
-    public enum FetchError: LocalizedError {
-        case loginRequired
-        case noDashboardData(body: String)
-
-        public var errorDescription: String? {
-            switch self {
-            case .loginRequired:
-                "OpenAI web access requires login."
-            case let .noDashboardData(body):
-                "OpenAI dashboard data not found. Body sample: \(body.prefix(200))"
-            }
-        }
-    }
-
-    public init() {}
-
-    public func loadLatestDashboard(
-        accountEmail _: String?,
-        cacheScope _: CookieHeaderCache.Scope? = nil,
-        logger _: ((String) -> Void)? = nil,
-        debugDumpHTML _: Bool = false,
-        allowNavigationTimeoutRetry _: Bool = true,
-        timeout _: TimeInterval = 60,
-        previousSnapshot _: OpenAIDashboardSnapshot? = nil,
-        allowPageScrape _: Bool = true) async throws -> OpenAIDashboardSnapshot
-    {
-        throw FetchError.noDashboardData(body: "OpenAI web dashboard fetch is only supported on macOS.")
-    }
-}
-#endif

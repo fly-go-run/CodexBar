@@ -1,6 +1,4 @@
 import Foundation
-
-#if os(macOS)
 import os.lock
 
 public enum ClaudeOAuthRefreshFailureGate {
@@ -520,70 +518,3 @@ public enum ClaudeOAuthRefreshFailureGate {
         state.lastCredentialsRecheckAt = nil
     }
 }
-#else
-public enum ClaudeOAuthRefreshFailureGate {
-    public enum BlockStatus: Equatable, Sendable {
-        case terminal(reason: String?, failures: Int)
-        case transient(until: Date, failures: Int)
-    }
-
-    public static func shouldAttempt(
-        environment _: [String: String] = ProcessInfo.processInfo.environment,
-        now _: Date = Date(),
-        refreshTokenHash _: String? = nil) -> Bool
-    {
-        true
-    }
-
-    public static func currentBlockStatus(
-        environment _: [String: String] = ProcessInfo.processInfo.environment,
-        now _: Date = Date()) -> BlockStatus?
-    {
-        nil
-    }
-
-    public static func recordTerminalAuthFailure(
-        environment _: [String: String] = ProcessInfo.processInfo.environment,
-        now _: Date = Date(),
-        refreshTokenHash _: String? = nil) {}
-
-    public static func recordTransientFailure(
-        environment _: [String: String] = ProcessInfo.processInfo.environment,
-        now _: Date = Date(),
-        refreshTokenHash _: String? = nil) {}
-
-    public static func recordAuthFailure(
-        environment _: [String: String] = ProcessInfo.processInfo.environment,
-        now _: Date = Date()) {}
-
-    public static func recordSuccess(
-        environment _: [String: String] = ProcessInfo.processInfo.environment) {}
-
-    #if DEBUG
-    static func withFingerprintProviderOverrideForTesting<T>(
-        _ override: (() -> Any?)?,
-        operation: () throws -> T) rethrows -> T
-    {
-        try operation()
-    }
-
-    static func withEnvironmentFingerprintProviderOverrideForTesting<T>(
-        _ override: (([String: String]) -> Any?)?,
-        operation: () throws -> T) rethrows -> T
-    {
-        try operation()
-    }
-
-    static func withFingerprintProviderOverrideForTesting<T>(
-        _ override: (() -> Any?)?,
-        isolation _: isolated (any Actor)? = #isolation,
-        operation: () async throws -> T) async rethrows -> T
-    {
-        try await operation()
-    }
-
-    public static func resetInMemoryStateForTesting() {}
-    public static func resetForTesting() {}
-    #endif
-}
-#endif

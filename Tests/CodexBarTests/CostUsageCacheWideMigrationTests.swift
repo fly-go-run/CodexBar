@@ -2,7 +2,6 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
-#if canImport(SQLite3)
 @Suite(.serialized)
 struct CostUsageCacheWideMigrationTests {
     @Test
@@ -305,4 +304,3 @@ enum CacheWideMigrationCase: CaseIterable {
     case priorityMetadata
     case priorityTurns
 }
-#endif

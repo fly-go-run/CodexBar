@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 import WebKit
 
@@ -97,5 +96,3 @@ extension WKWebView {
         }
     }
 }
-
-#endif

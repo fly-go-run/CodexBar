@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 import SweetCookieKit
 
@@ -64,4 +63,3 @@ enum BrowserCookieProfiles {
         }
     }
 }
-#endif

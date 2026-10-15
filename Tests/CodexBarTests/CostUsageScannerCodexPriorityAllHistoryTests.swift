@@ -1,5 +1,4 @@
 import Foundation
-#if canImport(SQLite3)
 import SQLite3
 import Testing
 @testable import CodexBarCore
@@ -136,4 +135,3 @@ struct CostUsageScannerCodexPriorityAllHistoryTests {
             options: options)
     }
 }
-#endif

@@ -4,7 +4,6 @@ import Testing
 
 @Suite(.serialized)
 struct CookieHeaderCacheConditionalMutationTests {
-    #if os(macOS)
     @Test
     func `temporary keychain read permits fresh replacement when legacy state is unchanged`() {
         self.withIsolatedCookieCache {
@@ -51,8 +50,6 @@ struct CookieHeaderCacheConditionalMutationTests {
             #expect(CookieHeaderCache.load(provider: .claude)?.cookieHeader == "sessionKey=sk-ant-concurrent")
         }
     }
-
-    #endif
 
     @Test
     func `legacy clear failure still permits replacing the keychain entry`() {

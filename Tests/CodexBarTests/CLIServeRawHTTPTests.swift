@@ -1,10 +1,6 @@
+import Darwin
 import Foundation
 import Testing
-#if canImport(Darwin)
-import Darwin
-#else
-import Glibc
-#endif
 @testable import CodexBarCLI
 @testable import CodexBarCore
 
@@ -646,11 +642,7 @@ struct CLIServeRawHTTPTests {
     }
 
     private static func performRawExchange(port: UInt16, request: String) throws -> RawHTTPResponse {
-        #if canImport(Darwin)
         let streamType = SOCK_STREAM
-        #else
-        let streamType = Int32(SOCK_STREAM.rawValue)
-        #endif
         let fd = socket(AF_INET, streamType, 0)
         guard fd >= 0 else { throw RawHTTPExchangeError.connectFailed }
         defer { close(fd) }
@@ -660,9 +652,7 @@ struct CLIServeRawHTTPTests {
         setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size))
 
         var address = sockaddr_in()
-        #if canImport(Darwin)
         address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
-        #endif
         address.sin_family = sa_family_t(AF_INET)
         address.sin_port = port.bigEndian
         guard inet_pton(AF_INET, "127.0.0.1", &address.sin_addr) == 1 else {

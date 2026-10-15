@@ -1,6 +1,4 @@
-#if canImport(Darwin)
 import Darwin
-#endif
 import Foundation
 
 package final class RPCChildProcessInput: @unchecked Sendable {
@@ -10,10 +8,8 @@ package final class RPCChildProcessInput: @unchecked Sendable {
     private var isClosed = false
 
     package init() {
-        #if canImport(Darwin)
         // Keep broken pipes catchable instead of terminating the app with SIGPIPE.
         _ = fcntl(self.pipe.fileHandleForWriting.fileDescriptor, F_SETNOSIGPIPE, 1)
-        #endif
     }
 
     package func write(_ data: Data) throws {

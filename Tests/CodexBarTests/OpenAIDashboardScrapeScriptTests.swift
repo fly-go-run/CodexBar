@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 import Testing
 import WebKit
@@ -240,4 +239,3 @@ struct OpenAIDashboardScrapeScriptTests {
     </html>
     """
 }
-#endif

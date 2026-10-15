@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 import Testing
 @testable import CodexBarCore
@@ -275,4 +274,3 @@ struct OpenAIDashboardIdentityMergeTests {
         #expect(result.subscriptionRenewsAt == nil)
     }
 }
-#endif

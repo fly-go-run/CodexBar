@@ -3,7 +3,6 @@ import Testing
 @testable import CodexBarCore
 
 struct BrowserCookieOrderStatusStringTests {
-    #if os(macOS)
     @Test
     func `codex cookie import order keeps firefox ahead of extra chromium browsers`() {
         let order = ProviderDefaults.metadata[.codex]?.browserCookieOrder ?? Browser.defaultImportOrder
@@ -36,5 +35,4 @@ struct BrowserCookieOrderStatusStringTests {
         }
         #expect(violators.isEmpty, "orders missing Firefox release channels: \(violators)")
     }
-    #endif
 }

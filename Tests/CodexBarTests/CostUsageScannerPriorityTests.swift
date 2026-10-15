@@ -1,5 +1,4 @@
 import Foundation
-#if canImport(SQLite3)
 import Testing
 @testable import CodexBarCore
 
@@ -843,4 +842,3 @@ struct CostUsageScannerPriorityTests {
                 + #"{"type":"response.create","model":""# + model + #"","service_tier":"priority"}"#)
     }
 }
-#endif

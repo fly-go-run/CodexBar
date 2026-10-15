@@ -1,11 +1,7 @@
 import Foundation
+import SQLite3
 import Testing
 @testable import CodexBarCore
-#if canImport(SQLite3)
-import SQLite3
-#elseif canImport(CSQLite3)
-import CSQLite3
-#endif
 
 struct CodexProjectlessWorkspaceTests {
     @Test
@@ -120,7 +116,6 @@ struct CodexProjectlessWorkspaceTests {
         #expect(classified.path == mixed.path)
     }
 
-    #if canImport(SQLite3) || canImport(CSQLite3)
     @Test(arguments: [false, true])
     func `a null project id in an unregistered CLI folder still requires an explicit marker`(_ marked: Bool) throws {
         try Self.withHome { home in
@@ -388,7 +383,6 @@ struct CodexProjectlessWorkspaceTests {
         defer { sqlite3_close(handle) }
         #expect(sqlite3_exec(handle, sql, nil, nil, nil) == SQLITE_OK)
     }
-    #endif
 
     private static func withHome(_ body: (URL) throws -> Void) throws {
         let home = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

@@ -1,10 +1,8 @@
 import Foundation
-import Testing
-@testable import CodexBarCore
-
-#if os(macOS)
 import LocalAuthentication
 import Security
+import Testing
+@testable import CodexBarCore
 
 @Suite(ClaudeOAuthDefaultsFixtures())
 struct ClaudeExternalLoginFreshnessTests {
@@ -176,4 +174,3 @@ struct ClaudeExternalLoginFreshnessTests {
         }, operation: operation)
     }
 }
-#endif

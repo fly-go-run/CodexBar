@@ -1,4 +1,3 @@
-#if os(macOS)
 import AppKit
 import Testing
 @testable import CodexBarCore
@@ -21,4 +20,3 @@ struct WebKitTeardownTests {
         #expect(!WebKitTeardown.isScheduledForTesting(owner))
     }
 }
-#endif

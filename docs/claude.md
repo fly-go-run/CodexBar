@@ -267,14 +267,6 @@ the cookie import.
   2) Chrome/Chromium forks: `~/Library/Application Support/Google/Chrome/*/Cookies`
   3) Firefox: `~/Library/Application Support/Firefox/Profiles/*/cookies.sqlite`
 - Domain: `claude.ai`.
-- Linux: the web source supports an explicitly configured manual `sessionKey` cookie. Automatic browser import,
-  including Firefox import, remains unavailable. This enables the same API request path as macOS; it does not
-  bypass Cloudflare challenges, refresh Claude Code OAuth credentials, or guarantee that a browser session will
-  work outside the browser. Use the OAuth source when the web request is challenged.
-- Linux CLI Auto mode: an existing valid manual cookie makes Web eligible ahead of CLI after upgrading.
-  Web success returns without launching Claude Code; authentication rejection or a Cloudflare challenge falls
-  back to an available CLI using the existing Auto policy. Cancellation stops without launching the CLI.
-  Explicit Web mode does not fall back. Use explicit OAuth mode for passive polling that must not launch the CLI.
 - Cookie name required:
   - `sessionKey` (value prefix `sk-ant-...`).
 - Cached cookies: Keychain cache `com.steipete.codexbar.cache` (account `cookie.claude`, source + timestamp).
@@ -525,7 +517,7 @@ Model-scoped weekly-window proof (synthetic data, no real accounts or credential
 - Source roots:
   - Native Claude logs:
     - `$CLAUDE_CONFIG_DIR` selects one literal directory and uses `<root>/projects`; commas are part of its path.
-    - Also includes claude-swap session profiles at `~/.claude-swap-backup/sessions/<slot>-<label>/projects`. On Linux, also checks `$XDG_DATA_HOME/claude-swap/sessions` (default `~/.local/share/claude-swap/sessions`). Discovery examines only immediate positive-numbered slot directories and their `projects` child; it does not read credentials or run cswap.
+    - Also includes claude-swap session profiles at `~/.claude-swap-backup/sessions/<slot>-<label>/projects`. Discovery examines only immediate positive-numbered slot directories and their `projects` child; it does not read credentials or run cswap.
     - Fallback roots:
       - `~/.config/claude/projects`
       - `~/.claude/projects` (Claude Code and current Claude Desktop Code/Cowork CLI sessions)

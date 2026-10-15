@@ -1035,7 +1035,6 @@ struct ClaudeOAuthCredentialsStoreTests {
     }
 }
 
-#if os(macOS)
 extension ClaudeOAuthCredentialsStoreTests {
     private func withMissingCredentialsFile<T>(operation: () throws -> T) throws -> T {
         let tempDirectory = FileManager.default.temporaryDirectory
@@ -1246,4 +1245,3 @@ extension ClaudeOAuthCredentialsStoreTests {
         }
     }
 }
-#endif

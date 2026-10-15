@@ -74,8 +74,6 @@ CodexBar CLI tarballs are not produced by `Scripts/release.sh` itself. The GitHu
 
 - `CodexBarCLI-v<version>-macos-arm64.tar.gz`
 - `CodexBarCLI-v<version>-macos-x86_64.tar.gz`
-- `CodexBarCLI-v<version>-linux-aarch64.tar.gz`
-- `CodexBarCLI-v<version>-linux-x86_64.tar.gz`
 - matching `.sha256` files
 
 If the workflow fails only in `update-homebrew-tap` with GitHub API rate limiting, the CLI assets may already be uploaded. Verify assets live, then update `Formula/codexbar.rb` manually from the tarball checksums.
@@ -109,7 +107,7 @@ For Homebrew:
 ```bash
 shasum -a 256 CodexBar-macos-universal-<VERSION>.zip
 cd /Users/steipete/Projects/homebrew-tap
-python3 .github/scripts/update_formula.py --formula codexbar --tag v<VERSION> --repository steipete/CodexBar --artifact-template 'CodexBarCLI-{tag}-{target}.tar.gz' --target-aliases 'darwin_arm64=macos-arm64,darwin_amd64=macos-x86_64,linux_arm64=linux-aarch64,linux_amd64=linux-x86_64'
+python3 .github/scripts/update_formula.py --formula codexbar --tag v<VERSION> --repository steipete/CodexBar --artifact-template 'CodexBarCLI-{tag}-{target}.tar.gz' --target-aliases 'darwin_arm64=macos-arm64,darwin_amd64=macos-x86_64'
 brew fetch --cask --force --retry codexbar
 brew fetch --formula --force --retry steipete/tap/codexbar
 ```

@@ -1,7 +1,4 @@
 import Foundation
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
 /// Optional dates from Claude's authenticated subscription_details response, separate from quota resets.
 public struct ClaudeSubscriptionMetadata: Equatable, Sendable {

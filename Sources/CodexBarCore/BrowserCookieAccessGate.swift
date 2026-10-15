@@ -1,6 +1,4 @@
 import Foundation
-
-#if os(macOS)
 import os.lock
 import SweetCookieKit
 
@@ -418,45 +416,3 @@ extension BrowserCookieClient {
         }
     }
 }
-#else
-public enum BrowserCookieAccessGate {
-    public static func requiresKeychainPromptAcknowledgement(for browsers: [Browser]) -> Bool {
-        false
-    }
-
-    public static func shouldAttempt(_ browser: Browser, now: Date = Date()) -> Bool {
-        true
-    }
-
-    public static func withExplicitRetry<T>(
-        bypassingCooldown: Bool = false,
-        _ operation: () throws -> T) rethrows -> T
-    {
-        try operation()
-    }
-
-    public static func withExplicitRetry<T>(
-        bypassingCooldown: Bool = false,
-        isolation: isolated (any Actor)? = #isolation,
-        operation: () async throws -> T) async rethrows -> T
-    {
-        try await operation()
-    }
-
-    static func withDeniedBrowsersForTesting<T>(
-        _: [Browser],
-        isolation _: isolated (any Actor)? = #isolation,
-        operation: () async throws -> T) async rethrows -> T
-    {
-        try await operation()
-    }
-
-    public static func recordIfNeeded(_ error: Error, now: Date = Date(), afterInteractiveRetry: Bool = false) {}
-    public static func recordDenied(for browser: Browser, now: Date = Date()) {}
-    public static func hasActiveDenial(for browser: Browser, now: Date = Date()) -> Bool {
-        false
-    }
-
-    public static func resetForTesting() {}
-}
-#endif

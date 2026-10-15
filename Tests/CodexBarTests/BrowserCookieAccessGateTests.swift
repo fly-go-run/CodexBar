@@ -1,9 +1,7 @@
 import Foundation
+import SweetCookieKit
 import Testing
 @testable import CodexBarCore
-
-#if os(macOS)
-import SweetCookieKit
 
 /// Covers the background (non-user-initiated) branch of `BrowserCookieAccessGate.shouldAttempt`.
 /// Before the preflight was consulted, any scheduled refresh returned early, so an already-authorized
@@ -233,4 +231,3 @@ struct BrowserCookieAccessGateTests {
         #expect(records.isEmpty)
     }
 }
-#endif

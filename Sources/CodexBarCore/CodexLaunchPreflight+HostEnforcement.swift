@@ -1,4 +1,3 @@
-#if os(macOS)
 import Darwin
 import Foundation
 
@@ -50,4 +49,3 @@ extension CodexLaunchPreflight {
         }
     }
 }
-#endif

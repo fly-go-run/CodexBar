@@ -215,11 +215,9 @@ struct ClaudeCLISessionTests {
         let file = directory.appendingPathComponent(".codexbar-session-id")
         let persisted = try String(contentsOf: file, encoding: .utf8)
         #expect(persisted == first.uuidString.lowercased())
-        #if os(macOS) || os(Linux)
         let attributes = try FileManager.default.attributesOfItem(atPath: file.path)
         let permissions = try #require(attributes[.posixPermissions] as? NSNumber)
         #expect(permissions.intValue == 0o600)
-        #endif
         try "\n \(first.uuidString) \n".write(to: file, atomically: true, encoding: .utf8)
         #expect(ClaudeCLISession.loadOrCreateProbeSessionID(in: directory) == first)
     }

@@ -15,7 +15,6 @@ final class CostUsageClaudeArtifactWriter {
 
     init?(temporaryURL: URL, replacing url: URL) {
         var cloned = false
-        #if os(macOS)
         #if DEBUG
         let allowClone = !Self.disableCloningForTesting
         #else
@@ -35,7 +34,6 @@ final class CostUsageClaudeArtifactWriter {
                 }
             }
         }
-        #endif
         var descriptor: Int32 = -1
         if cloned {
             descriptor = open(temporaryURL.path, O_RDWR | O_NOFOLLOW)

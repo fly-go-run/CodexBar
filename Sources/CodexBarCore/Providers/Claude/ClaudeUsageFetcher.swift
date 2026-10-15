@@ -460,7 +460,6 @@ public struct ClaudeUsageFetcher: ClaudeUsageFetching, Sendable {
         }
 
         private func shouldPreserveOwnerCLIHandoff(_ error: ClaudeOAuthCredentialsError) -> Bool {
-            #if os(macOS)
             guard case .refreshDelegatedToClaudeCLI = error else { return false }
             #if DEBUG
             // The credentials-only test loader cannot provide source/owner provenance. Only the real repository
@@ -468,10 +467,6 @@ public struct ClaudeUsageFetcher: ClaudeUsageFetching, Sendable {
             guard ClaudeUsageFetcher.loadOAuthCredentialsOverride == nil else { return false }
             #endif
             return ProviderInteractionContext.current == .userInitiated
-            #else
-            _ = error
-            return false
-            #endif
         }
     }
 

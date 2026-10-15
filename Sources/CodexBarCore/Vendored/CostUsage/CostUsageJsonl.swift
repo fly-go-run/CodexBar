@@ -1,11 +1,5 @@
-import Foundation
-#if canImport(Darwin)
 import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
+import Foundation
 
 enum CostUsageJsonl {
     struct Line {
@@ -424,19 +418,11 @@ enum CostUsageJsonl {
                     guard let base = rawBuffer.bindMemory(to: UInt8.self).baseAddress else { return }
                     var segmentStart = 0
                     while segmentStart < rawBuffer.count {
-                        #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
                         guard let newline = memchr(
                             base.advanced(by: segmentStart),
                             0x0A,
                             rawBuffer.count - segmentStart) else { break }
                         let index = base.distance(to: newline.assumingMemoryBound(to: UInt8.self))
-                        #else
-                        var index = segmentStart
-                        while index < rawBuffer.count, base[index] != 0x0A {
-                            index += 1
-                        }
-                        guard index < rawBuffer.count else { break }
-                        #endif
                         // A negative decoded line count can keep tail state alive across the flush.
                         if lineBytes < 0 || !jsonTailState.canSkipTerminatedSpanUpdates(count: index - segmentStart) {
                             for byteIndex in segmentStart..<index {

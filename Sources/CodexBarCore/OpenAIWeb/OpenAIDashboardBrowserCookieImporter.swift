@@ -1,8 +1,6 @@
 import Foundation
-#if os(macOS)
 import SweetCookieKit
 import WebKit
-#endif
 
 @MainActor
 // swiftlint:disable:next type_body_length
@@ -70,7 +68,6 @@ public struct OpenAIDashboardBrowserCookieImporter {
         }
     }
 
-    #if os(macOS)
     public init(browserDetection: BrowserDetection) {
         self.browserDetection = browserDetection
     }
@@ -964,29 +961,4 @@ public struct OpenAIDashboardBrowserCookieImporter {
         if parts.isEmpty { return "no key cookies detected" }
         return parts.joined(separator: ", ")
     }
-    #else
-    public init() {}
-
-    public func importBestCookies(
-        intoAccountEmail _: String?,
-        allowAnyAccount _: Bool = false,
-        preferCachedCookieHeader _: Bool = true,
-        cacheScope _: CookieHeaderCache.Scope? = nil,
-        deadline _: Date? = nil,
-        logger _: ((String) -> Void)? = nil) async throws -> ImportResult
-    {
-        throw ImportError.browserAccessDenied(details: "OpenAI web cookie import is only supported on macOS.")
-    }
-
-    public func importManualCookies(
-        cookieHeader _: String,
-        intoAccountEmail _: String?,
-        allowAnyAccount _: Bool = false,
-        cacheScope _: CookieHeaderCache.Scope? = nil,
-        deadline _: Date? = nil,
-        logger _: ((String) -> Void)? = nil) async throws -> ImportResult
-    {
-        throw ImportError.browserAccessDenied(details: "OpenAI web cookie import is only supported on macOS.")
-    }
-    #endif
 }

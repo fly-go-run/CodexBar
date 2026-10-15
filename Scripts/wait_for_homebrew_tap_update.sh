@@ -197,9 +197,7 @@ verify_tap_contents() {
         content_matches=true
         for asset in \
           macos-arm64 \
-          macos-x86_64 \
-          linux-aarch64 \
-          linux-x86_64
+          macos-x86_64
         do
           if ! grep -Fq \
             "releases/download/v#{version}/CodexBarCLI-v#{version}-${asset}.tar.gz" \

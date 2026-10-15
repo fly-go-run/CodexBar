@@ -1,19 +1,6 @@
-import Foundation
-#if canImport(Darwin)
 import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
-#if os(macOS)
+import Foundation
 import Security
-#endif
-
-#if os(Linux)
-@_silgen_name("pipe2")
-private func linuxPipe2(_ pipeDescriptors: UnsafeMutablePointer<Int32>, _ flags: Int32) -> Int32
-#endif
 
 public enum PathPurpose: Hashable, Sendable {
     case rpc
@@ -181,7 +168,6 @@ public enum BinaryLocator {
     /// Well-known installation paths for the signed Codex CLI bundled with current and legacy desktop apps.
     /// Keep these after PATH lookups, but use them as a safe fallback when a PATH shim is blocked.
     static func codexWellKnownPaths(home: String) -> [String] {
-        #if os(macOS)
         [
             "\(home)/Applications/ChatGPT.app/Contents/Resources/codex",
             "\(home)/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
@@ -190,9 +176,6 @@ public enum BinaryLocator {
             "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
             "/Applications/Codex.app/Contents/Resources/codex",
         ]
-        #else
-        []
-        #endif
     }
 
     public static func resolveGeminiBinary(
@@ -469,7 +452,6 @@ public enum CodexLaunchPreflight {
         fileManager: FileManager = .default,
         environment: [String: String] = ProcessInfo.processInfo.environment) -> Bool
     {
-        #if os(macOS)
         self.isLaunchCandidateAllowed(
             path: path,
             fileManager: fileManager,
@@ -482,14 +464,8 @@ public enum CodexLaunchPreflight {
                     self.nodePackageResolution(wrapper: wrapper, environment: environment, fileManager: manager)
                 }
             })
-        #else
-        _ = path
-        _ = fileManager
-        return true
-        #endif
     }
 
-    #if os(macOS)
     // Keep each security boundary injectable so preflight tests never inspect or launch host binaries.
     // swiftlint:disable:next function_parameter_count
     static func isLaunchCandidateAllowed(
@@ -782,15 +758,10 @@ public enum CodexLaunchPreflight {
             }
             .joined(separator: "\n")
     }
-    #endif
 }
 
 public enum ShellCommandLocator {
-    #if canImport(Darwin)
     private static let shellSpawnFlags = Int16(POSIX_SPAWN_SETSID | POSIX_SPAWN_CLOEXEC_DEFAULT)
-    #else
-    private static let shellSpawnFlags: Int16 = 0x80 // glibc/musl POSIX_SPAWN_SETSID.
-    #endif
     private static let shellSpawnLock = NSLock()
 
     static func test_runShellCommand(
@@ -858,12 +829,6 @@ public enum ShellCommandLocator {
 
     private static func makeCloseOnExecPipe() -> (read: Int32, write: Int32)? {
         var fds: (read: Int32, write: Int32) = (-1, -1)
-        #if os(Linux)
-        // Glibc and Musl export pipe2, but their Swift modules do not consistently declare it.
-        guard withUnsafeMutablePointer(to: &fds, {
-            $0.withMemoryRebound(to: Int32.self, capacity: 2) { linuxPipe2($0, O_CLOEXEC) == 0 }
-        }) else { return nil }
-        #else
         guard withUnsafeMutablePointer(to: &fds, {
             $0.withMemoryRebound(to: Int32.self, capacity: 2) { pipe($0) == 0 }
         }) else { return nil }
@@ -876,7 +841,6 @@ public enum ShellCommandLocator {
                 return nil
             }
         }
-        #endif
         return fds
     }
 
@@ -916,11 +880,7 @@ public enum ShellCommandLocator {
         // fds 1 and 2, and close every pipe fd in the child.  The init pattern
         // differs between platforms because the typedef is an opaque pointer on
         // Darwin and a struct on Linux C modules.
-        #if canImport(Darwin)
         var fileActions: posix_spawn_file_actions_t?
-        #else
-        var fileActions = posix_spawn_file_actions_t()
-        #endif
         guard posix_spawn_file_actions_init(&fileActions) == 0 else {
             close(stdoutFds.read); close(stdoutFds.write)
             close(stderrFds.read); close(stderrFds.write)
@@ -938,11 +898,7 @@ public enum ShellCommandLocator {
         // Build attributes: detach the child into a new session before exec. This
         // prevents interactive shell startup from changing the caller's foreground
         // process group while retaining a stable process group for cleanup.
-        #if canImport(Darwin)
         var attr: posix_spawnattr_t?
-        #else
-        var attr = posix_spawnattr_t()
-        #endif
         guard posix_spawnattr_init(&attr) == 0 else {
             close(stdoutFds.read); close(stdoutFds.write)
             close(stderrFds.read); close(stderrFds.write)
@@ -1334,7 +1290,6 @@ enum ExecutableLocation {
             return executableURL
         }
 
-        #if canImport(Darwin)
         var size: UInt32 = 0
         guard _NSGetExecutablePath(nil, &size) != 0 else { return nil }
         var buffer = [Int8](repeating: 0, count: Int(size))
@@ -1342,12 +1297,5 @@ enum ExecutableLocation {
         let pathBytes = buffer.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }
         guard let path = String(bytes: pathBytes, encoding: .utf8) else { return nil }
         return URL(fileURLWithPath: path)
-        #elseif os(Linux)
-        let path = "/proc/self/exe"
-        guard FileManager.default.fileExists(atPath: path) else { return nil }
-        return URL(fileURLWithPath: path)
-        #else
-        return nil
-        #endif
     }
 }

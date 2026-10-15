@@ -161,13 +161,8 @@ struct CLICommonOptions: CommanderParsable {
 }
 
 struct CLIUsageFetchOptions: CommanderParsable {
-    private static let sourceHelp: String = {
-        #if os(macOS)
+    private static let sourceHelp: String =
         "Data source: auto | web | cli | oauth | api (auto behavior is provider-specific)"
-        #else
-        "Data source: auto | web | cli | oauth | api (web/auto are macOS only for web-capable providers)"
-        #endif
-    }()
 
     @Option(
         name: .long("provider"),

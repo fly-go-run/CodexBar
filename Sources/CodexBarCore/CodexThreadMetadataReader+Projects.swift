@@ -1,9 +1,5 @@
-#if canImport(SQLite3)
-import SQLite3
-#elseif canImport(CSQLite3)
-import CSQLite3
-#endif
 import Foundation
+import SQLite3
 
 extension CodexThreadMetadataReader {
     typealias ProjectMetadata = (names: [String: String], ownedPaths: Set<String>, assignedSessionIDs: Set<String>)
@@ -12,7 +8,6 @@ extension CodexThreadMetadataReader {
     func projectMetadata(for paths: Set<String>, sessionIDs: Set<String> = []) -> ProjectMetadata {
         let fallback: ProjectMetadata = ([:], paths, sessionIDs)
         guard !paths.isEmpty || !sessionIDs.isEmpty else { return fallback }
-        #if canImport(SQLite3) || canImport(CSQLite3)
         var handle: OpaquePointer?
         guard sqlite3_open_v2(self.databaseURL.path, &handle, SQLITE_OPEN_READONLY, nil) == SQLITE_OK,
               let database = handle
@@ -41,12 +36,8 @@ extension CodexThreadMetadataReader {
             names[path] = first.name
         }
         return (names, ownedPaths, Self.assignedProjectSessionIDs(database, for: sessionIDs) ?? sessionIDs)
-        #else
-        return fallback
-        #endif
     }
 
-    #if canImport(SQLite3) || canImport(CSQLite3)
     private static func projectRoots(_ database: OpaquePointer) -> [(id: String?, name: String?, path: String)]? {
         let query = """
         SELECT p.id, p.name, r.path FROM project_roots r
@@ -116,5 +107,4 @@ extension CodexThreadMetadataReader {
         }
         return result
     }
-    #endif
 }

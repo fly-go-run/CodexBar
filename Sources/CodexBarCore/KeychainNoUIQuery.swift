@@ -1,7 +1,5 @@
-import Foundation
-
-#if os(macOS)
 import Darwin
+import Foundation
 import LocalAuthentication
 import Security
 
@@ -38,4 +36,3 @@ enum KeychainNoUIQuery {
         return (valuePointer.pointee as String?) ?? "u_AuthUIF"
     }
 }
-#endif

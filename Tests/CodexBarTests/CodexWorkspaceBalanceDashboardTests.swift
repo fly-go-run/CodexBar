@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 import Testing
 @testable import CodexBarCore
@@ -210,4 +209,3 @@ struct CodexWorkspaceBalanceDashboardTests {
         #expect(decodedLegacy.toCreditsSnapshot()?.balanceIsWorkspace == false)
     }
 }
-#endif

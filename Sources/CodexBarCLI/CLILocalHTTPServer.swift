@@ -1,11 +1,5 @@
-import Foundation
-#if canImport(Darwin)
 import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
+import Foundation
 
 private let requestReadTimeoutMilliseconds: Int32 = 5000
 /// Ceiling on how long one client may take to deliver a complete request head.
@@ -328,13 +322,7 @@ final class CLILocalHTTPServer: @unchecked Sendable {
     func run(onListening: @Sendable () -> Void = {}) async throws {
         ignoreSIGPIPE()
 
-        #if canImport(Darwin)
         let streamType = SOCK_STREAM
-        #elseif canImport(Glibc)
-        let streamType = Int32(SOCK_STREAM.rawValue)
-        #elseif canImport(Musl)
-        let streamType = Int32(SOCK_STREAM)
-        #endif
 
         let serverFD = socket(AF_INET, streamType, 0)
         guard serverFD >= 0 else {
@@ -356,9 +344,7 @@ final class CLILocalHTTPServer: @unchecked Sendable {
             socklen_t(MemoryLayout<Int32>.size))
 
         var address = sockaddr_in()
-        #if canImport(Darwin)
         address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
-        #endif
         address.sin_family = sa_family_t(AF_INET)
         address.sin_port = self.port.bigEndian
         guard inet_pton(AF_INET, self.host, &address.sin_addr) == 1 else {
@@ -565,29 +551,13 @@ private func waitForReadable(_ fd: Int32, timeoutMilliseconds: Int32) -> Bool {
 }
 
 private func sendNoSignalFlags() -> Int32 {
-    #if canImport(Darwin)
     0
-    #else
-    Int32(MSG_NOSIGNAL)
-    #endif
 }
 
 private func ignoreSIGPIPE() {
-    #if canImport(Darwin)
     _ = Darwin.signal(SIGPIPE, SIG_IGN)
-    #elseif canImport(Glibc)
-    _ = Glibc.signal(SIGPIPE, SIG_IGN)
-    #elseif canImport(Musl)
-    _ = Musl.signal(SIGPIPE, SIG_IGN)
-    #endif
 }
 
 private func closeSocket(_ fd: Int32) {
-    #if canImport(Darwin)
     Darwin.close(fd)
-    #elseif canImport(Glibc)
-    Glibc.close(fd)
-    #elseif canImport(Musl)
-    Musl.close(fd)
-    #endif
 }

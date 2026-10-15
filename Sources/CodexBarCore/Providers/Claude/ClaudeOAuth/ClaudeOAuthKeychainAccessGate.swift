@@ -1,6 +1,4 @@
 import Foundation
-
-#if os(macOS)
 import os.lock
 
 public enum ClaudeOAuthKeychainAccessGate {
@@ -182,30 +180,3 @@ public enum ClaudeOAuthKeychainAccessGate {
         }
     }
 }
-#else
-public enum ClaudeOAuthKeychainAccessGate {
-    public static func shouldAllowPrompt(now _: Date = Date()) -> Bool {
-        true
-    }
-
-    public static func recordDenied(now _: Date = Date()) {}
-
-    static func promptAttemptGeneration() -> UInt64 {
-        0
-    }
-
-    static func recordPromptAttemptCompleted() -> UInt64 {
-        0
-    }
-
-    public static func clearDenied(now _: Date = Date()) -> Bool {
-        false
-    }
-
-    #if DEBUG
-    public static func resetForTesting() {}
-
-    public static func resetInMemoryForTesting() {}
-    #endif
-}
-#endif

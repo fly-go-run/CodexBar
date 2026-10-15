@@ -154,10 +154,6 @@ public enum ProviderDefaults {
 
 public enum ProviderBrowserCookieDefaults {
     public static var defaultImportOrder: BrowserCookieImportOrder? {
-        #if os(macOS)
         Browser.defaultImportOrder
-        #else
-        nil
-        #endif
     }
 }

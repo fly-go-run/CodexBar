@@ -7,7 +7,7 @@ read_when:
 
 # Agent Sessions
 
-CodexBar can list live Codex and Claude Code sessions on this Mac and on macOS or Linux hosts reachable over SSH.
+CodexBar can list live Codex and Claude Code sessions on this Mac and on macOS hosts reachable over SSH.
 
 Enable **Settings → Menu → Agent sessions**. Local sessions refresh every 30 seconds. Remote sessions refresh every 60 seconds and whenever the menu opens. Tailscale discovery includes online macOS and Linux peers; add extra SSH destinations as a comma-separated list, such as `user@host`.
 

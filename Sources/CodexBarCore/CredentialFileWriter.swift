@@ -1,10 +1,4 @@
-#if canImport(Darwin)
 import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
 import Foundation
 
 /// Writes credential-bearing files (session tokens, cookies) with owner-only (`0600`) permissions

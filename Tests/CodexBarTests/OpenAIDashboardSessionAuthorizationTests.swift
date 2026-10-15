@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 import Testing
 @testable import CodexBarCore
@@ -340,4 +339,3 @@ struct OpenAIDashboardSessionAuthorizationTests {
         return (Data(payload.utf8), response)
     }
 }
-#endif

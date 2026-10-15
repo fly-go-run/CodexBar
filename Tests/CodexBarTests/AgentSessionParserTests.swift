@@ -71,7 +71,6 @@ struct AgentSessionParserTests {
     }
 }
 
-#if os(macOS)
 struct ChatGPTCodexProcessTrustTests {
     private static let nested =
         "/Applications/ChatGPT.app/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex"
@@ -175,4 +174,3 @@ struct ChatGPTCodexProcessTrustTests {
         }))
     }
 }
-#endif

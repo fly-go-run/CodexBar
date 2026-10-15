@@ -1,11 +1,5 @@
-import Foundation
-#if canImport(Musl)
-import Musl
-#elseif canImport(Glibc)
-import Glibc
-#else
 import Darwin
-#endif
+import Foundation
 
 extension CostUsageScanner {
     static func codexReportDayKeys(cache: CostUsageCache, range: CostUsageDayRange) -> [String] {
@@ -436,13 +430,8 @@ extension CostUsageScanner {
         guard path.withCString({ fstatat(AT_FDCWD, $0, &info, 0) }) == 0 else {
             return CodexFileMetadata(path: path, mtimeUnixMs: 0, size: 0, fileId: nil)
         }
-        #if os(Linux)
-        let modifiedSeconds = Int64(info.st_mtim.tv_sec)
-        let modifiedNanoseconds = Int64(info.st_mtim.tv_nsec)
-        #else
         let modifiedSeconds = Int64(info.st_mtimespec.tv_sec)
         let modifiedNanoseconds = Int64(info.st_mtimespec.tv_nsec)
-        #endif
         return CodexFileMetadata(
             path: path,
             mtimeUnixMs: modifiedSeconds * 1000 + modifiedNanoseconds / 1_000_000,

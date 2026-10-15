@@ -2,7 +2,6 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
-#if os(macOS)
 @Suite(.serialized)
 struct ClaudeOAuthKeychainPreAlertGateTests {
     @Test
@@ -93,4 +92,3 @@ struct ClaudeOAuthKeychainPreAlertGateTests {
                 present: { true }) == false)
     }
 }
-#endif

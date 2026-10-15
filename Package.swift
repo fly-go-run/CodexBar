@@ -10,14 +10,6 @@ let sweetCookieKitDependency: Package.Dependency =
     ? .package(path: sweetCookieKitPath)
     : .package(url: "https://github.com/steipete/SweetCookieKit", from: "0.5.7")
 
-let sqlite3LibDir = ProcessInfo.processInfo.environment["CODEXBAR_SQLITE3_LIB_DIR"]?
-    .trimmingCharacters(in: .whitespacesAndNewlines)
-let sqlite3LinkerSettings: [LinkerSetting] = if let sqlite3LibDir, !sqlite3LibDir.isEmpty {
-    [.unsafeFlags(["-L\(sqlite3LibDir)"], .when(platforms: [.linux]))]
-} else {
-    []
-}
-
 let package = Package(
     name: "CodexBar",
     defaultLocalization: "en",
@@ -51,17 +43,9 @@ let package = Package(
     ],
     targets: {
         var targets: [Target] = [
-            // Both glibc and static-musl CLI builds use this target; the module map supplies sqlite3 linkage.
-            .systemLibrary(
-                name: "CSQLite3",
-                providers: [
-                    .apt(["libsqlite3-dev"]),
-                    .brew(["sqlite3"]),
-                ]),
             .target(
                 name: "CodexBarCore",
                 dependencies: [
-                    .target(name: "CSQLite3", condition: .when(platforms: [.linux])),
                     .product(name: "Crypto", package: "swift-crypto"),
                     .product(name: "Logging", package: "swift-log"),
                     .product(name: "SweetCookieKit", package: "SweetCookieKit"),
@@ -71,8 +55,7 @@ let package = Package(
                 ],
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
-                ],
-                linkerSettings: sqlite3LinkerSettings),
+                ]),
             .executableTarget(
                 name: "CodexBarCLI",
                 dependencies: [
@@ -83,8 +66,7 @@ let package = Package(
                 path: "Sources/CodexBarCLI",
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
-                ],
-                linkerSettings: sqlite3LinkerSettings),
+                ]),
             // Crash-test subprocess: tests SIGKILL it mid-save to prove the cost store's
             // save cycle is atomic. Not shipped; built only as a test dependency.
             .executableTarget(
@@ -93,8 +75,7 @@ let package = Package(
                 path: "Sources/CodexBarCostStoreCrashProbe",
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
-                ],
-                linkerSettings: sqlite3LinkerSettings),
+                ]),
             // Sole owner of the adaptive refresh decision table. Package-internal; not published as a library product.
             .target(
                 name: "AdaptiveRefreshCore",
@@ -102,18 +83,6 @@ let package = Package(
                 path: "Sources/AdaptiveRefreshCore",
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
-                ]),
-            .testTarget(
-                name: "CodexBarLinuxTests",
-                dependencies: [
-                    "CodexBarCore",
-                    "CodexBarCLI",
-                    .target(name: "CSQLite3", condition: .when(platforms: [.linux])),
-                ],
-                path: "TestsLinux",
-                swiftSettings: [
-                    .enableUpcomingFeature("StrictConcurrency"),
-                    .enableExperimentalFeature("SwiftTesting"),
                 ]),
         ]
 

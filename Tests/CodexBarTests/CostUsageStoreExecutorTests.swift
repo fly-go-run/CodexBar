@@ -1,13 +1,8 @@
 import Dispatch
 import Foundation
+import SQLite3
 import Testing
 @testable import CodexBarCore
-
-#if canImport(SQLite3)
-import SQLite3
-#elseif canImport(CSQLite3)
-import CSQLite3
-#endif
 
 struct CostUsageStoreExecutorTests {
     @Test(.timeLimit(.minutes(2)))
@@ -136,13 +131,11 @@ extension CostUsageStoreExecutorTests {
         try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: real)
         let aliases: [URL] = {
             var paths = [real, alias, alias.appendingPathComponent("child/.."), real.resolvingSymlinksInPath()]
-            #if canImport(Darwin)
             if real.path.hasPrefix("/private/var/") {
                 paths.append(URL(fileURLWithPath: String(real.path.dropFirst("/private".count))))
             } else if real.path.hasPrefix("/var/") {
                 paths.append(URL(fileURLWithPath: "/private" + real.path))
             }
-            #endif
             return paths
         }()
         let stores = await withTaskGroup(of: CostUsageStore.self) { group in

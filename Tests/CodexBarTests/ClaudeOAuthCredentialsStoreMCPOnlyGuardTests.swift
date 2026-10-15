@@ -2,7 +2,6 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
-#if os(macOS)
 @Suite(.serialized)
 struct ClaudeOAuthCredentialsStoreMCPOnlyGuardTests {
     @Test
@@ -112,4 +111,3 @@ struct ClaudeOAuthCredentialsStoreMCPOnlyGuardTests {
         return Data(json.utf8)
     }
 }
-#endif

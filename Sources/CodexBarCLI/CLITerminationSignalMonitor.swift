@@ -1,13 +1,7 @@
 import CodexBarCore
+import Darwin
 import Dispatch
 import Foundation
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
 
 private func handleCLITerminationSignal(_: Int32) {}
 
@@ -58,22 +52,10 @@ final class CLITerminationSignalMonitor: @unchecked Sendable {
     }
 
     private static func installCaptureHandler(for signalNumber: Int32) {
-        #if canImport(Darwin)
         _ = Darwin.signal(signalNumber, handleCLITerminationSignal)
-        #elseif canImport(Glibc)
-        _ = Glibc.signal(signalNumber, handleCLITerminationSignal)
-        #elseif canImport(Musl)
-        _ = Musl.signal(signalNumber, handleCLITerminationSignal)
-        #endif
     }
 
     private static func restoreDefaultHandler(for signalNumber: Int32) {
-        #if canImport(Darwin)
         _ = Darwin.signal(signalNumber, SIG_DFL)
-        #elseif canImport(Glibc)
-        _ = Glibc.signal(signalNumber, SIG_DFL)
-        #elseif canImport(Musl)
-        _ = Musl.signal(signalNumber, SIG_DFL)
-        #endif
     }
 }

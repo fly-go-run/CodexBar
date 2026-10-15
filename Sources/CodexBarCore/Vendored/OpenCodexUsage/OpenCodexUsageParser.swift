@@ -1,15 +1,5 @@
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
-#if canImport(CryptoKit)
 import CryptoKit
-#else
-import Crypto
-#endif
+import Darwin
 import Foundation
 
 public enum OpenCodexUsageParser {
@@ -211,7 +201,6 @@ public enum OpenCodexUsageParser {
     }
 
     private static func newlineOffsets(in data: Data) -> [Int] {
-        #if canImport(Darwin) || canImport(Glibc) || canImport(Musl)
         let scanned: [Int]? = data.withUnsafeBytes { rawBuffer in
             guard let baseAddress = rawBuffer.baseAddress else { return nil }
             let count = rawBuffer.count
@@ -235,7 +224,6 @@ public enum OpenCodexUsageParser {
         if let scanned {
             return scanned
         }
-        #endif
         var offsets: [Int] = []
         var index = data.startIndex
         while index < data.endIndex {

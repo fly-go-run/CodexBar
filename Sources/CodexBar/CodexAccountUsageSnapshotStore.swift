@@ -207,11 +207,9 @@ struct FileCodexAccountUsageSnapshotStore: CodexAccountUsageSnapshotStoring, @un
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
             try encoder.encode(payload).write(to: self.fileURL, options: [.atomic])
-            #if os(macOS)
             try self.fileManager.setAttributes([
                 .posixPermissions: NSNumber(value: Int16(0o600)),
             ], ofItemAtPath: self.fileURL.path)
-            #endif
         } catch {
             // Snapshot hydration is best-effort; never make menu refresh fail because disk cache failed.
         }

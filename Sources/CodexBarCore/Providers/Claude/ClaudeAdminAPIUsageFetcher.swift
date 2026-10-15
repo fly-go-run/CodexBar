@@ -1,7 +1,4 @@
 import Foundation
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
 public enum ClaudeAdminAPIUsageError: LocalizedError, Sendable, Equatable {
     case missingCredentials

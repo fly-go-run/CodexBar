@@ -1,12 +1,7 @@
 import Foundation
+import SQLite3
 import Testing
 @testable import CodexBarCore
-
-#if canImport(SQLite3)
-import SQLite3
-#elseif canImport(CSQLite3)
-import CSQLite3
-#endif
 
 /// Adversarial failure injection for the SQLite cost-usage store: constraint failures,
 /// disk-full class errors, mid-file corruption, sidecar (-wal/-shm) damage, schema

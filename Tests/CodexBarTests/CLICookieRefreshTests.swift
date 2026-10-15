@@ -1,9 +1,7 @@
 import Commander
 import Foundation
-import Testing
-#if os(macOS)
 import SweetCookieKit
-#endif
+import Testing
 @testable import CodexBarCLI
 @testable import CodexBarCore
 
@@ -20,8 +18,4 @@ struct CLICookieRefreshTests {
         #expect(parsed.flags.contains("allowKeychainPrompt"))
         #expect(parsed.flags.contains("jsonShortcut"))
     }
-
-    #if os(macOS)
-
-    #endif
 }

@@ -1,4 +1,3 @@
-#if os(macOS)
 /// Cheap dashboard readiness probe. Returns flags only and avoids whole-document rendered text.
 let openAIDashboardReadinessScript = """
 
@@ -148,4 +147,3 @@ let openAIDashboardReadinessScript = """
     })();
 
 """
-#endif

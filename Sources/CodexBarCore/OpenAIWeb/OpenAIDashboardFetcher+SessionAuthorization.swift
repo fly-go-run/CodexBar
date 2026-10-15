@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 
 extension OpenAIDashboardFetcher {
@@ -128,4 +127,3 @@ extension OpenAIDashboardFetcher {
         return session
     }
 }
-#endif

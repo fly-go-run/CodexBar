@@ -2,7 +2,6 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
-#if os(macOS)
 @Suite(.serialized)
 struct ClaudeOAuthFetchStrategyProfileRoutingTests {
     private struct StubClaudeFetcher: ClaudeUsageFetching {
@@ -93,4 +92,3 @@ struct ClaudeOAuthFetchStrategyProfileRoutingTests {
         """.utf8)
     }
 }
-#endif

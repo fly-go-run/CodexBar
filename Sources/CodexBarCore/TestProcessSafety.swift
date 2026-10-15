@@ -8,12 +8,7 @@ package enum TestProcessSafety {
         {
             return true
         }
-        #if os(macOS)
         return Bundle.allBundles.contains { $0.bundlePath.hasSuffix(".xctest") }
-        #else
-        // Enumerating Bundle.allBundles can crash swift-corelibs-foundation.
-        return Bundle.main.executableURL?.path.hasSuffix(".xctest") ?? false
-        #endif
     }
 
     package static func isRunningUnderTests(

@@ -2,10 +2,6 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
-
 @Suite(CodexCredentialFixtures())
 struct CodexPATTests {
     @Test

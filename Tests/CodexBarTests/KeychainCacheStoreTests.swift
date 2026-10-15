@@ -166,7 +166,6 @@ struct KeychainCacheStoreTests {
         #expect(keys == [cookieA, scopedCookieA])
     }
 
-    #if os(macOS)
     @Test
     func `unsafe cache ACL remains unavailable without interaction`() {
         let service = "cache-preflight-\(UUID().uuidString)"
@@ -634,5 +633,4 @@ struct KeychainCacheStoreTests {
         #expect(exported != nil)
         #expect(exported.map { String(cString: $0) } == "1")
     }
-    #endif
 }

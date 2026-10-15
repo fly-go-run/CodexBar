@@ -1,11 +1,6 @@
 import Dispatch
 import Foundation
-
-#if canImport(SQLite3)
 import SQLite3
-#elseif canImport(CSQLite3)
-import CSQLite3
-#endif
 
 package enum CostUsageStoreExecutorTestControl {
     package static let suppressCurrentContextArgument = "--cost-store-suppress-current-context-for-testing"
@@ -122,6 +117,7 @@ actor CostUsageStore {
         parserHash: CodexParserHash.value)
     static let cacheGeneration = "sqlite:\(CostUsageStore.schemaVersion)"
     static let compatiblePredecessorParserHashes: Set<String> = [
+        "73875b763abeaf9b", // Linux support removal leaves macOS Codex semantics unchanged.
         "3f88178bf03ad704", // Provider trimming and Codex Workspaces removal leave native Codex semantics unchanged.
         "fc698834d6329beb", // Opt-in request observation defaults to nil; saved rows and cursors are unchanged.
         "f406dae284de4a55", // Revision 13 reparses rows to record the session creator account for Auto-review.

@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 import Security
 import Testing
@@ -279,4 +278,3 @@ struct ClaudeOAuthPromptCoalescingTests {
         }
     }
 }
-#endif

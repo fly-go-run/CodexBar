@@ -70,11 +70,9 @@ public struct CodexOpenAIWorkspaceIdentityCache: @unchecked Sendable {
     }
 
     private func applySecurePermissionsIfNeeded() throws {
-        #if os(macOS)
         try self.fileManager.setAttributes([
             .posixPermissions: NSNumber(value: Int16(0o600)),
         ], ofItemAtPath: self.fileURL.path)
-        #endif
     }
 
     public static func defaultURL() -> URL {

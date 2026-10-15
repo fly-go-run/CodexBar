@@ -4,7 +4,6 @@ import SweetCookieKit
 import Testing
 @testable import CodexBarCore
 
-#if os(macOS)
 @Suite(.serialized)
 struct ClaudeWebBrowserFallbackTests {
     @Test
@@ -58,4 +57,3 @@ struct ClaudeWebBrowserFallbackTests {
         #expect(sessionInfo.sourceLabel == "Safari")
     }
 }
-#endif

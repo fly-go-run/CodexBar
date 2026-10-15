@@ -1,9 +1,5 @@
 import Foundation
 
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
-
 public struct CodexPATWhoami: Equatable, Sendable {
     public let accountId: String?
     public let email: String?

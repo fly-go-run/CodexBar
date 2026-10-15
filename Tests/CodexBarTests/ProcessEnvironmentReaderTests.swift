@@ -47,35 +47,11 @@ struct ProcessEnvironmentReaderTests {
     }
 
     @Test
-    func `Linux environment fixtures distinguish empty missing truncated and oversized reads`() throws {
-        let procRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("ProcessEnvironmentReaderTests-\(UUID().uuidString)", isDirectory: true)
-        let processRoot = procRoot.appendingPathComponent("101", isDirectory: true)
-        try FileManager.default.createDirectory(at: processRoot, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: procRoot) }
-        let file = processRoot.appendingPathComponent("environ")
-
-        try Data("CODEX_HOME=/synthetic/codex\0PATH=/synthetic/bin\0".utf8).write(to: file)
-        #expect(ProcessEnvironmentReader.readLinuxEnvironment(pid: 101, procRoot: procRoot, names: Self.names) == [
-            "CODEX_HOME": "/synthetic/codex",
-        ])
-        try Data().write(to: file)
-        #expect(ProcessEnvironmentReader.readLinuxEnvironment(pid: 101, procRoot: procRoot, names: Self.names) == [:])
-        #expect(ProcessEnvironmentReader.readLinuxEnvironment(pid: 102, procRoot: procRoot, names: Self.names) == nil)
-        #expect(ProcessEnvironmentReader.readLinuxEnvironment(pid: 0, procRoot: procRoot, names: Self.names) == nil)
-        #expect(ProcessEnvironmentReader.readLinuxEnvironment(pid: -1, procRoot: procRoot, names: Self.names) == nil)
-
-        try Data("CODEX_HOME=/synthetic/codex".utf8).write(to: file)
-        #expect(ProcessEnvironmentReader.readLinuxEnvironment(pid: 101, procRoot: procRoot, names: Self.names) == nil)
-
+    func `environment size limit admits the maximum and rejects one more byte`() {
         let valueByteCount = ProcessEnvironmentReader.maxEnvironmentBytes - 6
         let atLimit = Data("HOME=".utf8) + Data(repeating: 120, count: valueByteCount) + Data([0])
-        try atLimit.write(to: file)
-        let parsed = ProcessEnvironmentReader.readLinuxEnvironment(pid: 101, procRoot: procRoot, names: Self.names)
+        let parsed = ProcessEnvironmentReader.parseNULSeparated(atLimit, names: Self.names)
         #expect(parsed?["HOME"]?.utf8.count == valueByteCount)
-        let oversized = atLimit + Data([0])
-        try oversized.write(to: file)
-        #expect(ProcessEnvironmentReader.readLinuxEnvironment(pid: 101, procRoot: procRoot, names: Self.names) == nil)
-        #expect(ProcessEnvironmentReader.parseNULSeparated(oversized, names: Self.names) == nil)
+        #expect(ProcessEnvironmentReader.parseNULSeparated(atLimit + Data([0]), names: Self.names) == nil)
     }
 }

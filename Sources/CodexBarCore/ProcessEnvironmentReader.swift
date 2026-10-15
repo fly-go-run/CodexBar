@@ -27,30 +27,4 @@ enum ProcessEnvironmentReader {
         }
         return selected
     }
-
-    static func readLinuxEnvironment(
-        pid: Int32,
-        procRoot: URL = URL(fileURLWithPath: "/proc", isDirectory: true),
-        names: Set<String>) -> [String: String]?
-    {
-        guard pid > 0 else { return nil }
-        let url = procRoot
-            .appendingPathComponent(String(pid), isDirectory: true)
-            .appendingPathComponent("environ")
-        guard let file = try? FileHandle(forReadingFrom: url) else { return nil }
-        defer { try? file.close() }
-
-        do {
-            var data = Data()
-            while data.count <= self.maxEnvironmentBytes {
-                let remaining = self.maxEnvironmentBytes + 1 - data.count
-                let chunk = try file.read(upToCount: remaining) ?? Data()
-                if chunk.isEmpty { return self.parseNULSeparated(data, names: names) }
-                data.append(chunk)
-            }
-        } catch {
-            return nil
-        }
-        return nil
-    }
 }

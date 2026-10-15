@@ -1,12 +1,6 @@
+import Darwin
 import Foundation
 import Logging
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
 
 struct JSONStderrLogHandler: LogHandler {
     var metadata: Logger.Metadata = [:]

@@ -1,15 +1,10 @@
 import Foundation
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
 public protocol ProviderHTTPTransport: Sendable {
     func data(for request: URLRequest) async throws -> (Data, URLResponse)
 }
 
-#if !os(Linux)
 extension URLSession: ProviderHTTPTransport {}
-#endif
 
 extension URLSession {
     public func response(for request: URLRequest) async throws -> ProviderHTTPResponse {
@@ -178,9 +173,7 @@ public final class ProviderHTTPClient: ProviderHTTPTransport, @unchecked Sendabl
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 30
         configuration.timeoutIntervalForResource = 90
-        #if !os(Linux)
         configuration.waitsForConnectivity = false
-        #endif
         return configuration
     }
 

@@ -350,7 +350,7 @@ race this design is intended to avoid.
 5. Verify missing, unauthorized, decode, and network errors follow the source-aware fallback
    policy. `CodexOAuthExpiryPipelineTests` exercises file loading through OAuth transport and
    additional-window mapping, with a sentinel instead of launching CLI recovery.
-6. `CodexNativeJWTExpiryTests` in `TestsLinux` covers raw JSON numeric spellings on both platforms.
+6. `CodexNativeJWTExpiryTests` covers raw JSON numeric spellings.
    Run focused tests with `CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS` unset and
    `CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS=1 CODEXBAR_TEST_CODEX_FILE_ISOLATION=1`, then `make check`.
 

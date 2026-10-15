@@ -1,13 +1,8 @@
 import Foundation
-@testable import CodexBarCore
-#if canImport(SQLite3)
 import SQLite3
-#elseif canImport(CSQLite3)
-import CSQLite3
-#endif
 import Testing
+@testable import CodexBarCore
 
-#if canImport(SQLite3) || canImport(CSQLite3)
 struct CodexProjectDisplayNameTests {
     @Test
     func `saved names match the nearest root without prefix collisions or ambiguous ownership`() throws {
@@ -177,4 +172,3 @@ struct CodexProjectDisplayNameTests {
         #expect(sqlite3_exec(handle, sql, nil, nil, nil) == SQLITE_OK)
     }
 }
-#endif

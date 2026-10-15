@@ -1,11 +1,8 @@
 import Foundation
+import Security
 import Testing
 @testable import CodexBar
 @testable import CodexBarCore
-
-#if os(macOS)
-import Security
-#endif
 
 @MainActor
 @Suite(.serialized)
@@ -677,7 +674,6 @@ struct ClaudeOAuthUpgradeCompatibilityTests {
         #expect(Self.cliInvocations(at: cli.invocationLog).isEmpty)
     }
 
-    #if os(macOS)
     @Test
     func `unavailable CodexBar OAuth cache remains terminal and does not switch authorities`() async throws {
         let root = try Self.makeTemporaryDirectory()
@@ -711,7 +707,6 @@ struct ClaudeOAuthUpgradeCompatibilityTests {
         #expect(calls.recordedForeignKeychainReads == 0)
         #expect(Self.cliInvocations(at: cli.invocationLog).isEmpty)
     }
-    #endif
 
     @Test
     func `direct OAuth service errors remain terminal and do not switch authorities`() async throws {

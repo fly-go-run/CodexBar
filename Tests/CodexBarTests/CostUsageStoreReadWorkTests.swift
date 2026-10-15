@@ -323,7 +323,6 @@ struct CostUsageStoreReadWorkTests {
         }
     }
 
-    #if canImport(SQLite3)
     @Test
     func `unrelated priority changes keep exact rows without token history loads`() throws {
         let rowsPerFile = 64
@@ -378,7 +377,6 @@ struct CostUsageStoreReadWorkTests {
             }
         }
     }
-    #endif
 
     @Test
     func `debounced scanner refresh skips file histories end to end`() throws {

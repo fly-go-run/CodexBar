@@ -1,6 +1,4 @@
 import Foundation
-
-#if os(macOS)
 import Security
 
 extension KeychainAccessPreflight {
@@ -159,4 +157,3 @@ extension KeychainAccessPreflight {
         }
     }
 }
-#endif

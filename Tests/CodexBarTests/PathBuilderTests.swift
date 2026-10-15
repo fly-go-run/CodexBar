@@ -318,7 +318,6 @@ struct PathBuilderTests {
         #expect(available == "/tools/bin/codex")
     }
 
-    #if os(macOS)
     @Test
     func `Codex launch preflight allows quarantined notarized native binary`() {
         let allowed = CodexLaunchPreflight.isLaunchCandidateAllowed(
@@ -629,7 +628,6 @@ struct PathBuilderTests {
 
         #expect(allowed)
     }
-    #endif
 
     @Test
     func `resolves codex from interactive shell`() {

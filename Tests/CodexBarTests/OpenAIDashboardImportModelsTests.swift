@@ -42,24 +42,4 @@ struct OpenAIDashboardImportModelsTests {
         #expect(!result.matchesCodexEmail)
     }
 
-    #if !os(macOS)
-    @Test
-    func `unsupported platforms keep cookie import unavailable`() async {
-        let importer = OpenAIDashboardBrowserCookieImporter()
-        do {
-            _ = try await importer.importBestCookies(intoAccountEmail: nil)
-            Issue.record("Expected unsupported platform error")
-        } catch {
-            #expect(error.localizedDescription ==
-                "Browser cookie access denied. OpenAI web cookie import is only supported on macOS.")
-        }
-        do {
-            _ = try await importer.importManualCookies(cookieHeader: "fixture=value", intoAccountEmail: nil)
-            Issue.record("Expected unsupported platform error")
-        } catch {
-            #expect(error.localizedDescription ==
-                "Browser cookie access denied. OpenAI web cookie import is only supported on macOS.")
-        }
-    }
-    #endif
 }

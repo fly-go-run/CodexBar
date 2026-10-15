@@ -1,11 +1,7 @@
 import Commander
+import Darwin
 import Foundation
 import Testing
-#if canImport(Darwin)
-import Darwin
-#else
-import Glibc
-#endif
 @testable import CodexBarCLI
 @testable import CodexBarCore
 

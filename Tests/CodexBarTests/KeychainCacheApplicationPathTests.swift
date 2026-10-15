@@ -1,9 +1,7 @@
 import Foundation
+import Security
 import Testing
 @testable import CodexBarCore
-#if os(macOS)
-import Security
-#endif
 
 struct KeychainCacheApplicationPathTests {
     enum LinkStyle: CaseIterable, Sendable {
@@ -22,7 +20,6 @@ struct KeychainCacheApplicationPathTests {
         #expect(KeychainCacheStore.invokingApplicationPathsForCacheAccess(executableURL: missing).isEmpty)
     }
 
-    #if os(macOS)
     @Test(arguments: LinkStyle.allCases)
     func `kernel identifies the bundled executable through each supported launch alias`(style: LinkStyle) throws {
         let fixture = try Fixture()
@@ -90,7 +87,6 @@ struct KeychainCacheApplicationPathTests {
                 promptSelector: []) == .rejected)
         }
     }
-    #endif
 
     private func normalizedPaths(_ paths: [String]) -> Set<String> {
         // The kernel retains /private/var while Foundation standardization uses /var.
@@ -115,7 +111,6 @@ struct KeychainCacheApplicationPathTests {
             for directory in [self.helper.deletingLastPathComponent(), self.bin] {
                 try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             }
-            #if os(macOS)
             let source = self.root.appendingPathComponent("helper.c")
             try """
             #include <unistd.h>
@@ -139,9 +134,6 @@ struct KeychainCacheApplicationPathTests {
                 process.waitUntilExit()
                 try #require(process.terminationStatus == 0)
             }
-            #else
-            try Data().write(to: self.helper)
-            #endif
             completed = true
         }
 
@@ -167,7 +159,6 @@ struct KeychainCacheApplicationPathTests {
             return alias
         }
 
-        #if os(macOS)
         func start(through alias: URL) throws -> Process {
             let process = Process()
             process.executableURL = alias
@@ -192,7 +183,6 @@ struct KeychainCacheApplicationPathTests {
             if process.isRunning { process.terminate() }
             process.waitUntilExit()
         }
-        #endif
 
         func remove() {
             try? FileManager.default.removeItem(at: self.root)

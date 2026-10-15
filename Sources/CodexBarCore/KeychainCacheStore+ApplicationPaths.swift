@@ -1,18 +1,11 @@
 import Foundation
-#if os(macOS)
 import Security
-#endif
 
 extension KeychainCacheStore {
     /// A launch alias can be retargeted while this process runs. Trust the kernel's loaded image path instead.
-    static let runningExecutableURLForCacheAccess: URL? = {
-        #if os(macOS)
-        DarwinProcessEnumerator.executablePath(pid: ProcessInfo.processInfo.processIdentifier)
-            .map { URL(fileURLWithPath: $0) }
-        #else
-        nil
-        #endif
-    }()
+    static let runningExecutableURLForCacheAccess: URL? = DarwinProcessEnumerator
+        .executablePath(pid: ProcessInfo.processInfo.processIdentifier)
+        .map { URL(fileURLWithPath: $0) }
 
     #if DEBUG
     @TaskLocal static var bundledAdHocProcessOverrideForTesting: Bool?
@@ -31,13 +24,9 @@ extension KeychainCacheStore {
     }
 
     private static let detectedBundledAdHocProcess: Bool = {
-        #if os(macOS)
         guard let appBundle = Self.runningExecutableURLForCacheAccess.flatMap(Self.appBundleURL(containing:))
         else { return false }
         return !Self.hasCodeSigningCertificate(at: appBundle)
-        #else
-        return false
-        #endif
     }()
 
     #if DEBUG
@@ -98,7 +87,6 @@ extension KeychainCacheStore {
     }
 
     static func hasCodeSigningCertificate(at bundleURL: URL) -> Bool {
-        #if os(macOS)
         var staticCode: SecStaticCode?
         guard SecStaticCodeCreateWithPath(bundleURL as CFURL, SecCSFlags(), &staticCode) == errSecSuccess,
               let staticCode
@@ -113,9 +101,5 @@ extension KeychainCacheStore {
             let certificates = values[kSecCodeInfoCertificates as String] as? [SecCertificate]
         else { return false }
         return !certificates.isEmpty
-        #else
-        _ = bundleURL
-        return false
-        #endif
     }
 }

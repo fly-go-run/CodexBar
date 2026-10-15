@@ -1,19 +1,8 @@
 import CodexBarCore
 import Commander
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
-import Foundation
-#if os(macOS)
 import CoreFoundation
-#endif
+import Darwin
+import Foundation
 
 extension CodexBarCLI {
     static func decodeProvider(from values: ParsedValues, config: CodexBarConfig) -> ProviderSelection {
@@ -141,7 +130,6 @@ extension CodexBarCLI {
             "com.steipete.codexbar.debug",
         ]
         for domain in domains {
-            #if os(macOS)
             let cfDomain = domain as CFString
             CFPreferencesSynchronize(cfDomain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
             if let cfValue = CFPreferencesCopyValue(
@@ -152,7 +140,6 @@ extension CodexBarCLI {
             {
                 return cfValue
             }
-            #endif
             if let value = UserDefaults(suiteName: domain)?.object(forKey: "weeklyProgressWorkDays") as? Int {
                 return value
             }
@@ -184,7 +171,6 @@ extension CodexBarCLI {
 
     static func valueFromAppDefaults<Value>(_ key: String) -> Value? {
         for domain in ["com.steipete.codexbar", "com.steipete.codexbar.debug"] {
-            #if os(macOS)
             let cfDomain = domain as CFString
             CFPreferencesSynchronize(cfDomain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
             if let value = CFPreferencesCopyValue(
@@ -193,7 +179,6 @@ extension CodexBarCLI {
             {
                 return value
             }
-            #endif
             if let value = UserDefaults(suiteName: domain)?.object(forKey: key) as? Value,
                (value as? String)?.isEmpty != true { return value }
         }

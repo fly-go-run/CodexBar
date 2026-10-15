@@ -192,20 +192,10 @@ public enum UsageFormatter {
             return self.localized("Updated just now")
         }
         if let hours = Calendar.current.dateComponents([.hour], from: date, to: now).hour, hours < 24 {
-            #if os(macOS)
             let rel = RelativeDateTimeFormatter()
             rel.locale = self.currentLocale()
             rel.unitsStyle = .abbreviated
             return self.localized("Updated relative %@", rel.localizedString(for: date, relativeTo: now))
-            #else
-            let seconds = max(0, elapsedSeconds)
-            if seconds < 3600 {
-                let minutes = max(1, seconds / 60)
-                return self.localized("Updated %@m ago", String(minutes))
-            }
-            let wholeHours = max(1, seconds / 3600)
-            return self.localized("Updated %@h ago", String(wholeHours))
-            #endif
         } else {
             return self.localized(
                 "Updated absolute %@",

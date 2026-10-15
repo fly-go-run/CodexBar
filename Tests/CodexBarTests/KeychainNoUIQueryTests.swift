@@ -1,11 +1,9 @@
-import Foundation
-import Testing
-@testable import CodexBarCore
-
-#if os(macOS)
 import Darwin
+import Foundation
 import LocalAuthentication
 import Security
+import Testing
+@testable import CodexBarCore
 
 struct KeychainNoUIQueryTests {
     private func resolveSecurityUIFailValue() -> String {
@@ -183,4 +181,3 @@ struct KeychainNoUIQueryTests {
             testSafetyBlocked: false) == nil)
     }
 }
-#endif

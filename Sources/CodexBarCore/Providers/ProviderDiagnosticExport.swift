@@ -99,13 +99,7 @@ public struct ProviderDiagnosticExport: Codable, Sendable {
 
 public enum ProviderDiagnosticPlatform {
     public static var current: String {
-        #if os(macOS)
         "macOS"
-        #elseif os(Linux)
-        "Linux"
-        #else
-        "unknown"
-        #endif
     }
 }
 

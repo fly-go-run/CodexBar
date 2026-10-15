@@ -1,10 +1,4 @@
-#if canImport(Darwin)
 import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
 import Foundation
 
 actor ClaudeCLISession {
@@ -437,7 +431,6 @@ actor ClaudeCLISession {
             return self.fallbackProbeSessionID
         }
 
-        #if os(macOS) || os(Linux)
         do {
             try fm.setAttributes(
                 [.posixPermissions: NSNumber(value: Int16(0o600))],
@@ -447,7 +440,6 @@ actor ClaudeCLISession {
                 "Claude probe session identity permission hardening failed",
                 metadata: ["error": error.localizedDescription])
         }
-        #endif
         return sessionID
     }
 

@@ -1,14 +1,6 @@
-import Foundation
-#if canImport(CryptoKit)
 import CryptoKit
-#endif
-#if canImport(Darwin)
 import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
+import Foundation
 
 public enum CookieAuthenticationFailurePolicy: String, Codable, Equatable, Sendable {
     case stopFallback
@@ -83,29 +75,15 @@ public enum CookieHeaderCache {
 
         private static func profileHomeDigest(_ path: String) -> String {
             let standardized = URL(fileURLWithPath: path, isDirectory: true).standardizedFileURL.path
-            #if canImport(CryptoKit)
             return SHA256.hash(data: Data(standardized.utf8))
                 .map { String(format: "%02x", $0) }
                 .joined()
-            #else
-            let digest = standardized.utf8.reduce(UInt64(14_695_981_039_346_656_037)) { partial, byte in
-                (partial ^ UInt64(byte)) &* 1_099_511_628_211
-            }
-            return String(digest, radix: 16)
-            #endif
         }
 
         private static func providerVariantDigest(_ variant: String) -> String {
-            #if canImport(CryptoKit)
-            return SHA256.hash(data: Data(variant.utf8))
+            SHA256.hash(data: Data(variant.utf8))
                 .map { String(format: "%02x", $0) }
                 .joined()
-            #else
-            let digest = variant.utf8.reduce(UInt64(14_695_981_039_346_656_037)) { partial, byte in
-                (partial ^ UInt64(byte)) &* 1_099_511_628_211
-            }
-            return String(digest, radix: 16)
-            #endif
         }
     }
 

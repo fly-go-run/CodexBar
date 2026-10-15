@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 import Security
 import Testing
@@ -62,4 +61,3 @@ struct ClaudeSecurityCLIPromptPolicyTests {
         #expect(reads.value == (allowed ? 1 : 0))
     }
 }
-#endif

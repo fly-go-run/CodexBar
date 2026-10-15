@@ -1,9 +1,7 @@
+import Darwin
 import Foundation
 import Testing
 @testable import CodexBarCore
-
-#if os(macOS)
-import Darwin
 
 struct CodexLaunchPreflightSignatureTests {
     private typealias Memo = CodexLaunchPreflight.AssessmentMemo
@@ -313,4 +311,3 @@ struct CodexLaunchPreflightSignatureTests {
         #expect(Signature.read(fixture.path) == nil)
     }
 }
-#endif

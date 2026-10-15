@@ -1,10 +1,8 @@
 import Foundation
 import os.lock
+import SweetCookieKit
 import Testing
 @testable import CodexBarCore
-
-#if os(macOS)
-import SweetCookieKit
 
 @Suite(.serialized)
 struct BrowserDetectionTests {
@@ -904,21 +902,3 @@ struct BrowserDetectionTests {
         }
     }
 }
-
-#else
-
-struct BrowserDetectionTests {
-    @Test
-    func `non mac OS returns no browsers`() {
-        #expect(BrowserDetection(cacheTTL: 0).isCookieSourceAvailable(Browser()) == false)
-    }
-
-    @Test
-    func `non mac OS filter returns empty`() {
-        let detection = BrowserDetection(cacheTTL: 0)
-        let browsers = [Browser(), Browser()]
-        #expect(browsers.cookieImportCandidates(using: detection).isEmpty == true)
-    }
-}
-
-#endif

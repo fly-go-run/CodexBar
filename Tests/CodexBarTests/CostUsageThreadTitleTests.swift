@@ -1,13 +1,8 @@
 import Foundation
-#if canImport(SQLite3)
 import SQLite3
-#elseif canImport(CSQLite3)
-import CSQLite3
-#endif
 import Testing
 @testable import CodexBarCore
 
-#if canImport(SQLite3) || canImport(CSQLite3)
 struct CostUsageThreadTitleTests {
     @Test
     func `five thousand sessions list each sqlite home once and preserve every field`() throws {
@@ -191,4 +186,3 @@ private final class ListingFileManager: FileManager, @unchecked Sendable {
         return try super.contentsOfDirectory(at: url, includingPropertiesForKeys: keys, options: mask)
     }
 }
-#endif

@@ -2,7 +2,6 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
-#if os(macOS)
 struct CodexLaunchPreflightMachOTests {
     private typealias Fixture = CodexLaunchPreflightSignatureTests.Fixture
     private typealias Signature = CodexLaunchPreflight.SignatureIdentity
@@ -133,4 +132,3 @@ struct CodexLaunchPreflightMachOTests {
         }
     }
 }
-#endif

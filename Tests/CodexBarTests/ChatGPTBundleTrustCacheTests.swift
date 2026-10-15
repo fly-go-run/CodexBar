@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 import Testing
 @testable import CodexBarCore
@@ -161,4 +160,3 @@ struct ChatGPTBundleTrustCacheTests {
         return root
     }
 }
-#endif

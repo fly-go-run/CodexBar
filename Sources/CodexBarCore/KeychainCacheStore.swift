@@ -1,8 +1,6 @@
-import Foundation
-#if os(macOS)
 import Darwin
+import Foundation
 import Security
-#endif
 
 public enum KeychainCacheStore {
     public struct Key: Hashable, Sendable {
@@ -116,7 +114,6 @@ public enum KeychainCacheStore {
             return self.loadFromDisabledAccessMemory(key: key, as: type)
         }
         guard self.canUseRealKeychain else { return .missing }
-        #if os(macOS)
         guard self.interactionRequiredRetryDate(for: key) == nil else { return .interactionRequired }
         // Requesting secret bytes can surface a legacy ACL prompt even when the query carries
         // `kSecUseAuthenticationUIFail`. Probe attributes and the item reference first, then ask
@@ -159,9 +156,6 @@ public enum KeychainCacheStore {
         default:
             return self.loadResultForKeychainReadFailure(status: status, key: key)
         }
-        #else
-        return .missing
-        #endif
     }
 
     public static func store(key: Key, entry: some Codable) {
@@ -189,7 +183,6 @@ public enum KeychainCacheStore {
             return self.storeInDisabledAccessMemory(key: key, entry: entry)
         }
         guard self.canUseRealKeychain else { return false }
-        #if os(macOS)
         let encoder = Self.makeEncoder()
         guard let data = try? encoder.encode(entry) else {
             self.log.error("Failed to encode keychain cache (\(key.account))")
@@ -260,9 +253,6 @@ public enum KeychainCacheStore {
             self.invalidateCachedPreflight(for: key)
         }
         return addStatus == errSecSuccess
-        #else
-        return false
-        #endif
     }
 
     @discardableResult
@@ -289,14 +279,10 @@ public enum KeychainCacheStore {
             return self.clearDisabledAccessMemory(key: key) ? .removed : .missing
         }
         guard self.canUseRealKeychain else { return .failed }
-        #if os(macOS)
         if self.interactionRequiredRetryDate(for: key) != nil,
            !self.cacheInteractionRequired(for: key, attemptingRepair: true) { return .failed }
         let query = self.itemQuery(for: key)
         return self.clearResultForKeychainDeleteStatus(KeychainSecurity.delete(query as CFDictionary), key: key)
-        #else
-        return .failed
-        #endif
     }
 
     public static func keys(category: String) -> [Key] {
@@ -324,7 +310,6 @@ public enum KeychainCacheStore {
             return .found(self.keysFromDisabledAccessMemory(category: category))
         }
         guard self.canUseRealKeychain else { return .failed }
-        #if os(macOS)
         var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: self.serviceName,
@@ -336,9 +321,6 @@ public enum KeychainCacheStore {
         var result: AnyObject?
         let status = KeychainSecurity.copyMatching(query as CFDictionary, &result)
         return self.keysResultForKeychainStatus(status, category: category, result: result)
-        #else
-        return .failed
-        #endif
     }
 
     public static func withServiceOverrideForTesting<T>(
@@ -551,18 +533,12 @@ public enum KeychainCacheStore {
 
     /// True when the running executable has no `.app` bundle ancestor.
     static let isUnbundledProcess: Bool = {
-        #if os(macOS)
         if let executableURL = Self.runningExecutableURLForCacheAccess,
            Self.appBundleURL(containing: executableURL) != nil
         {
             return false
         }
         return true
-        #else
-        // No app bundles (or real keychain) exist off macOS; the memory store is
-        // the only sensible backing there anyway.
-        return true
-        #endif
     }()
 
     #if DEBUG
@@ -641,7 +617,6 @@ public enum KeychainCacheStore {
         return decoder
     }
 
-    #if os(macOS)
     private static func itemQuery(for key: Key) -> [String: Any] {
         var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -773,7 +748,6 @@ public enum KeychainCacheStore {
         guard let securityFrameworkHandle else { return nil }
         return dlsym(securityFrameworkHandle, name)
     }
-    #endif
 
     private static func loadFromTestStore<Entry: Codable>(
         key: Key,

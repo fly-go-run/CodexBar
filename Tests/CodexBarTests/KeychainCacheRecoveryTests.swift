@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 import LocalAuthentication
 import Security
@@ -202,4 +201,3 @@ struct KeychainCacheRecoveryTests {
         #expect(mutations.value.filter { $0 == .add }.count == (failingOperation == .add ? 2 : 0))
     }
 }
-#endif

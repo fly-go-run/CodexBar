@@ -1,7 +1,4 @@
 import Foundation
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
 public struct CodexOpenAIWorkspaceIdentity: Equatable, Sendable {
     public let workspaceAccountID: String

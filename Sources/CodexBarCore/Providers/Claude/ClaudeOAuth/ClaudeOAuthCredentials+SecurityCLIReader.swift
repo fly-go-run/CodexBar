@@ -1,13 +1,6 @@
+import Darwin
 import Dispatch
 import Foundation
-
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
 
 extension ClaudeOAuthCredentialsStore {
     private static let securityBinaryPath = "/usr/bin/security"
@@ -25,7 +18,6 @@ extension ClaudeOAuthCredentialsStore {
         readStrategy == .securityCLIExperimental
     }
 
-    #if os(macOS)
     private enum SecurityCLIReadError: Error {
         case binaryUnavailable
         case isolatedKeychainUnavailable
@@ -293,24 +285,6 @@ extension ClaudeOAuthCredentialsStore {
             kill(process.processIdentifier, SIGKILL)
         }
     }
-    #else
-    static func loadFromClaudeKeychainViaSecurityCLIIfEnabled(
-        interaction _: ProviderInteraction,
-        readStrategy _: ClaudeOAuthKeychainReadStrategy = ClaudeOAuthKeychainReadStrategyPreference.current())
-        -> Data?
-    {
-        nil
-    }
-
-    static func readRawClaudeKeychainPayloadViaSecurityCLIIfEnabled(
-        interaction _: ProviderInteraction,
-        readStrategy _: ClaudeOAuthKeychainReadStrategy = ClaudeOAuthKeychainReadStrategyPreference.current(),
-        environment _: [String: String] = ProcessInfo.processInfo.environment)
-        -> Data?
-    {
-        nil
-    }
-    #endif
 
     private static func isolatedSecurityCLIKeychainPath(environment: [String: String]) -> String? {
         guard KeychainAccessGate.isDisabledByEnvironment(environment) else { return nil }

@@ -1,7 +1,5 @@
 import Dispatch
 import Foundation
-
-#if os(macOS)
 import Security
 
 enum ClaudeOAuthKeychainQueryTiming {
@@ -32,4 +30,3 @@ enum ClaudeOAuthKeychainQueryTiming {
             ])
     }
 }
-#endif

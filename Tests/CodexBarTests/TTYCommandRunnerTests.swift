@@ -1,11 +1,7 @@
+import Darwin
 import Foundation
 import Testing
 @testable import CodexBarCore
-#if canImport(Darwin)
-import Darwin
-#else
-import Glibc
-#endif
 
 @Suite(.serialized)
 struct TTYCommandRunnerEnvTests {
@@ -320,11 +316,7 @@ struct TTYCommandRunnerEnvTests {
     @Test
     func `repeated PTY launches release descriptors on exit failure cancellation and timeout`() throws {
         func terminalDescriptorCount() throws -> Int {
-            #if canImport(Darwin)
             let directory = "/dev/fd"
-            #else
-            let directory = "/proc/self/fd"
-            #endif
             return try FileManager.default.contentsOfDirectory(atPath: directory)
                 .compactMap(Int32.init)
                 .filter { isatty($0) == 1 }.count

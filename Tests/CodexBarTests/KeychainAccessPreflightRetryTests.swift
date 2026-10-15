@@ -1,9 +1,7 @@
 import Foundation
+import SweetCookieKit
 import Testing
 @testable import CodexBarCore
-
-#if os(macOS)
-import SweetCookieKit
 
 @Suite(.serialized)
 struct KeychainAccessPreflightRetryTests {
@@ -135,4 +133,3 @@ struct KeychainAccessPreflightRetryTests {
         #expect(disallowsInteraction)
     }
 }
-#endif

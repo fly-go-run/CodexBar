@@ -1,10 +1,4 @@
-#if canImport(Darwin)
 import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#endif
 import Foundation
 
 final class CLIStderrBuffer: @unchecked Sendable {
@@ -96,20 +90,12 @@ extension CodexBarCLI {
             return path
         }
 
-        #if canImport(Darwin)
         var size: UInt32 = 0
         guard _NSGetExecutablePath(nil, &size) != 0 else { return nil }
         var buffer = [Int8](repeating: 0, count: Int(size))
         guard _NSGetExecutablePath(&buffer, &size) == 0 else { return nil }
         let bytes = buffer.map { UInt8(bitPattern: $0) }
         return String(decodingCString: bytes, as: UTF8.self)
-        #elseif os(Linux)
-        let path = "/proc/self/exe"
-        guard FileManager.default.fileExists(atPath: path) else { return nil }
-        return URL(fileURLWithPath: path).resolvingSymlinksInPath().path
-        #else
-        return nil
-        #endif
     }
 
     static func currentVersion(bundleVersion: String?, executablePath: String?) -> String? {
@@ -177,12 +163,6 @@ extension CodexBarCLI {
     }
 
     static func platformExit(_ code: Int32) -> Never {
-        #if canImport(Darwin)
         Darwin.exit(code)
-        #elseif canImport(Glibc)
-        Glibc.exit(code)
-        #elseif canImport(Musl)
-        Musl.exit(code)
-        #endif
     }
 }

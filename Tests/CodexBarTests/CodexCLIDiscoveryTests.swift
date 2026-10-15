@@ -3,7 +3,6 @@ import Testing
 @testable import CodexBarCore
 
 struct CodexCLIDiscoveryTests {
-    #if os(macOS)
     @Test(arguments: ["pty", "status"])
     func `supplied environment rejection cannot fall back to the process environment`(entrypoint: String) async throws {
         let fm = FileManager.default
@@ -324,8 +323,6 @@ struct CodexCLIDiscoveryTests {
         }
         #expect(resolved == expected)
     }
-
-    #endif
 }
 
 private final class MockFileManager: FileManager {

@@ -1,16 +1,8 @@
-#if canImport(CryptoKit)
-import CryptoKit
-#else
-import Crypto
-#endif
 import CoreFoundation
+import CryptoKit
+import Darwin
 import Dispatch
 import Foundation
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#endif
 
 // swiftlint:disable type_body_length file_length
 enum CostUsageScanner {
@@ -2646,11 +2638,7 @@ enum CostUsageScanner {
         }
     }
 
-    #if os(Linux)
-    private typealias CodexDirectoryHandle = OpaquePointer
-    #else
     private typealias CodexDirectoryHandle = UnsafeMutablePointer<DIR>
-    #endif
 
     private final class CodexDirectoryCursor: @unchecked Sendable {
         let directory: CodexDirectoryHandle

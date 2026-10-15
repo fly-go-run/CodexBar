@@ -41,7 +41,6 @@ extension CodexBarCLI {
             Self.platformExit(1)
         }
 
-        #if os(macOS)
         let result = await MainActor.run {
             SessionWindowFocuser.focus(session)
         }
@@ -52,10 +51,6 @@ extension CodexBarCLI {
             Self.writeStderr("Could not focus session: \(sessionID)\n")
             Self.platformExit(2)
         }
-        #else
-        Self.writeStderr("Session focus is only available on macOS.\n")
-        Self.platformExit(2)
-        #endif
     }
 
     static func renderSessionsTable(_ sessions: [AgentSession], now: Date = Date()) -> String {

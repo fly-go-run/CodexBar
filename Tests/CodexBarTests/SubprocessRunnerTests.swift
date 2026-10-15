@@ -1,12 +1,7 @@
+import Darwin
 import Foundation
 import Testing
 @testable import CodexBarCore
-
-#if canImport(Darwin)
-import Darwin
-#else
-import Glibc
-#endif
 
 struct SubprocessRunnerTests {
     @Test(arguments: [Double(Int.max) / 1_000_000_000, Double.greatestFiniteMagnitude])

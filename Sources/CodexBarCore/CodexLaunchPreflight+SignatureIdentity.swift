@@ -1,4 +1,3 @@
-#if os(macOS)
 import CryptoKit
 import Foundation
 
@@ -168,4 +167,3 @@ private struct SignatureReader {
         guard types.contains(0) else { throw Invalid.signature }
     }
 }
-#endif

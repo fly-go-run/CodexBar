@@ -1,12 +1,7 @@
 import Foundation
+import SQLite3
 import Testing
 @testable import CodexBarCore
-
-#if canImport(SQLite3)
-import SQLite3
-#elseif canImport(CSQLite3)
-import CSQLite3
-#endif
 
 // Store invariants share one fixture/helper vocabulary across focused extensions.
 // swiftlint:disable file_length
@@ -955,6 +950,7 @@ extension CostUsageStoreTests {
 
 extension CostUsageStoreTests {
     private static let testedPredecessorParserHashes = [
+        "73875b763abeaf9b", // Before Linux support removal; macOS Codex semantics unchanged.
         "3f88178bf03ad704", // Before provider trimming and Codex Workspaces removal; native Codex semantics unchanged.
         "fc698834d6329beb", // Before opt-in request observation; saved rows and cursors are unchanged.
         "f406dae284de4a55", // Current main before the Auto-review creator-account reparse.

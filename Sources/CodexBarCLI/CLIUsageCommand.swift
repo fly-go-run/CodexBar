@@ -422,24 +422,6 @@ extension CodexBarCLI {
             account: account,
             codexVisibleAccount: codexVisibleAccount)
 
-        #if !os(macOS)
-        if Self.sourceModeRequiresWebSupport(
-            effectiveSourceMode,
-            provider: provider,
-            environment: env,
-            settings: settings)
-        {
-            return Self.webSourceUnsupportedOutput(
-                provider: provider,
-                account: (
-                    label: account?.label ?? codexVisibleAccount?.menuDisplayName,
-                    cacheKey: cacheAccountKey),
-                source: effectiveSourceMode.rawValue,
-                status: status,
-                command: command)
-        }
-        #endif
-
         // Provider-specific by design: Codex PAT User-Agent needs the CLI version before the fetch starts.
         let resolvedCLIVersion = provider == .codex
             ? Self.detectVersion(for: provider, browserDetection: command.browserDetection)

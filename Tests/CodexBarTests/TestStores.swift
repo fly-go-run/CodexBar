@@ -1,9 +1,7 @@
+import AppKit
 import CodexBarCore
 import Foundation
 @testable import CodexBar
-#if os(macOS)
-import AppKit
-#endif
 
 /// No Foundation search-domain fallback or persistent writes, including for absent keys.
 final class InMemoryUserDefaults: UserDefaults, @unchecked Sendable {
@@ -205,7 +203,6 @@ func enableTestProviders(_ enabledProviders: Set<UsageProvider>, settings: Setti
     }
 }
 
-#if os(macOS)
 @MainActor
 func testStatusBar() -> NSStatusBar {
     // Standalone NSStatusBar instances can crash during swiftpm-testing-helper teardown.
@@ -253,7 +250,6 @@ func withStatusItemControllerForTesting<T>(
     defer { controller.releaseStatusItemsForTesting() }
     return try await operation(controller)
 }
-#endif
 
 func testPlanUtilizationHistoryStore(suiteName: String, reset: Bool = true) -> PlanUtilizationHistoryStore {
     let sanitized = suiteName.replacingOccurrences(of: "/", with: "-")

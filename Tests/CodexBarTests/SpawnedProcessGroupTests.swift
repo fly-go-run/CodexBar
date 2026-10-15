@@ -1,11 +1,7 @@
+import Darwin
 import Foundation
 import Testing
 @testable import CodexBarCore
-#if canImport(Darwin)
-import Darwin
-#else
-import Glibc
-#endif
 
 struct SpawnedProcessGroupTests {
     #if DEBUG
@@ -118,12 +114,10 @@ struct SpawnedProcessGroupTests {
         #expect(descriptors == [3, 4])
     }
 
-    #if canImport(Darwin)
     @Test
     func `Darwin device identifier preserves signed bit pattern`() {
         #expect(SpawnedProcessGroup.darwinDeviceIdentifier(-805_306_367) == 3_489_660_929)
     }
-    #endif
 
     @Test
     func `musl close-from selects numeric descriptors at or above minimum`() throws {
@@ -258,11 +252,7 @@ struct SpawnedProcessGroupTests {
         defer { close(resolvedFD) }
         _ = fcntl(resolvedFD, F_SETFD, 0)
 
-        #if canImport(Darwin)
         let descriptorPath = "/dev/fd/\(resolvedFD)"
-        #else
-        let descriptorPath = "/proc/self/fd/\(resolvedFD)"
-        #endif
         let stdoutPipe = Pipe()
         let stderrPipe = Pipe()
         let process = try SpawnedProcessGroup.launch(

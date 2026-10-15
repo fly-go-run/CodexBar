@@ -2,7 +2,6 @@ import WebKit
 import XCTest
 @testable import CodexBarCore
 
-#if os(macOS)
 final class OpenAISubscriptionMetadataTests: XCTestCase {
     func test_mapsRenewingSubscriptionToRenewalDate() throws {
         let metadata = try XCTUnwrap(OpenAISubscriptionMetadata.parse(
@@ -180,4 +179,3 @@ final class OpenAISubscriptionMetadataTests: XCTestCase {
     });
     """
 }
-#endif

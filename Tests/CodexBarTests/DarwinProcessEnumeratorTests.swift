@@ -1,10 +1,7 @@
+import Darwin
 import Foundation
 import Testing
 @testable import CodexBarCore
-
-#if canImport(Darwin)
-import Darwin
-#endif
 
 struct DarwinProcessEnumeratorTests {
     @Test
@@ -53,7 +50,6 @@ struct DarwinProcessEnumeratorTests {
         #expect(DarwinProcessEnumerator.parseProcArgs2Arguments(data) == nil)
     }
 
-    #if canImport(Darwin)
     @Test
     func `self executable path is absolute and nonempty`() throws {
         let path = try #require(DarwinProcessEnumerator.executablePath(pid: getpid()))
@@ -170,7 +166,6 @@ struct DarwinProcessEnumeratorTests {
 
         #expect(record == nil)
     }
-    #endif
 
     private static func procArgsData(arguments: [String], environment: [String] = []) -> Data {
         var data = Data(self.littleEndianBytes(Int32(arguments.count)))
@@ -188,7 +183,6 @@ struct DarwinProcessEnumeratorTests {
         withUnsafeBytes(of: value.littleEndian) { Array($0) }
     }
 
-    #if canImport(Darwin)
     private static func openLoopbackListener() throws -> (fileDescriptor: Int32, port: Int) {
         let fileDescriptor = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
         guard fileDescriptor >= 0 else { throw POSIXError(.init(rawValue: errno) ?? .EIO) }
@@ -222,5 +216,4 @@ struct DarwinProcessEnumeratorTests {
             throw error
         }
     }
-    #endif
 }

@@ -16,7 +16,6 @@ extension CodexBarCLI {
                 kind: .args)
         }
 
-        #if os(macOS)
         let targets: [ProviderDescriptor]
         do {
             targets = try Self.cookieRefreshTargets(rawProvider: rawProvider, refreshAll: refreshAll)
@@ -69,16 +68,8 @@ extension CodexBarCLI {
         }
         let hasErrors = results.contains(where: \.isFailure)
         Self.exit(code: hasErrors ? .failure : .success, output: output, kind: .runtime)
-        #else
-        Self.exit(
-            code: .failure,
-            message: "Cookie refresh is only supported on macOS.",
-            output: output,
-            kind: .args)
-        #endif
     }
 
-    #if os(macOS)
     static func cookieRefreshTargets(
         rawProvider: String?,
         refreshAll: Bool,
@@ -289,8 +280,6 @@ extension CodexBarCLI {
             nil
         }
     }
-
-    #endif
 }
 
 enum CookieRefreshStatus: String, Encodable {

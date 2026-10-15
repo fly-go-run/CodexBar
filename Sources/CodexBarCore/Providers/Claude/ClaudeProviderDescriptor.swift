@@ -4,11 +4,7 @@ import SweetCookieKit
 public enum ClaudeProviderDescriptor {
     public static let descriptor: ProviderDescriptor = Self.makeDescriptor()
     private static var browserCookieOrder: BrowserCookieImportOrder? {
-        #if os(macOS)
         [.chrome] + Browser.defaultImportOrder.filter { $0 != .chrome }
-        #else
-        nil
-        #endif
     }
 
     private static let ttyLaunch = ProviderTTYLaunchConfig(
@@ -1017,11 +1013,7 @@ struct ClaudeWebFetchStrategy: ProviderFetchStrategy {
     }
 
     fileprivate static var isSupportedOnCurrentPlatform: Bool {
-        #if os(macOS)
         true
-        #else
-        false
-        #endif
     }
 }
 

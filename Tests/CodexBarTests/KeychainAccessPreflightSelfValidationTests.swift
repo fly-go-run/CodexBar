@@ -1,9 +1,7 @@
 import Foundation
+import Security
 import Testing
 @testable import CodexBarCore
-
-#if os(macOS)
-import Security
 
 struct KeychainAccessPreflightSelfValidationTests {
     @Test
@@ -158,4 +156,3 @@ struct KeychainAccessPreflightSelfValidationTests {
             trustedApplicationValidationStatuses: [result], promptSelector: .init(rawValue: 1)) == .rejected)
     }
 }
-#endif

@@ -2,7 +2,6 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
-#if os(macOS)
 struct CodexLaunchPreflightNPMMemoTests {
     @Test(arguments: [true, false], ["standalone", "bundle", "bundle-alias"])
     func `production discovery memo follows Node selection without caching wrapper eligibility`(
@@ -121,4 +120,3 @@ private final class FixtureFileManager: FileManager {
         path.hasPrefix(self.root) && super.isExecutableFile(atPath: path)
     }
 }
-#endif

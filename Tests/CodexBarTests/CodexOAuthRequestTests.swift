@@ -1,9 +1,6 @@
 import Foundation
 import Testing
 @testable import CodexBarCore
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
 @Suite(.serialized)
 struct CodexOAuthRequestTests {
@@ -52,7 +49,6 @@ struct CodexOAuthRequestTests {
         #expect(requests.map { $0.value(forHTTPHeaderField: "ChatGPT-Account-Id") } == ["account-a", "account-b"])
     }
 
-    #if os(macOS)
     @MainActor
     @Test
     func `dashboard cookie requests fetch distinct cacheable responses`() async {
@@ -121,7 +117,6 @@ struct CodexOAuthRequestTests {
         #expect(requests.allSatisfy { $0.cachePolicy == .reloadIgnoringLocalCacheData })
         #expect(requests.allSatisfy { $0.url?.path == "/backend-api/me" })
     }
-    #endif
 
     @Test
     func `token refresh request uses isolated cache policy`() async throws {
