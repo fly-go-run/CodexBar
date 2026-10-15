@@ -89,9 +89,7 @@ for (const code of catalogCodes) {
   assert(indexHtml.includes(`href="https://codexbar.app/?lang=${code}"`), `missing hreflang URL for ${code}`);
 }
 
-console.log(
-  `app/site locales OK: ${catalogCodes.length} locales, ${englishKeys.length} site messages`,
-);
+console.log(`app/site locales OK: ${catalogCodes.length} locales, ${englishKeys.length} site messages`);
 
 function tokens(value) {
   return [...value.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]).sort();
