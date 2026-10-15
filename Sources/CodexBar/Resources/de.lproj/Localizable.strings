@@ -2618,3 +2618,6 @@
 "Daily spend · %@" = "Tägliche Ausgaben · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Gilt für das ausgewählte Token-Konto „%@“. Jedes Konto behält seine eigenen Limits.";
 "Applies to the OpenAI API key, not to token accounts." = "Gilt für den OpenAI-API-Schlüssel, nicht für Token-Konten.";
+
+"Offline · %@" = "Offline · %@";
+"Offline · data may be outdated" = "Offline · Daten sind möglicherweise veraltet";

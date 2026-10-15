@@ -24,7 +24,8 @@ struct DeepSeekTransportRetentionTests {
             #expect(store.snapshots[.deepseek]?.deepseekPlatformBalanceOwner == prior.deepseekPlatformBalanceOwner)
             #expect(store.snapshots[.deepseek]?.updatedAt == prior.updatedAt)
             #expect(store.lastSourceLabels[.deepseek] == "web")
-            #expect(store.errors[.deepseek] == error.localizedDescription)
+            #expect(store.errors[.deepseek] == ProviderTransportRegressionSupport
+                .offlineError(preservingPriorData: true))
             store.persistWidgetSnapshot(reason: "deepseek-owned-outage")
             await store.widgetSnapshotPersistTask?.value
             let entry = try #require(saved?.entries.first { $0.provider == .deepseek })
@@ -56,7 +57,8 @@ struct DeepSeekTransportRetentionTests {
                 await store.refreshProvider(.deepseek)
             }
             #expect(store.snapshots[.deepseek] == nil)
-            #expect(store.errors[.deepseek] == error.localizedDescription)
+            #expect(store.errors[.deepseek] == ProviderTransportRegressionSupport
+                .offlineError(preservingPriorData: false))
             var saved: WidgetSnapshot?
             store._test_widgetSnapshotSaveOverride = { saved = $0 }
             store.persistWidgetSnapshot(reason: "deepseek-owner-mismatch")

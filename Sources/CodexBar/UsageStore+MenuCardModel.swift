@@ -133,6 +133,7 @@ extension UsageStore {
             lastKnownUsageCapturedAt: account?.lastKnownUsageCapturedAt
                 ?? lastKnownUsageCapturedAt
                 ?? (isLive ? self.browserSessionLastKnownUsageCapturedAt(for: provider, snapshot: snapshot) : nil),
+            isOffline: isLive && !isSettings && self.offlineProviders.contains(provider.instanceID),
             isRefreshing: isSettings ? self.refreshingProviders.contains(provider.instanceID)
                 : self.shouldShowRefreshingMenuCardIndicator(for: provider),
             lastError: lastError,

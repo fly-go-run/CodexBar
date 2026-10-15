@@ -2622,3 +2622,6 @@
 "Daily spend · %@" = "ค่าใช้จ่ายรายวัน · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "ใช้กับบัญชีโทเคนที่เลือก “%@” แต่ละบัญชีจะเก็บขีดจำกัดของตนเองไว้";
 "Applies to the OpenAI API key, not to token accounts." = "ใช้กับคีย์ API ของ OpenAI ไม่ใช่บัญชีโทเคน";
+
+"Offline · %@" = "ออฟไลน์ · %@";
+"Offline · data may be outdated" = "ออฟไลน์ · ข้อมูลอาจล้าสมัย";

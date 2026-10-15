@@ -76,7 +76,7 @@ struct DeepSeekTransportOwnershipTests {
         #expect(snapshot.primary?.resetDescription?.contains("19.00") == true)
     }
 
-    @Test(arguments: [URLError.Code.badURL, .secureConnectionFailed])
+    @Test(arguments: [URLError.Code.badURL, .serverCertificateUntrusted])
     func `unsupported URL failures cannot retain even the matching owner`(code: URLError.Code) async throws {
         let cache = DeepSeekPlatformValidationCache(validityTTL: 0)
         let prior = try await Fixture.project(Fixture.successfulResolution(candidate: Fixture.candidateA, cache: cache))
@@ -226,7 +226,7 @@ struct DeepSeekTransportOwnershipTests {
             cache: cache,
             validate: { token in
                 throw ProviderTransportRegressionSupport.urlError(token == Fixture.candidateA.token ? .dnsLookupFailed :
-                    .secureConnectionFailed)
+                    .serverCertificateUntrusted)
             })
         let error = try #require(resolution.selectedTransportError)
         #expect(error.owner?.profileID == Fixture.candidateA.id)

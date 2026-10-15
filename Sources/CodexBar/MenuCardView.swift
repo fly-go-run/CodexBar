@@ -952,6 +952,7 @@ extension UsageMenuCardView.Model {
                 isRefreshing: input.isRefreshing,
                 lastError: Self.lastError(input: input),
                 hasLastKnownUsage: input.lastKnownUsageCapturedAt != nil,
+                isOffline: input.isOffline,
                 now: input.now)
         let redacted = Self.redactedText(input: input, subtitle: subtitle)
         let placeholder = Self.placeholder(input: input)
@@ -1134,6 +1135,7 @@ extension UsageMenuCardView.Model {
         isRefreshing: Bool,
         lastError: String?,
         hasLastKnownUsage: Bool,
+        isOffline: Bool = false,
         now: Date) -> (text: String, style: SubtitleStyle)
     {
         if let lastError, !lastError.isEmpty {
@@ -1150,7 +1152,8 @@ extension UsageMenuCardView.Model {
         }
 
         if let updated = snapshot?.updatedAt {
-            return (UsageFormatter.updatedString(from: updated, now: now), .info)
+            let updatedText = UsageFormatter.updatedString(from: updated, now: now)
+            return (isOffline ? L("Offline · %@", updatedText) : updatedText, .info)
         }
 
         return (L("Not fetched yet"), .info)

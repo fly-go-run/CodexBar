@@ -24,7 +24,7 @@ struct OllamaTransportIdentityTests {
         #expect(await transport.requests().count == (route == .validation ? 1 : 2))
     }
 
-    @Test(arguments: Route.allCases, [URLError.Code.badURL, .secureConnectionFailed])
+    @Test(arguments: Route.allCases, [URLError.Code.badURL, .serverCertificateUntrusted])
     func `Ollama API keeps nonpreservable URL failures bounded`(route: Route, code: URLError.Code) async {
         let (error, _) = await Self.failure(route: route, error: ProviderTransportRegressionSupport.urlError(code))
         #expect(!UsageStore.shouldPreservePriorSnapshot(after: error, hadPriorData: true))
@@ -57,7 +57,8 @@ struct OllamaTransportIdentityTests {
             await store.refreshProvider(.ollama, allowDisabled: true)
             await store.refreshProvider(.ollama, allowDisabled: true)
             #expect(fetches == 2)
-            #expect(store.errors[.ollama] == error.localizedDescription)
+            #expect(store.errors[.ollama] == ProviderTransportRegressionSupport
+                .offlineError(preservingPriorData: hasPriorData))
             #expect((store.snapshot(for: .ollama) != nil) == hasPriorData)
             if hasPriorData {
                 #expect(store.snapshot(for: .ollama)?.primary == nil)
