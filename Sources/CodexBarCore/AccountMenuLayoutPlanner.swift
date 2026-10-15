@@ -24,17 +24,10 @@ public enum AccountMenuLayoutPlanner {
         case healthy
     }
 
-    public enum ResetPresentation: Equatable, Sendable {
-        case standard
-        case hidden
-        case providerDescription
-    }
-
     public struct WindowDetail: Equatable, Sendable {
         public let metricID: String
         public let label: String
         public let window: RateWindow
-        public let resetPresentation: ResetPresentation
     }
 
     public struct CompactRow: Equatable, Sendable {
@@ -191,53 +184,27 @@ public enum AccountMenuLayoutPlanner {
             windows.append(WindowDetail(
                 metricID: "primary",
                 label: metadata?.sessionLabel ?? "Session",
-                window: primary,
-                resetPresentation: self.primaryResetPresentation(for: account, window: primary)))
+                window: primary))
         }
         if let secondary = snapshot.secondary {
             windows.append(WindowDetail(
                 metricID: "secondary",
                 label: metadata?.weeklyLabel ?? "Weekly",
-                window: secondary,
-                resetPresentation: .standard))
+                window: secondary))
         }
         if let tertiary = snapshot.tertiary {
             windows.append(WindowDetail(
                 metricID: "tertiary",
                 label: metadata?.opusLabel ?? "Monthly",
-                window: tertiary,
-                resetPresentation: .standard))
+                window: tertiary))
         }
         for extra in snapshot.extraRateWindows ?? [] where extra.usageKnown {
             windows.append(WindowDetail(
                 metricID: extra.id,
                 label: self.shortLabel(forWindowTitle: extra.title),
-                window: extra.window,
-                resetPresentation: .standard))
+                window: extra.window))
         }
         return windows
-    }
-
-    private static func primaryResetPresentation(
-        for account: ProviderAccountUsageSnapshot,
-        window: RateWindow) -> ResetPresentation
-    {
-        let policy = ProviderDescriptorRegistry.descriptor(for: account.provider).presentation.menuCard
-        if policy.clearsPrimaryReset ||
-            ((policy.hidesPrimaryResetWithoutDate || policy.usesAbacusPace) && window.resetsAt == nil)
-        {
-            return .hidden
-        }
-        if policy.usesRawPrimaryResetDescription {
-            return .providerDescription
-        }
-        if policy.primaryDescriptionPlacement == .reset,
-           let description = window.resetDescription,
-           !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        {
-            return .providerDescription
-        }
-        return .standard
     }
 
     /// Scoped weekly windows are titled "<model> only" for the card view; the

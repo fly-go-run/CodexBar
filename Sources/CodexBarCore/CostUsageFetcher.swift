@@ -257,12 +257,8 @@ public struct CostUsageFetcher: Sendable {
     {
         var options = override ?? CostUsageScanner.Options()
         // Provider-specific by design: Codex managed profiles relocate sessions and archived_sessions roots.
-        if provider == .codex,
-           let codexHomePath = codexHomePath?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !codexHomePath.isEmpty
-        {
-            options.codexSessionsRoot = URL(fileURLWithPath: codexHomePath, isDirectory: true)
-                .appendingPathComponent("sessions", isDirectory: true)
+        if provider == .codex, let sessionsRoot = CodexHomeScope.sessionsRoot(homePath: codexHomePath) {
+            options.codexSessionsRoot = sessionsRoot
         }
         return options
     }
@@ -886,7 +882,6 @@ public struct CostUsageFetcher: Sendable {
         historyCoverageIsEstablished: Bool = true,
         historyScanIsPartial: Bool = false,
         monetaryValuesAreAvailable: Bool = true,
-        meteredCostUSD: Double? = nil,
         costProvenance: CostProvenance = .unknown,
         credentialScopeFingerprint: String? = nil,
         historyLabel: String? = nil,
@@ -928,7 +923,6 @@ public struct CostUsageFetcher: Sendable {
             historyCoverageIsEstablished: historyCoverageIsEstablished,
             historyScanIsPartial: historyScanIsPartial,
             historyLabel: historyLabel,
-            meteredCostUSD: monetaryValuesAreAvailable ? meteredCostUSD : nil,
             costProvenance: costProvenance,
             credentialScopeFingerprint: credentialScopeFingerprint,
             daily: daily.data,

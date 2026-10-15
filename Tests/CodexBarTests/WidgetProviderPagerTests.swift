@@ -133,7 +133,7 @@ struct WidgetProviderPagerTests {
     func `every provider mark label is the higher contrast choice`() {
         for provider in UsageProvider.allCases {
             guard let color = ProviderBrandColor.resolve(for: provider.instanceID) else { continue }
-            let luminance = WidgetContrast.relativeLuminance(of: color)
+            let luminance = color.relativeLuminance
             let whiteContrast = 1.05 / (luminance + 0.05)
             let blackContrast = (luminance + 0.05) / 0.05
             let expected = blackContrast >= whiteContrast ? "black" : "white"

@@ -14,8 +14,8 @@ struct ProviderThroughputSection {
     var summaryLine: String {
         L(
             "Latest %@ · Peak %@ at %@",
-            self.snapshot.latestTokensPerMinute.map(Self.count) ?? "—",
-            Self.count(self.snapshot.peakTokensPerMinute),
+            self.snapshot.latestTokensPerMinute.map(UsageFormatter.tokenCountString) ?? "—",
+            UsageFormatter.tokenCountString(self.snapshot.peakTokensPerMinute),
             self.snapshot.peakAt?.formatted(date: .omitted, time: .shortened) ?? "—")
     }
 
@@ -24,8 +24,8 @@ struct ProviderThroughputSection {
             let time = minute.start.formatted(date: .omitted, time: .shortened)
             let summary = minute.isPending ? "\(time) · \(L("reporting…"))" : "\(time) · " + L(
                 "%@ tokens · %@ requests",
-                ProviderThroughputSection.count(minute.totalTokens),
-                ProviderThroughputSection.count(minute.requests))
+                UsageFormatter.tokenCountString(minute.totalTokens),
+                UsageFormatter.tokenCountString(minute.requests))
             return .init(
                 id: String(minute.start.timeIntervalSince1970),
                 value: Double(minute.totalTokens),
@@ -37,10 +37,6 @@ struct ProviderThroughputSection {
 
     func summary(selectedPointID: String?) -> String {
         self.points.first { $0.id == selectedPointID }?.hoverSummary ?? self.summaryLine
-    }
-
-    static func count(_ value: Int) -> String {
-        UsageFormatter.tokenCountString(value)
     }
 }
 

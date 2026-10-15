@@ -67,12 +67,6 @@ enum CLIRenderer {
             context: context,
             now: now,
             lines: &lines)
-        self.appendExtraRateWindows(
-            provider: provider,
-            snapshot: snapshot,
-            context: context,
-            now: now,
-            lines: &lines)
         self.appendProviderDetails(snapshot.details, useColor: context.useColor, lines: &lines)
         self.appendPresentationCostLines(
             provider: provider,
@@ -330,7 +324,7 @@ enum CLIRenderer {
         let windows: [NamedRateWindow] = slots.compactMap { label, window in
             guard let window, !window.isSyntheticPlaceholder else { return nil }
             return NamedRateWindow(id: label, title: label, window: window)
-        } + descriptor.presentation.extraRateWindows(snapshot: snapshot)
+        }
         return windows.map {
             self.makeCardMetric(provider: provider, window: $0, resetStyle: resetStyle, now: now)
         }
@@ -595,43 +589,6 @@ enum CLIRenderer {
             context: context,
             now: now,
             lines: &lines)
-    }
-
-    private static func appendExtraRateWindows(
-        provider: UsageProvider,
-        snapshot: UsageSnapshot,
-        context: RenderContext,
-        now: Date,
-        lines: inout [String])
-    {
-        let presentation = ProviderDescriptorRegistry.descriptor(for: provider).presentation
-        self.appendNamedRateWindowLines(
-            presentation.extraRateWindows(snapshot: snapshot),
-            context: context,
-            now: now,
-            lines: &lines,
-            usesResetDescriptionAsDetail: presentation.menuCard.extraRateWindowShowsResetDescriptionAsDetail)
-    }
-
-    private static func appendNamedRateWindowLines(
-        _ windows: [NamedRateWindow],
-        context: RenderContext,
-        now: Date,
-        lines: inout [String],
-        usesResetDescriptionAsDetail: (NamedRateWindow) -> Bool = { _ in false })
-    {
-        for window in windows {
-            let line = window.usageKnown
-                ? self.rateLine(title: window.title, window: window.window, useColor: context.useColor)
-                : self.labelValueLine(window.title, value: "Unavailable", useColor: context.useColor)
-            lines.append(line)
-            self.appendResetAndDetailLines(
-                usesDetail: usesResetDescriptionAsDetail(window),
-                window: window.window,
-                context: context,
-                now: now,
-                lines: &lines)
-        }
     }
 
     private static func appendCreditsLine(

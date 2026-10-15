@@ -102,11 +102,7 @@ extension StatusItemController {
         provider _: UsageProvider,
         tokenUsage: UsageMenuCardView.Model.TokenUsageSection?) -> [String]
     {
-        let lines = [
-            tokenUsage?.sessionLine,
-            tokenUsage?.monthLine,
-            tokenUsage?.meteredLine,
-        ]
+        let lines = [tokenUsage?.sessionLine, tokenUsage?.monthLine]
             .compactMap(\.self)
             + (tokenUsage?.comparisonLines ?? [])
             + (tokenUsage?.speedLines ?? [])
@@ -120,11 +116,7 @@ extension StatusItemController {
         hasSubmenu: Bool) -> [String]
     {
         guard !hasSubmenu else { return [] }
-        let primaryLines = ([
-            tokenUsage?.sessionLine,
-            tokenUsage?.monthLine,
-            tokenUsage?.meteredLine,
-        ]
+        let primaryLines = ([tokenUsage?.sessionLine, tokenUsage?.monthLine]
             .compactMap(\.self)
             + (tokenUsage?.comparisonLines ?? [])
             + (tokenUsage?.speedLines ?? [])

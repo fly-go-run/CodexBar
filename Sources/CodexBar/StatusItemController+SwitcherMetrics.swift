@@ -19,20 +19,13 @@ extension StatusItemController {
             metric
         } else if preference == .automatic,
                   let metric,
-                  presentation.switcherUsesAutomaticMenuBarWindow
-                  || (presentation.automaticSelectionPrioritizesExhaustedWindow && metric.usedPercent >= 100)
+                  presentation.automaticSelectionPrioritizesExhaustedWindow && metric.usedPercent >= 100
         {
             metric
         } else {
             snapshot?.switcherWeeklyWindow(for: provider, showUsed: showUsed)
         }
-        if let window {
-            return showUsed ? window.usedPercent : window.remainingPercent
-        }
-        guard preference == .automatic,
-              let snapshot,
-              let usedPercent = presentation.fallbackSwitcherUsedPercent(snapshot: snapshot),
-              usedPercent.isFinite else { return nil }
-        return showUsed ? usedPercent : max(0, 100 - usedPercent)
+        guard let window else { return nil }
+        return showUsed ? window.usedPercent : window.remainingPercent
     }
 }

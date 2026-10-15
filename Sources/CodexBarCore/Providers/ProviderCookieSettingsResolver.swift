@@ -8,7 +8,6 @@ public enum ProviderCookieSettingsResolver {
         selectedAccount: ProviderTokenAccount?) -> ProviderSettingsSnapshot.CookieProviderSettings
     {
         guard let support = TokenAccountSupportCatalog.support(for: provider),
-              case .cookieHeader = support.injection,
               let selectedAccount
         else {
             return ProviderSettingsSnapshot.CookieProviderSettings(

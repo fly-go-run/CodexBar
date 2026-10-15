@@ -103,24 +103,19 @@ public struct ProviderTokenAccount: Codable, Identifiable, Sendable {
     }
 
     public var sanitizedOrganizationID: String? {
-        Self.clean(self.organizationID)
+        self.organizationID.trimmedNonEmpty
     }
 
     public var sanitizedUsageScope: String? {
-        Self.clean(self.usageScope)
+        self.usageScope.trimmedNonEmpty
     }
 
     public var sanitizedWorkspaceID: String? {
-        Self.clean(self.workspaceID)
+        self.workspaceID.trimmedNonEmpty
     }
 
     public var sanitizedSeatCreditEntitlement: String? {
-        Self.clean(self.seatCreditEntitlement)
-    }
-
-    private static func clean(_ raw: String?) -> String? {
-        let trimmed = raw?.trimmingCharacters(in: .whitespacesAndNewlines)
-        return (trimmed?.isEmpty ?? true) ? nil : trimmed
+        self.seatCreditEntitlement.trimmedNonEmpty
     }
 
     public func sanitizedForDump() -> ProviderTokenAccount {

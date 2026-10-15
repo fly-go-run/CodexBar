@@ -49,11 +49,6 @@ extension UsageStore {
         snapshot: UsageSnapshot,
         sourceLabel: String?)
     {
-        let support = TokenAccountSupportCatalog.support(for: provider)
-        let cookieSource = self.settings.providerConfig(for: provider)?.cookieSource ?? .auto
-        guard support?.selectedAccountRequiresManualCookieSource != true || cookieSource != .auto else {
-            return
-        }
         let cached = TokenAccountUsageSnapshot(
             account: account,
             snapshot: snapshot,
@@ -510,8 +505,7 @@ extension UsageStore {
     func refreshTokenAccounts(
         provider: UsageProvider,
         accounts: [ProviderTokenAccount],
-        generation: UInt64? = nil,
-        sleep: (Duration) async throws -> Void = { try await Task.sleep(for: $0) }) async
+        generation: UInt64? = nil) async
     {
         guard let selectedAccount = self.settings.effectiveSelectedTokenAccount(for: provider) else {
             self.reconcileSelectedTokenAccountSnapshotBeforeRefresh(provider: provider, accounts: accounts)
@@ -538,7 +532,7 @@ extension UsageStore {
         var sawAnyNonCancellationOutcome = false
 
         let results = await self.fetchTokenAccountOutcomes(
-            provider: provider, accounts: limitedAccounts, sleep: sleep)
+            provider: provider, accounts: limitedAccounts)
         guard self.isCurrentProviderRefreshGeneration(provider, generation: generation) else { return }
         for result in results {
             guard let account = self.uniqueTokenAccount(provider: provider, accountID: result.account.id)
@@ -675,8 +669,7 @@ extension UsageStore {
 
     private func fetchTokenAccountOutcomes(
         provider: UsageProvider,
-        accounts: [ProviderTokenAccount],
-        sleep: (Duration) async throws -> Void) async -> [TokenAccountFetchResult]
+        accounts: [ProviderTokenAccount]) async -> [TokenAccountFetchResult]
     {
         let descriptor =
             self.providerSpecs[provider]?.descriptor
@@ -692,38 +685,6 @@ extension UsageStore {
                 let context = self.makeFetchContext(provider: provider, override: override)
                 return (index, account, context)
             }
-
-        if let delay = TokenAccountSupportCatalog.support(for: provider)?
-            .minimumDelayBetweenAccountRefreshes
-        {
-            var results: [TokenAccountFetchResult] = []
-            results.reserveCapacity(requests.count)
-            for request in requests {
-                if !results.isEmpty {
-                    do {
-                        try await sleep(delay)
-                    } catch {
-                        for pending in requests.dropFirst(results.count) {
-                            results.append(
-                                TokenAccountFetchResult(
-                                    index: pending.index,
-                                    account: pending.account,
-                                    outcome: ProviderFetchOutcome(
-                                        result: .failure(CancellationError()),
-                                        attempts: [])))
-                        }
-                        return results
-                    }
-                }
-                let outcome = await descriptor.fetchOutcome(context: request.context)
-                results.append(
-                    TokenAccountFetchResult(
-                        index: request.index,
-                        account: request.account,
-                        outcome: outcome))
-            }
-            return results
-        }
 
         return await withTaskGroup(
             of: TokenAccountFetchResult.self,

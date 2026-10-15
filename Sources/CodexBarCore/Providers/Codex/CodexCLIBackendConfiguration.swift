@@ -121,12 +121,7 @@ private struct CodexCLIBackendConfiguration {
         environment: [String: String],
         fileManager: FileManager) -> String?
     {
-        let codexHome = environment["CODEX_HOME"]?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let root = if let codexHome, !codexHome.isEmpty {
-            URL(fileURLWithPath: codexHome, isDirectory: true)
-        } else {
-            fileManager.homeDirectoryForCurrentUser.appendingPathComponent(".codex", isDirectory: true)
-        }
+        let root = CodexHomeScope.ambientHomeURL(env: environment, fileManager: fileManager)
         let configURL = root.appendingPathComponent("config.toml")
         guard let handle = try? FileHandle(forReadingFrom: configURL) else { return nil }
         defer { try? handle.close() }

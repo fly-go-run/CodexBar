@@ -666,7 +666,7 @@ extension SettingsStore {
 
 extension SettingsStore {
     func codexSettingsSnapshot(
-        tokenOverride: TokenAccountOverride?,
+        tokenOverride _: TokenAccountOverride?,
         activeSourceOverride: CodexActiveSource? = nil) -> ProviderSettingsSnapshot.CodexProviderSettings
     {
         let reconciliationSnapshot = self.codexAccountReconciliationSnapshot(
@@ -674,8 +674,8 @@ extension SettingsStore {
         let resolvedActiveSource = CodexActiveSourceResolver.resolve(from: reconciliationSnapshot)
         return CodexProviderSettingsBuilder.make(input: CodexProviderSettingsBuilderInput(
             usageDataSource: self.codexUsageDataSource,
-            cookieSource: self.codexSnapshotCookieSource(tokenOverride: tokenOverride),
-            manualCookieHeader: self.codexSnapshotCookieHeader(tokenOverride: tokenOverride),
+            cookieSource: self.codexCookieSource,
+            manualCookieHeader: self.codexCookieHeader,
             reconciliationSnapshot: reconciliationSnapshot,
             resolvedActiveSource: resolvedActiveSource,
             allowExternalOAuthSources: self.codexExternalOAuthSourcesAllowed))
@@ -693,33 +693,5 @@ extension SettingsStore {
         case .oauth:
             return .oauth
         }
-    }
-
-    private func codexSnapshotCookieHeader(tokenOverride: TokenAccountOverride?) -> String {
-        let fallback = self.codexCookieHeader
-        guard let support = TokenAccountSupportCatalog.support(for: .codex),
-              case .cookieHeader = support.injection
-        else {
-            return fallback
-        }
-        guard let account = ProviderTokenAccountSelection.selectedAccount(
-            provider: .codex,
-            settings: self,
-            override: tokenOverride)
-        else {
-            return fallback
-        }
-        return TokenAccountSupportCatalog.normalizedCookieHeader(account.token, support: support)
-    }
-
-    private func codexSnapshotCookieSource(tokenOverride: TokenAccountOverride?) -> ProviderCookieSource {
-        let fallback = self.codexCookieSource
-        guard let support = TokenAccountSupportCatalog.support(for: .codex),
-              support.requiresManualCookieSource
-        else {
-            return fallback
-        }
-        if self.tokenAccounts(for: .codex).isEmpty { return fallback }
-        return .manual
     }
 }

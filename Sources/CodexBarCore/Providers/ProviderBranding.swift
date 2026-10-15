@@ -39,6 +39,15 @@ public struct ProviderColor: Sendable, Equatable {
         }
         return String(format: "#%02X%02X%02X", channel(self.red), channel(self.green), channel(self.blue))
     }
+
+    /// WCAG relative luminance of the sRGB color, with channels clamped to 0...1.
+    public var relativeLuminance: Double {
+        func linear(_ value: Double) -> Double {
+            let clamped = min(1, max(0, value))
+            return clamped <= 0.04045 ? clamped / 12.92 : pow((clamped + 0.055) / 1.055, 2.4)
+        }
+        return 0.2126 * linear(self.red) + 0.7152 * linear(self.green) + 0.0722 * linear(self.blue)
+    }
 }
 
 public struct ProviderBranding: Sendable {

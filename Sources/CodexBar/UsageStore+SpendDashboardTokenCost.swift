@@ -123,7 +123,7 @@ extension UsageStore {
                     costScopeSignature: costScopeSignature)
                 return
             }
-            let hasUsage = !snapshot.daily.isEmpty || snapshot.meteredCostUSD != nil
+            let hasUsage = !snapshot.daily.isEmpty
             guard hasUsage || snapshot.historyCoverageIsEstablished else {
                 throw TokenSnapshotError.historyUnavailable
             }

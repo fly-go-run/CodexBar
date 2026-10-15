@@ -22,16 +22,7 @@ extension SettingsStore {
     /// Saved manual credentials stay passive while Automatic discovery owns the account, until the user explicitly
     /// selects one again.
     func effectiveSelectedTokenAccount(for provider: UsageProvider) -> ProviderTokenAccount? {
-        let support = TokenAccountSupportCatalog.support(for: provider)
-        if support?.passiveSourceModes.contains(self.providerConfig(for: provider)?.source ?? .auto) == true {
-            return nil
-        }
-        if support?.selectedAccountRequiresManualCookieSource == true,
-           (self.providerConfig(for: provider)?.cookieSource ?? .auto) == .auto
-        {
-            return nil
-        }
-        return self.selectedTokenAccount(for: provider)
+        self.selectedTokenAccount(for: provider)
     }
 
     func modelRateLimitScope(for provider: UsageProvider) -> ProviderModelRateLimitScope {
@@ -92,9 +83,6 @@ extension SettingsStore {
             activeIndex: accounts.count)
         self.updateProviderConfig(provider: provider) { entry in
             entry.tokenAccounts = updated
-            if TokenAccountSupportCatalog.support(for: provider)?.clearsAPIKeyOnMutation == true {
-                entry.apiKey = nil
-            }
         }
         self.applyTokenAccountCookieSourceIfNeeded(provider: provider)
         CodexBarLog.logger(LogCategories.tokenAccounts).info(
@@ -148,9 +136,6 @@ extension SettingsStore {
             activeIndex: data.clampedActiveIndex())
         self.updateProviderConfig(provider: provider) { entry in
             entry.tokenAccounts = updated
-            if TokenAccountSupportCatalog.support(for: provider)?.clearsAPIKeyOnMutation == true {
-                entry.apiKey = nil
-            }
         }
         self.applyTokenAccountCookieSourceIfNeeded(provider: provider)
         CodexBarLog.logger(LogCategories.tokenAccounts).info(
@@ -182,9 +167,6 @@ extension SettingsStore {
                     version: data.version,
                     accounts: filtered,
                     activeIndex: nextActiveIndex)
-            }
-            if TokenAccountSupportCatalog.support(for: provider)?.clearsAPIKeyOnMutation == true {
-                entry.apiKey = nil
             }
         }
         CodexBarLog.logger(LogCategories.tokenAccounts).info(

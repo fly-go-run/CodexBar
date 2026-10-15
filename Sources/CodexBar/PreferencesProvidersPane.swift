@@ -470,28 +470,12 @@ struct ProvidersPane: View {
                 }
             },
             showsOrganizationField: support.showsOrganizationField,
-            showsTeamModeControls: support.showsTeamModeControls,
-            addAccount: { label, token, usageScope, organizationID, workspaceID in
+            addAccount: { label, token, organizationID in
                 self.settings.addTokenAccount(
                     provider: provider,
                     label: label,
                     token: token,
-                    usageScope: usageScope,
-                    organizationID: organizationID,
-                    workspaceID: workspaceID)
-                Task { @MainActor in
-                    await ProviderInteractionContext.$current.withValue(.userInitiated) {
-                        await self.store.refreshProvider(provider, allowDisabled: true)
-                    }
-                }
-            },
-            updateAccount: { accountID, usageScope, organizationID, workspaceID in
-                self.settings.updateTokenAccount(
-                    provider: provider,
-                    accountID: accountID,
-                    usageScope: usageScope,
-                    organizationID: organizationID,
-                    workspaceID: workspaceID)
+                    organizationID: organizationID)
                 Task { @MainActor in
                     await ProviderInteractionContext.$current.withValue(.userInitiated) {
                         await self.store.refreshProvider(provider, allowDisabled: true)
@@ -506,13 +490,6 @@ struct ProvidersPane: View {
                     }
                 }
             },
-            primaryAddActionTitle: support.primaryAddActionTitle,
-            primaryAddAction: support.primaryAddActionTitle.map { _ in {
-                await implementation?.runTokenAccountPrimaryAction(context: context)
-                await ProviderInteractionContext.$current.withValue(.userInitiated) {
-                    await self.store.refreshProvider(provider, allowDisabled: true)
-                }
-            } },
             openConfigFile: {
                 if implementation?.openTokenFile(context: context) == true {
                     return

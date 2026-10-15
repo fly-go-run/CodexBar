@@ -35,16 +35,39 @@ public enum CodexHomeScope {
         return URL(fileURLWithPath: path, isDirectory: true).standardizedFileURL.path
     }
 
+    /// `CODEX_HOME` when set, otherwise `~/.codex`. `homeDirectory` replaces the user's home for tests.
     public static func ambientHomeURL(
         env: [String: String],
-        fileManager: FileManager = .default)
+        fileManager: FileManager = .default,
+        homeDirectory: URL? = nil)
         -> URL
     {
         if let raw = env["CODEX_HOME"]?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty {
             return URL(fileURLWithPath: raw, isDirectory: true)
         }
         // Provider-specific by design: `.codex` is the CLI's default on-disk home contract.
-        return fileManager.homeDirectoryForCurrentUser.appendingPathComponent(".codex", isDirectory: true)
+        return (homeDirectory ?? fileManager.homeDirectoryForCurrentUser)
+            .appendingPathComponent(".codex", isDirectory: true)
+    }
+
+    public static func sessionsRoot(home: URL) -> URL {
+        home.appendingPathComponent("sessions", isDirectory: true)
+    }
+
+    /// The sessions root of an explicit managed or profile home; nil when the path is blank.
+    public static func sessionsRoot(homePath: String?) -> URL? {
+        guard let homePath = homePath?.trimmingCharacters(in: .whitespacesAndNewlines), !homePath.isEmpty else {
+            return nil
+        }
+        return self.sessionsRoot(home: URL(fileURLWithPath: homePath, isDirectory: true))
+    }
+
+    /// `archived_sessions` beside a `sessions` root; nil for a custom root with another name.
+    public static func archivedSessionsRoot(sessionsRoot: URL) -> URL? {
+        guard sessionsRoot.lastPathComponent == "sessions" else { return nil }
+        return sessionsRoot
+            .deletingLastPathComponent()
+            .appendingPathComponent("archived_sessions", isDirectory: true)
     }
 
     public static func scopedEnvironment(base: [String: String], codexHome: String?) -> [String: String] {

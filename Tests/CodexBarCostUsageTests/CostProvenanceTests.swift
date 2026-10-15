@@ -136,7 +136,7 @@ struct CostProvenanceTests {
     }
 
     @Test
-    func `vendor reported snapshots stay vendor metered without meteredCostUSD`() throws {
+    func `vendor reported snapshots stay vendor metered`() throws {
         let snapshot = CostUsageTokenSnapshot(
             sessionTokens: 10,
             sessionCostUSD: 1.25,
@@ -160,18 +160,16 @@ struct CostProvenanceTests {
         let summary = snapshot.summary(forLastDays: 7, calendar: calendar)
         #expect(summary.provenance == .vendorMetered)
         #expect(summary.totalCostUSD == 1.25)
-        #expect(summary.meteredCostUSD == nil)
     }
 
     @Test
-    func `shorter summaries omit snapshot-wide metered spend`() throws {
+    func `mixed snapshot windows report their list-price rows`() throws {
         let snapshot = CostUsageTokenSnapshot(
             sessionTokens: 10,
             sessionCostUSD: 1,
             last30DaysTokens: 100,
             last30DaysCostUSD: 10,
             historyDays: 30,
-            meteredCostUSD: 4.5,
             costProvenance: .mixed,
             daily: [
                 CostUsageDailyReport.Entry(
@@ -188,10 +186,8 @@ struct CostProvenanceTests {
         calendar.timeZone = try #require(TimeZone(secondsFromGMT: 0))
         let week = snapshot.summary(forLastDays: 7, calendar: calendar)
         let month = snapshot.summary(forLastDays: 30, calendar: calendar)
-        #expect(week.meteredCostUSD == nil)
         #expect(week.provenance == .listPriceEstimate)
-        #expect(month.meteredCostUSD == 4.5)
-        #expect(month.provenance == .mixed)
+        #expect(month.provenance == .listPriceEstimate)
     }
 
     @Test

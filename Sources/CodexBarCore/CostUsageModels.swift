@@ -34,7 +34,6 @@ public struct CostUsageWindowSummary: Sendable, Equatable {
     public let tokenMix: CostUsageTokenMix
     public let coverage: CostUsageCoverageCounts
     public let provenance: CostProvenance
-    public let meteredCostUSD: Double?
 
     public init(
         days: Int,
@@ -45,7 +44,6 @@ public struct CostUsageWindowSummary: Sendable, Equatable {
         tokenMix: CostUsageTokenMix = CostUsageTokenMix(),
         coverage: CostUsageCoverageCounts = CostUsageCoverageCounts(),
         provenance: CostProvenance = .unknown,
-        meteredCostUSD: Double? = nil,
         incompleteRequestCount: Int = 0)
     {
         self.days = days
@@ -57,7 +55,6 @@ public struct CostUsageWindowSummary: Sendable, Equatable {
         self.tokenMix = tokenMix
         self.coverage = coverage
         self.provenance = provenance
-        self.meteredCostUSD = meteredCostUSD
     }
 }
 
@@ -177,10 +174,6 @@ public struct CostUsageTokenSnapshot: Sendable, Equatable {
     public let historyScanIsPartial: Bool
     public var historyLabel: String?
     public var reportingPeriod: CostReportingPeriod?
-    /// Provider-metered spend over the same window as `last30DaysCostUSD` — what the plan
-    /// actually deducts, as opposed to the API-rate estimate. Only some providers (e.g. Cursor)
-    /// report this; `nil` when unknown.
-    public let meteredCostUSD: Double?
     /// How this snapshot's costs were produced. Never infer this solely from whether a
     /// cost figure exists — Bedrock and OpenAI Admin costs are vendor-reported.
     public let costProvenance: CostProvenance
@@ -211,7 +204,6 @@ public struct CostUsageTokenSnapshot: Sendable, Equatable {
         historyCoverageIsEstablished: Bool = true,
         historyScanIsPartial: Bool = false,
         historyLabel: String? = nil,
-        meteredCostUSD: Double? = nil,
         costProvenance: CostProvenance = .unknown,
         credentialScopeFingerprint: String? = nil,
         daily: [CostUsageDailyReport.Entry],
@@ -234,7 +226,6 @@ public struct CostUsageTokenSnapshot: Sendable, Equatable {
         self.historyCoverageIsEstablished = historyCoverageIsEstablished
         self.historyScanIsPartial = historyScanIsPartial
         self.historyLabel = historyLabel
-        self.meteredCostUSD = meteredCostUSD
         self.costProvenance = costProvenance
         self.credentialScopeFingerprint = credentialScopeFingerprint
         self.daily = daily
@@ -272,8 +263,6 @@ public struct CostUsageTokenSnapshot: Sendable, Equatable {
             mix.merge(.from(entry: entry))
             coverage.add(entry)
         }
-        let coversFullHistory = days >= self.historyDays
-        let windowMetered = coversFullHistory ? self.meteredCostUSD : nil
         let totalTokens = tokens.isEmpty ? nil : CheckedSum.integers(tokens)
         let totalRequests = requests.isEmpty ? nil : CheckedSum.integers(requests)
         return CostUsageWindowSummary(
@@ -286,9 +275,7 @@ public struct CostUsageTokenSnapshot: Sendable, Equatable {
             coverage: coverage.counts,
             provenance: CostProvenance.forWindow(
                 snapshot: self.costProvenance,
-                hasWindowCosts: !costs.isEmpty,
-                includesMetered: windowMetered != nil),
-            meteredCostUSD: windowMetered,
+                hasWindowCosts: !costs.isEmpty),
             incompleteRequestCount: CostUsageIncompleteRequests.sum(entries.map(\.incompleteRequestCount)))
     }
 
@@ -1297,8 +1284,6 @@ private struct CostUsageAnyCodingKey: CodingKey {
 }
 
 enum CostUsageDateParser {
-    private static let isoWithFractionalSecondsKey = "CostUsageDateParser.isoWithFractionalSeconds"
-    private static let isoInternetDateTimeKey = "CostUsageDateParser.isoInternetDateTime"
     private static let dayFormatterKey = "CostUsageDateParser.dayFormatter"
     private static let monthDayYearFormatterKey = "CostUsageDateParser.monthDayYearFormatter"
 
@@ -1306,16 +1291,7 @@ enum CostUsageDateParser {
         guard let text, !text.isEmpty else { return nil }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if let d = self.isoFormatter(
-            key: self.isoWithFractionalSecondsKey,
-            options: [.withInternetDateTime, .withFractionalSeconds])
-            .date(from: trimmed)
-        {
-            return d
-        }
-        if let d = self.isoFormatter(key: self.isoInternetDateTimeKey, options: [.withInternetDateTime])
-            .date(from: trimmed)
-        {
+        if let d = ISO8601DateParser.parse(trimmed) {
             return d
         }
         if let d = self.dateFormatter(key: self.dayFormatterKey, format: "yyyy-MM-dd").date(from: trimmed) {
@@ -1328,20 +1304,6 @@ enum CostUsageDateParser {
         }
 
         return nil
-    }
-
-    private static func isoFormatter(
-        key: String,
-        options: ISO8601DateFormatter.Options) -> ISO8601DateFormatter
-    {
-        let threadDict = Thread.current.threadDictionary
-        if let cached = threadDict[key] as? ISO8601DateFormatter {
-            return cached
-        }
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = options
-        threadDict[key] = formatter
-        return formatter
     }
 
     private static func dateFormatter(key: String, format: String) -> DateFormatter {

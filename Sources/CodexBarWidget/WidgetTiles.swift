@@ -71,12 +71,7 @@ struct UsageTile<Header: View>: View {
 
     var body: some View {
         let color = WidgetColors.color(for: self.entry.provider)
-        // The provider's compact row cap curates what a tile may LIST; it must not decide which
-        // lane is binding. Headline and overflow are computed against the full set.
         let allLanes = WidgetTileLane.lanes(for: self.entry)
-        let displayLanes = self.laneLimit == nil
-            ? allLanes
-            : WidgetTileLane.lanes(for: self.entry, limit: self.laneLimit)
         let hasChart = self.size.showsChart(
             laneCount: allLanes.count,
             hasHistory: !self.entry.dailyUsage.isEmpty)
@@ -88,7 +83,7 @@ struct UsageTile<Header: View>: View {
             excluding: fallback?.consumedMetricID)
         let plan = WidgetTilePlan.make(
             lanes: allLanes,
-            displayCandidates: displayLanes,
+            displayCandidates: allLanes,
             maxSecondaryLanes: self.size.secondaryLaneCapacity(
                 hasMetrics: !metrics.isEmpty,
                 hasChart: hasChart),
@@ -100,7 +95,7 @@ struct UsageTile<Header: View>: View {
                     self.smallContent(
                         plan: WidgetTilePlan.make(
                             lanes: allLanes,
-                            displayCandidates: displayLanes,
+                            displayCandidates: allLanes,
                             maxSecondaryLanes: capacity,
                             reservesOverflowRow: true),
                         fallback: fallback,
@@ -111,7 +106,7 @@ struct UsageTile<Header: View>: View {
                 self.smallContent(
                     plan: WidgetTilePlan.make(
                         lanes: allLanes,
-                        displayCandidates: displayLanes,
+                        displayCandidates: allLanes,
                         maxSecondaryLanes: 0,
                         reservesOverflowRow: true),
                     fallback: fallback,
@@ -158,16 +153,6 @@ struct UsageTile<Header: View>: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        }
-    }
-
-    /// Providers cap how many lanes a compact tile may show; large tiles take everything and page
-    /// the excess behind a "+N more" line.
-    private var laneLimit: Int? {
-        switch self.size {
-        case .small: WidgetUsageRow.smallWidgetRowLimit(for: self.entry)
-        case .medium: WidgetUsageRow.mediumWidgetRowLimit(for: self.entry)
-        case .large: nil
         }
     }
 

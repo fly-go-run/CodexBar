@@ -123,20 +123,18 @@ struct UsageMenuCardView: View {
             let isRefreshing: Bool
             let sessionLine: String
             let monthLine: String
-            let meteredLine: String?
             let comparisonLines: [String]
             var speedLines: [String] = []
             let hintLine: String?
             let errorLine: String?
             let errorCopyText: String?
 
-            /// Explicit initializer so `meteredLine`/`comparisonLines` default to empty: callers
+            /// Explicit initializer so `comparisonLines` defaults to empty: callers
             /// that predate them (and providers that never report them) keep their call sites.
             init(
                 isRefreshing: Bool = false,
                 sessionLine: String,
                 monthLine: String,
-                meteredLine: String? = nil,
                 comparisonLines: [String] = [],
                 hintLine: String?,
                 errorLine: String?,
@@ -145,7 +143,6 @@ struct UsageMenuCardView: View {
                 self.isRefreshing = isRefreshing
                 self.sessionLine = sessionLine
                 self.monthLine = monthLine
-                self.meteredLine = meteredLine
                 self.comparisonLines = comparisonLines
                 self.hintLine = hintLine
                 self.errorLine = errorLine
@@ -504,7 +501,7 @@ private struct CopyIconButton: View {
     }
 }
 
-/// Shared token-cost block (header, Today/window/metered/comparison lines, hint, error) used by
+/// Shared token-cost block (header, Today/window/comparison lines, hint, error) used by
 /// both the inline card body and the standalone cost section; only the value-line font differs.
 private struct TokenUsageSectionContent: View {
     let provider: UsageProvider
@@ -531,11 +528,6 @@ private struct TokenUsageSectionContent: View {
             Text(self.tokenUsage.monthLine)
                 .font(self.lineFont)
                 .lineLimit(1)
-            if let metered = self.tokenUsage.meteredLine, !metered.isEmpty {
-                Text(metered)
-                    .font(self.lineFont)
-                    .lineLimit(1)
-            }
             ForEach(self.tokenUsage.comparisonLines, id: \.self) { line in
                 Text(line)
                     .font(self.lineFont)
@@ -866,9 +858,7 @@ extension UsageMenuCardView.Model {
         let usageNotes = Self.usageNotes(input: input)
         let presentation = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation
         let menuCard = presentation.menuCard
-        let rawCreditsText: String? = if !menuCard.showsCreditsSection ||
-            !input.showOptionalCreditsAndExtraUsage
-        {
+        let rawCreditsText: String? = if !input.showOptionalCreditsAndExtraUsage {
             nil
         } else {
             Self.creditsLine(
@@ -896,9 +886,8 @@ extension UsageMenuCardView.Model {
         let costPresentation = extraUsageSnapshot.map { presentation.cost(snapshot: $0) }
         let providerCostStyle = costPresentation?.menuCardStyle ?? .generic
         let providerCostFollowsSummaryStyle = Self.providerCostFollowsSummaryStyle(
-            cost: extraUsageCost,
             style: providerCostStyle,
-            isClaudeAdminAPI: isClaudeAdminAPI) && !menuCard.providerCostIsRequiredUsage
+            isClaudeAdminAPI: isClaudeAdminAPI)
         let providerCost: ProviderCostSection? = if !showsProviderCost ||
             metrics.contains(where: { $0.id == "claude-extra-usage" }) ||
             (providerCostFollowsSummaryStyle && !input.costSummaryInlineEnabled)
@@ -912,7 +901,7 @@ extension UsageMenuCardView.Model {
                 isClaudeAdminAPI: isClaudeAdminAPI,
                 preferredCurrencyCode: input.preferredCurrencyCode)
         }
-        let tokenUsageSnapshot = Self.tokenUsageSnapshot(input: input)
+        let tokenUsageSnapshot = input.tokenSnapshot
         let tokenUsage = Self.tokenUsageSection(
             provider: input.provider,
             enabled: input.tokenCostMenuSectionEnabled,
@@ -937,9 +926,7 @@ extension UsageMenuCardView.Model {
                 now: input.now)
         let redacted = Self.redactedText(input: input, subtitle: subtitle)
         let placeholder = Self.placeholder(input: input)
-        let providerDetails = Self.visibleProviderDetails(
-            input: input,
-            replacedRows: providerCost == nil ? [:] : costPresentation?.replacedDetailRows ?? [:])
+        let providerDetails = Self.visibleProviderDetails(input: input)
 
         return UsageMenuCardView.Model(
             provider: input.provider,
@@ -1179,7 +1166,7 @@ extension UsageMenuCardView.Model {
                 pacePercent: nil,
                 paceOnTop: true))
         }
-        return Self.blockingQuotaMetrics(metrics, input: input, snapshot: snapshot)
+        return metrics
     }
 
     private static func primaryMetric(
@@ -1190,18 +1177,10 @@ extension UsageMenuCardView.Model {
         title: String? = nil) -> Metric
     {
         var presentation = PrimaryMetricPresentation(
-            resetText: Self.resetText(for: primary, style: input.resetTimeDisplayStyle, now: input.now),
-            detailText: nil)
-        Self.applyPrimaryQuotaPresentation(
-            &presentation,
-            input: input,
-            primary: primary)
-        Self.applyPrimaryBalancePresentation(&presentation, input: input, primary: primary)
-        Self.applyPrimaryResetPresentation(&presentation, input: input, primary: primary)
+            resetText: Self.resetText(for: primary, style: input.resetTimeDisplayStyle, now: input.now))
         if bindingProjection == nil {
             Self.applyPrimaryPacePresentation(&presentation, input: input, primary: primary)
         }
-        Self.applyPrimaryFinalOverrides(&presentation, input: input, primary: primary)
         if let bindingProjection {
             let resetWindow = RateWindow(
                 usedPercent: bindingProjection.usedPercent,
@@ -1219,9 +1198,9 @@ extension UsageMenuCardView.Model {
             title: title ?? L(input.metadata.sessionLabel),
             percent: Self.clamped(input.usageBarsShowUsed ? displayedUsedPercent : 100 - displayedUsedPercent),
             percentStyle: percentStyle,
-            statusText: presentation.statusText,
+            statusText: nil,
             resetText: presentation.resetText,
-            detailText: presentation.detailText,
+            detailText: nil,
             detailLeftText: presentation.detailLeft,
             detailRightText: presentation.detailRight,
             pacePercent: presentation.pacePercent,
@@ -1248,18 +1227,7 @@ extension UsageMenuCardView.Model {
             now: input.now,
             pace: input.weeklyPace,
             showUsed: input.usageBarsShowUsed)
-        let presentation = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation
-        var weeklyResetText = Self.resetText(for: weekly, style: input.resetTimeDisplayStyle, now: input.now)
-        var weeklyDetailText: String?
-        if presentation.menuCard.showsSecondaryBalanceDescription,
-           let detail = weekly.resetDescription,
-           !detail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        {
-            weeklyDetailText = detail
-            if weekly.resetsAt == nil {
-                weeklyResetText = nil
-            }
-        }
+        let weeklyResetText = Self.resetText(for: weekly, style: input.resetTimeDisplayStyle, now: input.now)
         if let cursorPaceDetail = Self.resetWindowPaceDetail(
             window: weekly,
             input: input,
@@ -1274,7 +1242,7 @@ extension UsageMenuCardView.Model {
             percentStyle: percentStyle,
             statusText: nil,
             resetText: weeklyResetText,
-            detailText: weeklyDetailText,
+            detailText: nil,
             detailLeftText: paceDetail?.leftLabel,
             detailRightText: paceDetail?.rightLabel,
             pacePercent: paceDetail?.pacePercent,

@@ -272,7 +272,6 @@ struct SpendDashboardModel: Equatable, Sendable {
         }
 
         let provenance: CostProvenance
-        let meteredCost: Double?
         let sessions: [SessionRow]
         let projects: [ProjectRow]
         var retainedDetailUpdatedAt: Date?
@@ -315,7 +314,6 @@ struct SpendDashboardModel: Equatable, Sendable {
             tokenMix: CostUsageTokenMix = CostUsageTokenMix(),
             coverageAccumulator: CostUsageCoverageAccumulator = CostUsageCoverageAccumulator(),
             provenance: CostProvenance = .unknown,
-            meteredCost: Double? = nil,
             sessions: [SessionRow] = [],
             selectedDay: Date? = nil,
             hourlyPoints: [HourlyPoint] = [],
@@ -335,7 +333,6 @@ struct SpendDashboardModel: Equatable, Sendable {
             self.tokenMix = tokenMix
             self.coverageAccumulator = coverageAccumulator
             self.provenance = provenance
-            self.meteredCost = meteredCost
             self.sessions = sessions
             self.projects = projects
             self.selectedDay = selectedDay
@@ -611,21 +608,12 @@ struct SpendDashboardModel: Equatable, Sendable {
         let dailyPoints = Self.dailyPoints(summaries: summaries)
         var tokenMix = CostUsageTokenMix()
         var coverage = CostUsageCoverageAccumulator()
-        var metered: Double?
-        var hasMeteredCostAmount = false
         var sawVendorMeteredProvenance = false
         var sawEstimate = false
         for summary in scopedSummaries {
             for windowEntry in summary.entries {
                 tokenMix.merge(.from(entry: windowEntry.entry))
                 coverage.add(windowEntry.entry)
-            }
-            if selectedDay == nil,
-               let meteredCost = summary.input.snapshot.meteredCostUSD,
-               days >= summary.input.snapshot.historyDays
-            {
-                hasMeteredCostAmount = true
-                metered = (metered ?? 0) + meteredCost * summary.costMultiplier
             }
             if summary.totalCost != nil {
                 switch summary.input.snapshot.costProvenance {
@@ -677,7 +665,6 @@ struct SpendDashboardModel: Equatable, Sendable {
             tokenMix: tokenMix,
             coverageAccumulator: coverage,
             provenance: provenance,
-            meteredCost: hasMeteredCostAmount ? metered : nil,
             sessions: Self.sessionRows(
                 summaries: detailSummaries,
                 bounds: detailBounds,

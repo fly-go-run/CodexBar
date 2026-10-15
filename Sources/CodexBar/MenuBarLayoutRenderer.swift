@@ -843,9 +843,7 @@ final class MenuBarLayoutRenderer {
                 ?? self.primaryLabel(data: data).flatMap(\.first).map { String($0).uppercased() }
                 ?? Self.sessionPrefix(rateWindow)
         case .weekly:
-            let secondaryLabel = Self.secondaryLabel(data: data)
-            prefix = taggedPrefix
-                ?? secondaryLabel.flatMap(\.first).map { String($0).uppercased() } ?? "W"
+            prefix = taggedPrefix ?? "W"
         case .scopedWeekly:
             prefix = data.scopedWeeklyTitle.map { String($0.prefix(1)).uppercased() } ?? "F"
         case .automatic:
@@ -861,7 +859,7 @@ final class MenuBarLayoutRenderer {
         }
         return switch window {
         case .session: self.primaryLabel(data: data) ?? L("Session")
-        case .weekly: self.secondaryLabel(data: data) ?? L("Weekly")
+        case .weekly: L("Weekly")
         case .scopedWeekly: data.scopedWeeklyTitle ?? L("Scoped weekly")
         case .automatic: L("Usage")
         }
@@ -1050,18 +1048,10 @@ final class MenuBarLayoutRenderer {
         // Conservative reference backgrounds allow more translucency than pure black/white.
         // Require lighter accents on dark bars and darker accents on light bars.
         let gray = isDark ? 0.25 : 0.85
-        let background = self.relativeLuminance(of: ProviderColor(red: gray, green: gray, blue: gray))
-        let luminance = self.relativeLuminance(of: accent)
+        let background = ProviderColor(red: gray, green: gray, blue: gray).relativeLuminance
+        let luminance = accent.relativeLuminance
         return isDark ? (luminance + 0.05) / (background + 0.05) >= 2
             : (background + 0.05) / (luminance + 0.05) >= 2
-    }
-
-    static func relativeLuminance(of color: ProviderColor) -> Double {
-        func linear(_ value: Double) -> Double {
-            let clamped = min(1, max(0, value))
-            return clamped <= 0.04045 ? clamped / 12.92 : pow((clamped + 0.055) / 1.055, 2.4)
-        }
-        return 0.2126 * linear(color.red) + 0.7152 * linear(color.green) + 0.0722 * linear(color.blue)
     }
 
     private static func resetToken(
@@ -1153,14 +1143,8 @@ final class MenuBarLayoutRenderer {
 
     private static func primaryLabel(data: MenuBarLayoutRenderData) -> String? {
         let descriptor = ProviderDescriptorRegistry.descriptor(for: data.provider)
-        if let label = descriptor.presentation.menuBarLayoutPrimaryLabel { return L(label) }
         guard descriptor.metadata.usesDetailBackedWindow, data.session?.windowMinutes == nil else { return nil }
-        return descriptor.presentation.primarySemanticWindow == .session
-            ? data.laneLabels.primary : data.laneLabels.secondary
-    }
-
-    private static func secondaryLabel(data: MenuBarLayoutRenderData) -> String? {
-        PercentWindow.weekly.providerLabel(provider: data.provider)
+        return data.laneLabels.primary
     }
 
     private static func sessionPrefix(_ window: MenuBarLayoutRenderWindow?) -> String {
@@ -1196,7 +1180,7 @@ extension MenuBarLayoutRenderer {
         switch item {
         case .tokensPerMinute:
             self.optionalTextToken(
-                data.tokensPerMinute.map { ProviderThroughputSection.count($0) + "/min" },
+                data.tokensPerMinute.map { UsageFormatter.tokenCountString($0) + "/min" },
                 unavailableLabel: L("%@ unavailable", L("Tokens / min")),
                 attributes: style.attributes)
         case .tokensSparkline:
@@ -1229,7 +1213,7 @@ extension MenuBarLayoutRenderer {
             height: style.iconHeight)
         let value = NSMutableAttributedString(attachment: attachment)
         value.addAttributes(style.attributes, range: NSRange(location: 0, length: value.length))
-        return (value, L("Tokens per minute, latest %@", graph.latest.map(ProviderThroughputSection.count) ?? "—"))
+        return (value, L("Tokens per minute, latest %@", graph.latest.map(UsageFormatter.tokenCountString) ?? "—"))
     }
 
     /// Provider-declared menu bar tag for a lane; nil keeps the lane's percentage bare.
@@ -1245,14 +1229,10 @@ extension MenuBarLayoutRenderer {
     /// The tagged lane backing a session/weekly percentage, so a provider with explicit lane tags never falls
     /// back to colliding first-letter prefixes; nil when the window maps to no tagged lane.
     private static func taggedSemanticLane(_ window: PercentWindow, provider: UsageProvider) -> MenuBarLayoutLane? {
-        let presentation = ProviderDescriptorRegistry.descriptor(for: provider).presentation
-        let primaryWindow = PercentWindow.forSemanticWindow(presentation.primarySemanticWindow)
-        let lane: MenuBarLayoutLane? = if window == primaryWindow {
-            .primary
-        } else if window == PercentWindow.forSemanticWindow(presentation.secondarySemanticWindow) {
-            .secondary
-        } else {
-            nil
+        let lane: MenuBarLayoutLane? = switch window {
+        case .session: .primary
+        case .weekly: .secondary
+        case .scopedWeekly, .automatic: nil
         }
         guard let lane, self.laneShortLabel(lane, provider: provider) != nil else { return nil }
         return lane

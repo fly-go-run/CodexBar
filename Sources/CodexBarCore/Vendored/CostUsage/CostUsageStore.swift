@@ -117,6 +117,8 @@ actor CostUsageStore {
         parserHash: CodexParserHash.value)
     static let cacheGeneration = "sqlite:\(CostUsageStore.schemaVersion)"
     static let compatiblePredecessorParserHashes: Set<String> = [
+        "bee29988ce6aa46f", // Resolving the sessions root through CodexHomeScope leaves native Codex parsing unchanged.
+        "fa0706ab181d3e33", // Moving the timestamp parser into ISO8601DateParser leaves native Codex parsing unchanged.
         "850e297ebe305f0a", // Kimi alias and OpenCode route pricing removal leaves Codex subscription rows unchanged.
         "4b60f2bfafeaaa11", // OpenCodex routing removal keeps the Codex subscription model filter unchanged.
         "73875b763abeaf9b", // Linux support removal leaves macOS Codex semantics unchanged.

@@ -270,7 +270,7 @@ extension UsageStore {
             self.lastTokenFetchAt[.codex] = lastRefreshAt
             self.lastTokenFetchScope[.codex] = context.scopeSignature
         }
-        if snapshot.daily.isEmpty, snapshot.meteredCostUSD == nil {
+        if snapshot.daily.isEmpty {
             self.publishConfirmedEmptyTokenSnapshot(for: .codex)
             self.tokenErrors[.codex] = Self.tokenCostNoDataMessage(for: .codex)
         } else {

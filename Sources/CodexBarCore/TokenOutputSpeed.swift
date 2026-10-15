@@ -266,7 +266,7 @@ public final class TokenOutputSpeedScanner: @unchecked Sendable {
         let home = CodexHomeScope.normalizedHomePath(codexHomePath).map { URL(fileURLWithPath: $0, isDirectory: true) }
             ?? CodexHomeScope.ambientHomeURL(env: environment)
         var options = CostUsageScanner.Options()
-        options.codexSessionsRoot = home.appendingPathComponent("sessions", isDirectory: true)
+        options.codexSessionsRoot = CodexHomeScope.sessionsRoot(home: home)
         return CostUsageScanner.codexSessionsRoots(options: options)
     }
 
