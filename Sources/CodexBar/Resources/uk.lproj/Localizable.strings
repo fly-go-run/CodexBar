@@ -2620,5 +2620,8 @@
 "Daily spend · %@" = "Щоденні витрати · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Застосовується до вибраного облікового запису токена «%@». Кожен обліковий запис зберігає власні ліміти.";
 "Applies to the OpenAI API key, not to token accounts." = "Застосовується до ключа API OpenAI, а не до облікових записів токенів.";
-"token_speed_window_line" = "Швидкість (24 год): %@";
-"token_speed_last_hour_line" = "Остання година: %@ tok/s · %@ запитів";
+"token_speed_title_last_hour" = "Швидкість виводу · остання година";
+"token_speed_title_24h" = "Швидкість виводу · 24 год";
+"token_speed_slowdown_help" = "на %@%% повільніше за середнє за 24 год";
+"plan_renews_short" = "продовження %@";
+"menu_tokens_short" = "%@ токенів";

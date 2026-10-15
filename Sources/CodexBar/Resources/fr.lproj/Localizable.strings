@@ -2619,5 +2619,8 @@
 "Daily spend · %@" = "Dépenses quotidiennes · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "S’applique au compte de jeton sélectionné « %@ ». Chaque compte conserve ses propres limites.";
 "Applies to the OpenAI API key, not to token accounts." = "S’applique à la clé API OpenAI, pas aux comptes de jeton.";
-"token_speed_window_line" = "Vitesse (24 h) : %@";
-"token_speed_last_hour_line" = "Dernière heure : %@ tok/s · %@ requêtes";
+"token_speed_title_last_hour" = "Vitesse de sortie · dernière heure";
+"token_speed_title_24h" = "Vitesse de sortie · 24 h";
+"token_speed_slowdown_help" = "%@ %% plus lent que la moyenne sur 24 h";
+"plan_renews_short" = "renouvellement %@";
+"menu_tokens_short" = "Jetons %@";

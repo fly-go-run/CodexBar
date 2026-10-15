@@ -26,6 +26,7 @@ struct InlineUsageDashboardModel: Equatable {
         let title: String
         let value: String
         let emphasis: Bool
+        var detail: String?
     }
 
     struct Point: Equatable, Identifiable {
@@ -65,6 +66,11 @@ struct InlineUsageDashboardModel: Equatable {
     /// Nil for token/points dashboards.
     var currencyCode: String?
     var chartTitle: String?
+    var tokenSpeed: TokenSpeedSummary?
+    /// One-line history summary shown above the chart, e.g. "近 30 天  $2,909 · 12B tokens".
+    var chartCaption: String?
+    /// Cost-estimate disclaimer, shown as the chart's hover help instead of a footnote row.
+    var chartHelp: String?
 }
 
 extension UsageMenuCardView.Model {
@@ -245,27 +251,12 @@ extension UsageMenuCardView.Model {
         if let coverage = Self.tokenHistoryCoverageHint(snapshot) { details.append(coverage) }
         if unpricedCount > 0 { details.append("\(L("Partial estimate")) · \(L("Unpriced")) \(unpricedCount)") }
         if let note = UsageFormatter.incompleteUsageNote(incompleteCount) { details.append(note) }
-        if let topModel = Self.topCostModel(from: snapshot.daily) {
-            details.append("\(L("Top model")): \(Self.shortModelName(topModel))")
-        }
-        details.append(contentsOf: Self.tokenOutputSpeedLines(input.tokenOutputSpeed))
+        // The top model is visible in the chart's per-day breakdown and the estimate hint moved to the
+        // chart's hover help, so the card keeps only lines that change what the numbers mean.
         let tokenCost = ProviderDescriptorRegistry.descriptor(for: input.provider).tokenCost
-        let hintLines = Self.tokenUsageHintLines(provider: input.provider)
-        if tokenCost.hintPlacement == .beforeRequestHistory {
-            details.append(contentsOf: hintLines)
-        }
-        if tokenCost.showsRequestHistory {
-            if let requestCount = snapshot.last30DaysRequests {
-                details
-                    .append("\(requestHistoryTitle): \(UsageFormatter.tokenCountString(requestCount)) \(L("requests"))")
-            }
-            if tokenCost.hintPlacement == .afterRequestHistory {
-                if hintLines.isEmpty == false {
-                    details.append(contentsOf: hintLines)
-                } else {
-                    details.append(L("cost_estimate_hint"))
-                }
-            }
+        if tokenCost.showsRequestHistory, let requestCount = snapshot.last30DaysRequests {
+            details
+                .append("\(requestHistoryTitle): \(UsageFormatter.tokenCountString(requestCount)) \(L("requests"))")
         }
         return details
     }
@@ -292,10 +283,11 @@ extension UsageMenuCardView.Model {
                 providerCurrency: snapshot.currencyCode).value
         }
         func convertedString(_ value: Double) -> String {
-            UsageFormatter.convertedCostString(
+            let converted = UsageFormatter.convertedCost(
                 value,
                 preferredCurrency: input.preferredCurrencyCode,
                 providerCurrency: snapshot.currencyCode)
+            return Self.menuCurrencyString(converted.value, currencyCode: converted.currencyCode)
         }
 
         let historyDays = snapshot.displayHistoryDays(calendar: input.costUsageBucketCalendar)
@@ -332,17 +324,13 @@ extension UsageMenuCardView.Model {
             snapshot: snapshot,
             historyDays: historyDays,
             convertedString: convertedString)
-        let weekCostTitle = quota.boundariesAreEstimated ? L("Estimated: %@", L("Current window")) : L("Current window")
-        let rawTokenTitle = L("%@ tokens", L("Current window"))
-        let weekTokenTitle = quota.boundariesAreEstimated ? L("Estimated: %@", rawTokenTitle) : rawTokenTitle
+        let weekCostTitle = L("Current window")
+        let weekTokenTitle = L("%@ tokens", L("Current window"))
         var details = Self.costHistoryDetailLines(
             input: input,
             snapshot: snapshot,
             requestHistoryTitle: requestHistoryTitle,
             displayCurrencyCode: displayCurrencyCode)
-        if !quota.rows.isEmpty, let note = menuCardPresentation(for: input.provider).quotaWindowNote {
-            details.append(L(note))
-        }
         let providerName = ProviderDefaults.metadata[input.provider]?.displayName ?? input.provider.rawValue
         let accessibilityLabel = L(
             "%@: %@",
@@ -366,15 +354,20 @@ extension UsageMenuCardView.Model {
             emphasis: false)
         let trailingKPIs = Self.costHistoryTrailingKPIs(snapshot: snapshot, latest: latest)
         var kpis: [InlineUsageDashboardModel.KPI]
+        var chartCaption: String?
         if quota.insertsKPIs, let latestTokensKPI = trailingKPIs.first {
+            // Two headline numbers; token counts ride underneath, the 30d totals caption the chart.
+            var today = todayKPI
+            today.detail = L("menu_tokens_short", latestTokensKPI.value)
             kpis = [
-                todayKPI,
-                .init(title: weekCostTitle, value: quota.costValue, emphasis: true),
-                latestTokensKPI,
-                .init(title: weekTokenTitle, value: quota.tokenValue, emphasis: false),
-                historyCostKPI,
-                tokenHistoryKPI,
+                today,
+                .init(
+                    title: weekCostTitle,
+                    value: quota.costValue,
+                    emphasis: true,
+                    detail: L("menu_tokens_short", quota.tokenValue)),
             ]
+            chartCaption = "\(period)  \(historyCostKPI.value) · \(L("menu_tokens_short", tokenHistoryKPI.value))"
         } else {
             kpis = [todayKPI, historyCostKPI]
             if snapshot.last30DaysRequests == nil {
@@ -400,6 +393,9 @@ extension UsageMenuCardView.Model {
             points: points,
             detailLines: details)
         model.quotaWindows = quota.rows
+        model.chartCaption = chartCaption
+        model.chartHelp = Self.tokenUsageHintLines(provider: input.provider).joined(separator: "\n")
+        model.tokenSpeed = Self.tokenSpeedSummary(input.tokenOutputSpeed)
         model.currencyCode = displayCurrencyCode
         model.chartTitle = L("Daily spend · %@", period)
         return model
@@ -662,35 +658,13 @@ extension UsageMenuCardView.Model {
             components.day ?? 0)
     }
 
-    private static func shortModelName(_ name: String) -> String {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.count > 26 else { return trimmed }
-        return String(trimmed.prefix(25)) + "…"
-    }
-
-    private static func topCostModel(from entries: [CostUsageDailyReport.Entry]) -> String? {
-        guard entries.allSatisfy({
-            $0.incompleteRequestCount == 0
-                && $0.coverageCounts.unpriced == 0
-                && $0.coverageCounts.unmetered == 0
-        }) else { return nil }
-        var scores: [String: (cost: Double, tokens: Int)] = [:]
-        for entry in entries {
-            for model in entry.modelBreakdowns ?? [] {
-                var score = scores[model.modelName] ?? (0, 0)
-                score.cost += model.costUSD ?? 0
-                let addition = score.tokens.addingReportingOverflow(model.totalTokens ?? 0)
-                guard !addition.overflow else { return nil }
-                score.tokens = addition.partialValue
-                scores[model.modelName] = score
-            }
-        }
-        return scores.max {
-            if $0.value.cost == $1.value.cost {
-                return $0.value.tokens < $1.value.tokens
-            }
-            return $0.value.cost < $1.value.cost
-        }?.key
+    /// Menu amounts: cents only below $100 ("$5.28", "$437", "$2,909").
+    static func menuCurrencyString(_ value: Double, currencyCode: String) -> String {
+        guard abs(value) >= 100 else { return UsageFormatter.currencyString(value, currencyCode: currencyCode) }
+        return value.formatted(
+            .currency(code: currencyCode)
+                .precision(.fractionLength(0))
+                .locale(Locale(identifier: "en_US")))
     }
 }
 
@@ -705,18 +679,30 @@ struct InlineUsageDashboardContent: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 14) {
             self.kpis
             if self.showsChart, !self.model.points.isEmpty {
-                MiniUsageBars(model: self.model)
-                    .frame(height: 58)
-                    .accessibilityElement(children: .contain)
-                    .accessibilityLabel(self.model.accessibilityLabel)
+                VStack(alignment: .leading, spacing: 4) {
+                    if let caption = self.model.chartCaption {
+                        Text(caption)
+                            .font(.subheadline)
+                            .monospacedDigit()
+                            .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
+                            .lineLimit(1)
+                    }
+                    MiniUsageBars(model: self.model)
+                        .frame(height: 46)
+                        .accessibilityElement(children: .contain)
+                        .accessibilityLabel(self.model.accessibilityLabel)
+                }
+                .help(self.model.chartHelp ?? "")
             }
-            if !self.model.quotaWindows.isEmpty {
-                self.quotaWindows
+            if let tokenSpeed = self.model.tokenSpeed {
+                InlineTokenSpeedRow(summary: tokenSpeed)
             }
-            self.detailLines
+            if !self.model.detailLines.isEmpty {
+                self.detailLines
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -728,48 +714,10 @@ struct InlineUsageDashboardContent: View {
                 GridItem(.flexible(minimum: 100), alignment: .leading),
             ],
             alignment: .leading,
-            spacing: 6)
+            spacing: 10)
         {
             ForEach(Array(self.model.kpis.enumerated()), id: \.offset) { _, kpi in
-                KPIBlock(title: kpi.title, value: kpi.value, emphasis: kpi.emphasis)
-            }
-        }
-    }
-
-    private var quotaWindows: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(L("Recent windows"))
-                .font(.caption2)
-                .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
-            ForEach(self.model.quotaWindows) { window in
-                VStack(alignment: .leading, spacing: 1) {
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Text(window.title)
-                            .font(.caption)
-                            .foregroundStyle(MenuHighlightStyle.primary(self.isHighlighted))
-                            .lineLimit(1)
-                        Spacer(minLength: 8)
-                        Text(window.value)
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(MenuHighlightStyle.primary(self.isHighlighted))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                            .monospacedDigit()
-                    }
-                    if let note = window.note {
-                        Text(note)
-                            .font(.caption2)
-                            .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Text(window.range)
-                        .font(.caption2)
-                        .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                }
-                .accessibilityElement(children: .combine)
+                KPIBlock(title: kpi.title, value: kpi.value, emphasis: kpi.emphasis, detail: kpi.detail)
             }
         }
     }
@@ -778,7 +726,7 @@ struct InlineUsageDashboardContent: View {
         VStack(alignment: .leading, spacing: 3) {
             ForEach(Array(self.model.detailLines.enumerated()), id: \.offset) { _, line in
                 Text(line)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
                     .lineLimit(1)
             }
@@ -789,20 +737,28 @@ struct InlineUsageDashboardContent: View {
         let title: String
         let value: String
         let emphasis: Bool
+        var detail: String?
         @Environment(\.menuItemHighlighted) private var isHighlighted
 
         var body: some View {
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(self.title)
-                    .font(.caption2)
+                    .font(.subheadline)
                     .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
                     .fixedSize(horizontal: false, vertical: true)
                 Text(self.value)
-                    .font(self.emphasis ? .headline : .subheadline)
-                    .fontWeight(.semibold)
+                    .font(.system(size: self.emphasis ? 15 : 13, weight: .semibold))
+                    .monospacedDigit()
                     .foregroundStyle(MenuHighlightStyle.primary(self.isHighlighted))
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
+                if let detail = self.detail {
+                    Text(detail)
+                        .font(.subheadline)
+                        .monospacedDigit()
+                        .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
+                        .lineLimit(1)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }

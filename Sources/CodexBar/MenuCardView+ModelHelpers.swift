@@ -507,8 +507,10 @@ extension UsageMenuCardView.Model {
                 current.points.count == candidate.points.count &&
                 current.quotaWindows.count == candidate.quotaWindows.count &&
                 current.detailLines.count == candidate.detailLines.count &&
+                current.tokenSpeed?.rows.count == candidate.tokenSpeed?.rows.count &&
+                (current.chartCaption == nil) == (candidate.chartCaption == nil) &&
                 zip(current.kpis, candidate.kpis).allSatisfy {
-                    $0.title == $1.title && $0.emphasis == $1.emphasis
+                    $0.title == $1.title && $0.emphasis == $1.emphasis && ($0.detail == nil) == ($1.detail == nil)
                 } &&
                 zip(current.points, candidate.points).allSatisfy {
                     $0.id == $1.id && $0.label == $1.label

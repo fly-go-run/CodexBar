@@ -841,7 +841,7 @@
 "Latest billing day (%@)" = "最近结算日（%@）";
 "%@ left" = "%@ 剩余";
 "Resets %@" = "重置于 %@";
-"Resets in %@" = "%@后重置";
+"Resets in %@" = "%@ 后重置";
 "Resets now" = "立即重置";
 "reset_tomorrow_format" = "明天 %@";
 "Lasts until reset" = "持续到重置";
@@ -2612,5 +2612,8 @@
 "Daily spend · %@" = "每日支出 · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "适用于所选令牌账户“%@”。每个账户保留各自的限制。";
 "Applies to the OpenAI API key, not to token accounts." = "适用于 OpenAI API 密钥，不适用于令牌账户。";
-"token_speed_window_line" = "输出速度 (24h): %@";
-"token_speed_last_hour_line" = "近 1 小时: %@ tok/s · %@ 次请求";
+"token_speed_title_last_hour" = "输出速度 · 近 1 小时";
+"token_speed_title_24h" = "输出速度 · 24h";
+"token_speed_slowdown_help" = "比 24 小时平均慢 %@%%";
+"plan_renews_short" = "%@ 续订";
+"menu_tokens_short" = "%@ tokens";

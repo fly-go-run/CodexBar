@@ -2622,5 +2622,8 @@
 "Daily spend · %@" = "ค่าใช้จ่ายรายวัน · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "ใช้กับบัญชีโทเคนที่เลือก “%@” แต่ละบัญชีจะเก็บขีดจำกัดของตนเองไว้";
 "Applies to the OpenAI API key, not to token accounts." = "ใช้กับคีย์ API ของ OpenAI ไม่ใช่บัญชีโทเคน";
-"token_speed_window_line" = "ความเร็ว (24 ชม.): %@";
-"token_speed_last_hour_line" = "ชั่วโมงล่าสุด: %@ tok/s · %@ คำขอ";
+"token_speed_title_last_hour" = "ความเร็วเอาต์พุต · ชั่วโมงล่าสุด";
+"token_speed_title_24h" = "ความเร็วเอาต์พุต · 24 ชม.";
+"token_speed_slowdown_help" = "ช้ากว่าค่าเฉลี่ย 24 ชม. %@%%";
+"plan_renews_short" = "ต่ออายุ %@";
+"menu_tokens_short" = "โทเค็น %@";

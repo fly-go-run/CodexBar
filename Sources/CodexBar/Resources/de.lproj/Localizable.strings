@@ -2618,5 +2618,8 @@
 "Daily spend · %@" = "Tägliche Ausgaben · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Gilt für das ausgewählte Token-Konto „%@“. Jedes Konto behält seine eigenen Limits.";
 "Applies to the OpenAI API key, not to token accounts." = "Gilt für den OpenAI-API-Schlüssel, nicht für Token-Konten.";
-"token_speed_window_line" = "Tempo (24 h): %@";
-"token_speed_last_hour_line" = "Letzte Stunde: %@ tok/s · %@ Anfragen";
+"token_speed_title_last_hour" = "Ausgabetempo · letzte Stunde";
+"token_speed_title_24h" = "Ausgabetempo · 24 h";
+"token_speed_slowdown_help" = "%@ %% langsamer als der 24-h-Schnitt";
+"plan_renews_short" = "verlängert %@";
+"menu_tokens_short" = "%@ Token";

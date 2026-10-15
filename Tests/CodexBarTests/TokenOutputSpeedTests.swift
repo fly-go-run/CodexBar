@@ -119,24 +119,57 @@ struct TokenOutputSpeedTests {
     }
 
     @Test
-    func `menu lines show top models and the last hour`() throws {
+    func `speed summary leads with the last hour once it has enough requests`() throws {
         let now = try Self.date("2026-10-10T12:00:00.000Z")
-        let snapshot = TokenOutputSpeedSnapshot(
+        func sample(_ model: String, _ tokens: Int, minutesAgo: Double) -> TokenOutputSpeedSample {
+            let end = now.addingTimeInterval(-minutesAgo * 60)
+            return TokenOutputSpeedSample(
+                model: model, outputTokens: tokens, startedAt: end.addingTimeInterval(-10), completedAt: end)
+        }
+        typealias Model = UsageMenuCardView.Model
+        let busy = TokenOutputSpeedSnapshot(
             samples: [
-                TokenOutputSpeedSample(
-                    model: "claude-opus-4-1-20250805",
-                    outputTokens: 810,
-                    startedAt: now.addingTimeInterval(-70),
-                    completedAt: now.addingTimeInterval(-60)),
+                sample("claude-opus-4-1-20250805", 900, minutesAgo: 5),
+                sample("claude-opus-4-1-20250805", 900, minutesAgo: 10),
+                sample("claude-sonnet-4-5", 600, minutesAgo: 20),
+                sample("claude-opus-4-1-20250805", 300, minutesAgo: 300),
             ],
             now: now)
 
-        let lines = UsageMenuCardView.Model.tokenOutputSpeedLines(snapshot)
+        let summary = try #require(Model.tokenSpeedSummary(busy))
 
-        #expect(lines.count == 2)
-        #expect(lines[0].contains("opus-4-1 81 tok/s"))
-        #expect(lines[1].contains("81"))
-        #expect(UsageMenuCardView.Model.tokenOutputSpeedLines(nil).isEmpty)
+        #expect(summary.title == L("token_speed_title_last_hour"))
+        #expect(summary.value == "80 tok/s")
+        #expect(summary.rows == [
+            .init(name: "Opus 4.1", value: "70"),
+            .init(name: "Sonnet 4.5", value: "60"),
+        ])
+        #expect(summary.rowsLine == "24h · Opus 4.1 70 · Sonnet 4.5 60")
+        // 80 tok/s now vs ~73 over 24h: not slower, so nothing is flagged.
+        #expect(summary.slowdownPercent == nil)
+        #expect(Model.tokenOutputSpeedLines(busy) == [summary.compactLine])
+
+        // Too few recent requests: fall back to the 24h rate; a lone model row would only repeat it.
+        let quiet = TokenOutputSpeedSnapshot(
+            samples: [sample("claude-opus-4-1-20250805", 500, minutesAgo: 300)],
+            now: now)
+        let fallback = try #require(Model.tokenSpeedSummary(quiet))
+        #expect(fallback.title == L("token_speed_title_24h"))
+        #expect(fallback.value == "50 tok/s")
+        #expect(fallback.rows.isEmpty)
+        #expect(Model.tokenSpeedSummary(nil) == nil)
+        #expect(Model.tokenOutputSpeedLines(nil).isEmpty)
+    }
+
+    @Test
+    func `speed model names are readable and unknown ids pass through`() {
+        typealias Model = UsageMenuCardView.Model
+        #expect(Model.tokenSpeedModelName("claude-opus-4-1-20250805") == "Opus 4.1")
+        #expect(Model.tokenSpeedModelName("claude-3-5-sonnet") == "Sonnet 3.5")
+        #expect(Model.tokenSpeedModelName("gpt-5-codex") == "GPT-5 Codex")
+        #expect(Model.tokenSpeedModelName("gpt-5") == "GPT-5")
+        #expect(Model.tokenSpeedModelName("codex-auto-review") == "Codex Auto Review")
+        #expect(Model.tokenSpeedModelName("Custom Model") == "Custom Model")
     }
 
     @Test

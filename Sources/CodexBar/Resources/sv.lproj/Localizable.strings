@@ -2619,5 +2619,8 @@
 "Daily spend · %@" = "Dagliga utgifter · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "Gäller det valda tokenkontot ”%@”. Varje konto behåller sina egna gränser.";
 "Applies to the OpenAI API key, not to token accounts." = "Gäller OpenAI API-nyckeln, inte tokenkonton.";
-"token_speed_window_line" = "Hastighet (24 h): %@";
-"token_speed_last_hour_line" = "Senaste timmen: %@ tok/s · %@ förfrågningar";
+"token_speed_title_last_hour" = "Utdatahastighet · senaste timmen";
+"token_speed_title_24h" = "Utdatahastighet · 24 h";
+"token_speed_slowdown_help" = "%@ %% långsammare än 24 h-snittet";
+"plan_renews_short" = "förnyas %@";
+"menu_tokens_short" = "%@ token";

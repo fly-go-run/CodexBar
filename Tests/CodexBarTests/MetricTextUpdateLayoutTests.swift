@@ -12,14 +12,15 @@ struct MetricTextUpdateLayoutTests {
 
         var initialText: String {
             switch self {
-            case .pace: "On pace · Lasts until reset"
+            // The card only shows pace when it is a risk; "Lasts until reset" stays silent.
+            case .pace: "Lasts until reset"
             case .detail: "100 credits remaining"
             }
         }
 
         var updatedText: String {
             switch self {
-            case .pace: "32% in deficit · Runs out in 1d 11m"
+            case .pace: "Runs out in 1d 11m"
             case .detail: "1234 credits remaining this week"
             }
         }
@@ -57,12 +58,13 @@ struct MetricTextUpdateLayoutTests {
         let initial = Self.model(kind: .pace, text: TextKind.pace.initialText)
         let updated = Self.model(
             kind: .pace,
-            text: "32% in deficit · Runs out in 1 day and 11 minutes at the current usage rate")
+            text: "Runs out in 1 day and 11 minutes at the current usage rate (85% risk)")
         let before = try Self.render(model: initial, layoutModel: initial)
         let live = try Self.render(model: updated, layoutModel: initial)
         let reopened = try Self.render(model: updated, layoutModel: updated)
 
-        #expect(reopened.size.height > before.size.height, "The fixture must require an extra line.")
+        // Footers are single-line now, so even an overlong forecast keeps the card height.
+        #expect(reopened.size.height == before.size.height)
         #expect(live.size == before.size)
         try Self.export(live, name: "pace-overflow-live")
         try Self.export(reopened, name: "pace-overflow-reopened")
@@ -83,8 +85,8 @@ struct MetricTextUpdateLayoutTests {
                 percentStyle: .left,
                 resetText: "Resets in 3d 2h",
                 detailText: kind == .detail ? text : nil,
-                detailLeftText: kind == .pace ? text : nil,
-                detailRightText: nil,
+                detailLeftText: nil,
+                detailRightText: kind == .pace ? text : nil,
                 pacePercent: 36,
                 detailIsPaceDerived: kind == .pace,
                 paceOnTop: false)],

@@ -2588,5 +2588,8 @@
 "Daily spend · %@" = "일일 지출 · %@";
 "Applies to the selected token account “%@”. Each account keeps its own limits." = "선택한 토큰 계정 “%@”에 적용됩니다. 각 계정은 자체 한도를 유지합니다.";
 "Applies to the OpenAI API key, not to token accounts." = "토큰 계정이 아닌 OpenAI API 키에 적용됩니다.";
-"token_speed_window_line" = "출력 속도 (24시간): %@";
-"token_speed_last_hour_line" = "최근 1시간: %@ tok/s · 요청 %@건";
+"token_speed_title_last_hour" = "출력 속도 · 최근 1시간";
+"token_speed_title_24h" = "출력 속도 · 24시간";
+"token_speed_slowdown_help" = "24시간 평균보다 %@%% 느림";
+"plan_renews_short" = "%@ 갱신";
+"menu_tokens_short" = "%@ 토큰";

@@ -147,7 +147,7 @@ struct UsageMenuCardLayoutTests {
     }
 
     @Test
-    func `metric detail wraps to a second row instead of truncating as pace content grows`() {
+    func `metric footer keeps one line as pace content grows`() {
         let width: CGFloat = 296
         func card(
             detailRightText: String,
@@ -178,14 +178,12 @@ struct UsageMenuCardLayoutTests {
                 accessibilityLabel: "Est. 2 session quotas left · 6 windows until reset")))
             .sizeThatFits(in: CGSize(width: width, height: .greatestFiniteMagnitude)).height
 
-        // The meta line may wrap to two lines so tail content stays readable
-        // instead of truncating; the card grows by roughly one text line.
-        #expect(longHeight - shortHeight > Self.heightTolerance)
-        #expect(longHeight - shortHeight < 20)
+        // The card keeps one footer line; session-equivalent detail moved to the row's help.
+        #expect(abs(longHeight - shortHeight) <= Self.heightTolerance)
     }
 
     @Test
-    func `metric reset wraps to a bounded second line at standard width`() {
+    func `metric reset stays on one line at standard width`() {
         let width: CGFloat = 296
         func card(resetText: String) -> UsageMenuCardView {
             UsageMenuCardView(model: Self.model(metrics: [
@@ -209,12 +207,12 @@ struct UsageMenuCardLayoutTests {
             resetText: "Resets Wednesday, August 14 at 11:59 PM"))
             .sizeThatFits(in: CGSize(width: width, height: .greatestFiniteMagnitude)).height
 
-        #expect(longHeight - shortHeight > Self.heightTolerance)
-        #expect(longHeight - shortHeight < 20)
+        // Reset text sits on its own single line under the bar, so length never changes the height.
+        #expect(abs(longHeight - shortHeight) <= Self.heightTolerance)
     }
 
     @Test
-    func `mixed language metric header falls back to one compact extra row at standard width`() {
+    func `mixed language metric header needs no extra row at standard width`() {
         let width: CGFloat = 296
         func card(title: String, resetText: String) -> UsageMenuCardView {
             UsageMenuCardView(model: Self.model(metrics: [
@@ -239,8 +237,8 @@ struct UsageMenuCardLayoutTests {
             resetText: "Réinitialisation demain à 23:59"))
             .sizeThatFits(in: CGSize(width: width, height: .greatestFiniteMagnitude)).height
 
-        #expect(fallbackHeight - shortHeight > Self.heightTolerance)
-        #expect(fallbackHeight - shortHeight < 24)
+        // Title and percentage share the header; the reset moved below the bar, so no fallback row.
+        #expect(abs(fallbackHeight - shortHeight) <= Self.heightTolerance)
     }
 
     private static func model(

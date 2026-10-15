@@ -126,6 +126,7 @@ extension UsageMenuCardView.Model.Metric {
             // content (not just presence) can change the measured card height.
             MenuCardHeightFingerprint.field("reset", presentation.resetText),
             MenuCardHeightFingerprint.field("meta", presentation.metaText),
+            self.cardPresentation(title: self.title).hasFooter ? "cardFooter=1" : "cardFooter=0",
             self.detailText == nil ? "detail=0" : "detail=1",
             self.pacePercent == nil ? "pace=0" : "pace=1",
             self.paceOnTop ? "paceTop=1" : "paceTop=0",
@@ -182,6 +183,8 @@ extension InlineUsageDashboardModel {
             MenuCardHeightFingerprint.join(self.points.map(\.heightFingerprint)),
             MenuCardHeightFingerprint.join(self.quotaWindows.map(\.heightFingerprint)),
             MenuCardHeightFingerprint.join(self.detailLines.map { MenuCardHeightFingerprint.field("detail", $0) }),
+            MenuCardHeightFingerprint.field("tokenSpeed", self.tokenSpeed.map { "\($0.rows.count)" }),
+            MenuCardHeightFingerprint.field("chartCaption", self.chartCaption == nil ? nil : "1"),
         ])
     }
 }
@@ -203,6 +206,7 @@ extension InlineUsageDashboardModel.KPI {
             MenuCardHeightFingerprint.field("title", self.title),
             MenuCardHeightFingerprint.field("value", self.value),
             self.emphasis ? "1" : "0",
+            self.detail == nil ? "detail=0" : "detail=1",
         ])
     }
 }
