@@ -111,96 +111,74 @@ struct CodexAdditionalRateLimitsTests {
         #expect(extras.first?.window.usedPercent == 30)
     }
 
-    @Test
-    func `keeps primary usage when every additional limit element is malformed`() throws {
-        let json = """
-        {
-          "rate_limit": {
-            "primary_window": { "used_percent": 22, "reset_at": 1766948068, "limit_window_seconds": 18000 }
-          },
-          "additional_rate_limits": ["garbage", 1, true]
-        }
-        """
-        let creds = CodexOAuthCredentials(
-            accessToken: "access",
-            refreshToken: "refresh",
-            idToken: nil,
-            accountId: nil,
-            lastRefresh: Date())
-        let snapshot = try CodexOAuthFetchStrategy._mapUsageForTesting(Data(json.utf8), credentials: creds)
-        #expect(snapshot?.primary?.usedPercent == 22)
-        #expect(snapshot?.extraRateWindows == nil)
+    struct MalformedAdditionalLimitsCase: CustomTestStringConvertible, Sendable {
+        let testDescription: String
+        let json: String
     }
 
-    @Test
-    func `omits extra rate windows when additional limits are absent`() throws {
-        let json = """
-        {
-          "rate_limit": {
-            "primary_window": {
-              "used_percent": 22,
-              "reset_at": 1766948068,
-              "limit_window_seconds": 18000
-            }
-          }
-        }
-        """
-        let creds = CodexOAuthCredentials(
-            accessToken: "access",
-            refreshToken: "refresh",
-            idToken: nil,
-            accountId: nil,
-            lastRefresh: Date())
-        let snapshot = try CodexOAuthFetchStrategy._mapUsageForTesting(Data(json.utf8), credentials: creds)
-        #expect(snapshot?.primary?.usedPercent == 22)
-        #expect(snapshot?.extraRateWindows == nil)
-    }
-
-    @Test
-    func `tolerates malformed additional limits while keeping primary window`() throws {
-        let json = """
-        {
-          "rate_limit": {
-            "primary_window": {
-              "used_percent": 22,
-              "reset_at": 1766948068,
-              "limit_window_seconds": 18000
-            }
-          },
-          "additional_rate_limits": "unexpected"
-        }
-        """
-        let creds = CodexOAuthCredentials(
-            accessToken: "access",
-            refreshToken: "refresh",
-            idToken: nil,
-            accountId: nil,
-            lastRefresh: Date())
-        let snapshot = try CodexOAuthFetchStrategy._mapUsageForTesting(Data(json.utf8), credentials: creds)
-        #expect(snapshot?.primary?.usedPercent == 22)
-        #expect(snapshot?.extraRateWindows == nil)
-    }
-
-    @Test
-    func `skips additional limits without a usable window`() throws {
-        let json = """
-        {
-          "rate_limit": {
-            "primary_window": {
-              "used_percent": 22,
-              "reset_at": 1766948068,
-              "limit_window_seconds": 18000
-            }
-          },
-          "additional_rate_limits": [
+    @Test(arguments: [
+        MalformedAdditionalLimitsCase(
+            testDescription: "keeps primary usage when every additional limit element is malformed",
+            json: """
             {
-              "limit_name": "GPT-5.3-Codex-Spark",
-              "metered_feature": "gpt_5_3_codex_spark",
-              "rate_limit": null
+              "rate_limit": {
+                "primary_window": { "used_percent": 22, "reset_at": 1766948068, "limit_window_seconds": 18000 }
+              },
+              "additional_rate_limits": ["garbage", 1, true]
             }
-          ]
-        }
-        """
+            """),
+        MalformedAdditionalLimitsCase(
+            testDescription: "omits extra rate windows when additional limits are absent",
+            json: """
+            {
+              "rate_limit": {
+                "primary_window": {
+                  "used_percent": 22,
+                  "reset_at": 1766948068,
+                  "limit_window_seconds": 18000
+                }
+              }
+            }
+            """),
+        MalformedAdditionalLimitsCase(
+            testDescription: "tolerates malformed additional limits while keeping primary window",
+            json: """
+            {
+              "rate_limit": {
+                "primary_window": {
+                  "used_percent": 22,
+                  "reset_at": 1766948068,
+                  "limit_window_seconds": 18000
+                }
+              },
+              "additional_rate_limits": "unexpected"
+            }
+            """),
+        MalformedAdditionalLimitsCase(
+            testDescription: "skips additional limits without a usable window",
+            json: """
+            {
+              "rate_limit": {
+                "primary_window": {
+                  "used_percent": 22,
+                  "reset_at": 1766948068,
+                  "limit_window_seconds": 18000
+                }
+              },
+              "additional_rate_limits": [
+                {
+                  "limit_name": "GPT-5.3-Codex-Spark",
+                  "metered_feature": "gpt_5_3_codex_spark",
+                  "rate_limit": null
+                }
+              ]
+            }
+            """),
+    ])
+    func `keeps primary usage across absent or malformed additional limits`(
+        _ testCase: MalformedAdditionalLimitsCase) throws
+    {
+        let json = testCase.json
         let creds = CodexOAuthCredentials(
             accessToken: "access",
             refreshToken: "refresh",

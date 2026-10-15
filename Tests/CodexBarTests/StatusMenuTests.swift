@@ -108,12 +108,10 @@ struct StatusMenuTests {
                         accountOrganization: nil,
                         loginMethod: plan)),
                 provider: .claude)
-            let controller = StatusItemController(
+            let controller = makeStatusItemControllerForTesting(
                 store: store,
                 settings: settings,
                 account: fetcher.loadAccountInfo(),
-                updater: DisabledUpdaterController(),
-                preferencesSelection: PreferencesSelection(),
                 statusBar: self.makeStatusBarForTesting())
 
             #expect(controller.dashboardURL(for: .claude)?.absoluteString == "https://claude.ai/settings/usage")
@@ -133,12 +131,10 @@ struct StatusMenuTests {
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -162,12 +158,10 @@ struct StatusMenuTests {
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         let menu = controller.makeMenu()
@@ -191,12 +185,10 @@ struct StatusMenuTests {
         settings.mergeIcons = false
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         let menu = controller.makeMenu()
@@ -286,12 +278,10 @@ struct StatusMenuTests {
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         controller.releaseStatusItemsForTesting()
@@ -318,12 +308,10 @@ struct StatusMenuTests {
 
         let fetcher = UsageFetcher()
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         let model = try #require(controller.menuCardModel(for: .codex))
@@ -370,12 +358,10 @@ struct StatusMenuTests {
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         #expect(store.enabledProviders().count == 2)
@@ -426,12 +412,10 @@ struct StatusMenuTests {
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         let menu = controller.makeMenu()
@@ -457,12 +441,10 @@ struct StatusMenuTests {
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         let menu = controller.makeMenu()
@@ -507,12 +489,10 @@ struct StatusMenuTests {
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         let menu = controller.makeMenu()
@@ -556,12 +536,10 @@ extension StatusMenuTests {
             description: statusText,
             updatedAt: nil)
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         let menu = controller.makeMenu(for: .codex)
@@ -602,12 +580,10 @@ extension StatusMenuTests {
             creditsPurchaseURL: nil,
             updatedAt: Date())
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         let parentMenu = NSMenu()
@@ -670,12 +646,10 @@ extension StatusMenuTests {
             ],
             updatedAt: Date(timeIntervalSince1970: 0))
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         let submenu = NSMenu()
@@ -703,12 +677,10 @@ extension StatusMenuTests {
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         let submenu = controller.makeHostedSubviewPlaceholderMenu(
@@ -765,12 +737,10 @@ extension StatusMenuTests {
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         let menu = controller.makeMenu()

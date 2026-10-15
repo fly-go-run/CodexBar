@@ -123,12 +123,10 @@ struct MenuCardOverrideIsolationTests {
                 accountEmail: "bob@example.com",
                 accountOrganization: nil,
                 loginMethod: "max"))
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: store.settings,
             account: AccountInfo(email: nil, plan: nil),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 

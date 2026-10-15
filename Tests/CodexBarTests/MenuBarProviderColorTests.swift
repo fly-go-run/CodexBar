@@ -155,12 +155,10 @@ struct MenuBarProviderColorTests {
             primary: RateWindow(usedPercent: 25, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
             secondary: nil,
             updatedAt: self.now), provider: .claude)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
         let item = try #require(merged ? controller.statusItem : controller

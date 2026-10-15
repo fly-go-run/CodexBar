@@ -26,12 +26,10 @@ struct StatusItemAnimationSignatureTests {
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -74,12 +72,10 @@ struct StatusItemAnimationSignatureTests {
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -157,12 +153,10 @@ struct StatusItemAnimationSignatureTests {
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -215,12 +209,10 @@ struct StatusItemAnimationSignatureTests {
             provider: .claude,
             isSelected: false,
             activeProviders: store.enabledFirstPartyProvidersForDisplay())
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -269,12 +261,10 @@ struct StatusItemAnimationSignatureTests {
             provider: .claude,
             isSelected: false,
             activeProviders: store.enabledFirstPartyProvidersForDisplay())
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -331,12 +321,10 @@ struct StatusItemAnimationSignatureTests {
             provider: .claude,
             isSelected: false,
             activeProviders: activeProviders)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -360,12 +348,10 @@ struct StatusItemAnimationSignatureTests {
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 

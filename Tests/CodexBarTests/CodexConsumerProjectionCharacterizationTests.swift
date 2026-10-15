@@ -57,12 +57,10 @@ struct CodexConsumerProjectionCharacterizationTests {
     private func makeMenuBarController(settings: SettingsStore) -> (UsageStore, StatusItemController) {
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         return (store, controller)
     }
@@ -85,12 +83,10 @@ struct CodexConsumerProjectionCharacterizationTests {
             updatedAt: Date()), provider: .codex)
         store._setErrorForTesting("Live store error", provider: .codex)
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 

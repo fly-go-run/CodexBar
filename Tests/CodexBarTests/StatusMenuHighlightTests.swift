@@ -19,12 +19,10 @@ extension StatusMenuTests {
         let settings = self.makeSettings()
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._cancelPlanUtilizationHistoryLoadForTesting()
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -63,12 +61,10 @@ extension StatusMenuTests {
         settings.mergeIcons = false
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._cancelPlanUtilizationHistoryLoadForTesting()
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -136,12 +132,10 @@ extension StatusMenuTests {
         settings.mergeIcons = false
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._cancelPlanUtilizationHistoryLoadForTesting()
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -189,12 +183,10 @@ extension StatusMenuTests {
         settings.mergeIcons = false
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._cancelPlanUtilizationHistoryLoadForTesting()
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
@@ -261,12 +253,10 @@ extension StatusMenuTests {
         settings.mergeIcons = false
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._cancelPlanUtilizationHistoryLoadForTesting()
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
@@ -330,12 +320,10 @@ extension StatusMenuTests {
         settings.mergeIcons = false
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._cancelPlanUtilizationHistoryLoadForTesting()
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
@@ -396,12 +384,10 @@ extension StatusMenuTests {
         settings.mergeIcons = false
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._cancelPlanUtilizationHistoryLoadForTesting()
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -450,12 +436,10 @@ extension StatusMenuTests {
         settings.mergeIcons = false
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._cancelPlanUtilizationHistoryLoadForTesting()
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
@@ -520,12 +504,10 @@ extension StatusMenuTests {
         settings.mergeIcons = false
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._cancelPlanUtilizationHistoryLoadForTesting()
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 

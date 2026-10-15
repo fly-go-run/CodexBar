@@ -26,12 +26,10 @@ struct StatusItemLayoutStyleSwitchTests {
                 secondary: nil,
                 updatedAt: Date()),
             provider: .codex)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
 

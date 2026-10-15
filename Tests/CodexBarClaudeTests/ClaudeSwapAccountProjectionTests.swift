@@ -361,49 +361,20 @@ struct ClaudeSwapAccountProjectionTests {
         #expect(account.error == "Usage unavailable.")
     }
 
-    @Test
-    func `unavailable retain drops exhausted windows without a reset timestamp`() throws {
-        let previous = ClaudeSwapAccountProjection.accountSnapshots(
-            from: ClaudeSwapAccountList(
-                activeAccountNumber: 1,
-                accounts: [
-                    ClaudeSwapAccountRow(
-                        number: 1,
-                        email: "a@b.c",
-                        isActive: true,
-                        usageStatus: .ok,
-                        fiveHour: ClaudeSwapUsageWindow(usedPercent: 100, resetsAt: nil),
-                        sevenDay: ClaudeSwapUsageWindow(
-                            usedPercent: 100,
-                            resetsAt: self.now.addingTimeInterval(86400))),
-                ]),
-            now: self.now)
-        let list = ClaudeSwapAccountList(
-            activeAccountNumber: 1,
-            accounts: [
-                ClaudeSwapAccountRow(
-                    number: 1,
-                    email: "a@b.c",
-                    isActive: true,
-                    usageStatus: .unavailable,
-                    fiveHour: nil,
-                    sevenDay: nil),
-            ])
-
-        let account = try #require(
-            ClaudeSwapAccountProjection.accountSnapshots(
-                from: list,
-                previousAccounts: previous,
-                now: self.now).first)
-        #expect(account.snapshot?.primary == nil)
-        #expect(account.snapshot?.secondary?.usedPercent == 100)
-        let error = try #require(account.error)
-        #expect(error.contains("Weekly limit reached"))
-        #expect(!error.contains("Session limit reached"))
+    struct UnavailableRetainCase: CustomTestStringConvertible, Sendable {
+        let testDescription: String
+        let weeklyUsedPercent: Double
     }
 
-    @Test
-    func `unavailable retain drops unknown reset lanes that are not exhausted`() throws {
+    @Test(arguments: [
+        UnavailableRetainCase(
+            testDescription: "unavailable retain drops exhausted windows without a reset timestamp",
+            weeklyUsedPercent: 100),
+        UnavailableRetainCase(
+            testDescription: "unavailable retain drops unknown reset lanes that are not exhausted",
+            weeklyUsedPercent: 40),
+    ])
+    func `unavailable retain drops windows that cannot carry a reset`(_ testCase: UnavailableRetainCase) throws {
         let previous = ClaudeSwapAccountProjection.accountSnapshots(
             from: ClaudeSwapAccountList(
                 activeAccountNumber: 1,
@@ -413,7 +384,7 @@ struct ClaudeSwapAccountProjectionTests {
                         email: "a@b.c",
                         isActive: true,
                         usageStatus: .ok,
-                        fiveHour: ClaudeSwapUsageWindow(usedPercent: 40, resetsAt: nil),
+                        fiveHour: ClaudeSwapUsageWindow(usedPercent: testCase.weeklyUsedPercent, resetsAt: nil),
                         sevenDay: ClaudeSwapUsageWindow(
                             usedPercent: 100,
                             resetsAt: self.now.addingTimeInterval(86400))),

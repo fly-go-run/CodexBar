@@ -189,8 +189,22 @@ struct UsagePaceTests {
         #expect(abs(pace5.deltaPercent) < 0.01)
     }
 
-    @Test
-    func `workday aware exhausted quota does not last through weekend`() throws {
+    struct WorkdayExhaustedCase: CustomTestStringConvertible, Sendable {
+        let testDescription: String
+        let day: Int
+    }
+
+    @Test(arguments: [
+        WorkdayExhaustedCase(
+            testDescription: "workday aware exhausted quota does not last through weekend",
+            day: 13),
+        WorkdayExhaustedCase(
+            testDescription: "workday aware exhausted quota stays exhausted before first workday",
+            day: 7),
+    ])
+    func `workday aware exhausted quota stays exhausted until the next workday`(
+        _ testCase: WorkdayExhaustedCase) throws
+    {
         let calendar = Self.utcCalendar
 
         let resetsAt = try #require(calendar.date(from: DateComponents(
@@ -204,7 +218,7 @@ struct UsagePaceTests {
             timeZone: calendar.timeZone,
             year: 2026,
             month: 6,
-            day: 13,
+            day: testCase.day,
             hour: 12)))
         let window = RateWindow(
             usedPercent: 100,
@@ -407,39 +421,6 @@ struct UsagePaceTests {
         #expect(pace.expectedUsedPercent == 0)
         #expect(pace.willLastToReset == false)
         #expect(pace.etaSeconds == nil)
-    }
-
-    @Test
-    func `workday aware exhausted quota stays exhausted before first workday`() throws {
-        let calendar = Self.utcCalendar
-
-        let resetsAt = try #require(calendar.date(from: DateComponents(
-            calendar: calendar,
-            timeZone: calendar.timeZone,
-            year: 2026,
-            month: 6,
-            day: 14)))
-        let now = try #require(calendar.date(from: DateComponents(
-            calendar: calendar,
-            timeZone: calendar.timeZone,
-            year: 2026,
-            month: 6,
-            day: 7,
-            hour: 12)))
-        let window = RateWindow(
-            usedPercent: 100,
-            windowMinutes: 10080,
-            resetsAt: resetsAt,
-            resetDescription: nil)
-
-        let pace = try #require(UsagePace.weekly(
-            window: window,
-            now: now,
-            workDays: 5,
-            calendar: calendar))
-
-        #expect(pace.willLastToReset == false)
-        #expect(pace.etaSeconds == 0)
     }
 
     @Test

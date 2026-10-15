@@ -69,6 +69,23 @@ func testStatusBar() -> NSStatusBar {
     .system
 }
 
+/// The production status item controller wired to test-inert updater and preferences collaborators.
+@MainActor
+func makeStatusItemControllerForTesting(
+    store: UsageStore,
+    settings: SettingsStore,
+    account: AccountInfo,
+    statusBar: NSStatusBar) -> StatusItemController
+{
+    StatusItemController(
+        store: store,
+        settings: settings,
+        account: account,
+        updater: DisabledUpdaterController(),
+        preferencesSelection: PreferencesSelection(),
+        statusBar: statusBar)
+}
+
 @MainActor
 @discardableResult
 func withStatusItemControllerForTesting<T>(

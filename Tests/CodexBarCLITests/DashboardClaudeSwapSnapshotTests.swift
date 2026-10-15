@@ -93,42 +93,27 @@ struct DashboardClaudeSwapSnapshotTests {
         ])
     }
 
-    @Test
-    func `redacted dashboard mode rewrites email shaped aliases`() throws {
-        let accounts = ClaudeSwapAccountProjection.accountSnapshots(
-            from: ClaudeSwapAccountList(
-                activeAccountNumber: 1,
-                accounts: [
-                    self.accountRow(
-                        number: 1,
-                        email: "shared@example.com",
-                        organizationName: "Sendbird",
-                        alias: "other@example.com",
-                        active: true),
-                    self.accountRow(
-                        number: 2,
-                        email: "shared@example.com",
-                        organizationName: "Acme",
-                        active: false),
-                ]),
-            now: self.generatedAt)
-        let providers = try self.providers(
-            identityMode: .redacted,
-            claudeSwap: DashboardAccountsInput(accounts: accounts, adapterError: nil, weeklyWorkDays: nil))
-        let claude = try #require(providers.first { $0["id"] as? String == "claude" })
-        let rows = try #require(claude["accounts"] as? [[String: Any]])
-        #expect(rows.compactMap { $0["label"] as? String } == [
-            "redacted@example.com",
-            "redacted@example.com · Acme",
-        ])
-        #expect(rows.compactMap { ($0["identity"] as? [String: Any])?["accountEmail"] as? String } == [
-            "redacted@example.com",
-            "redacted@example.com",
-        ])
+    struct RedactedEmailAliasCase: CustomTestStringConvertible, Sendable {
+        let testDescription: String
+        let alias: String
+        let expectedLabel: String
     }
 
-    @Test
-    func `redacted dashboard mode keeps non email alias text around an address`() throws {
+    @Test(arguments: [
+        RedactedEmailAliasCase(
+            testDescription: "redacted dashboard mode rewrites email shaped aliases",
+            alias: "other@example.com",
+            expectedLabel: "redacted@example.com"),
+        RedactedEmailAliasCase(
+            testDescription: "redacted dashboard mode keeps non email alias text around an address",
+            alias: "Work (owner@example.com)",
+            expectedLabel: "Work (redacted@example.com)"),
+        RedactedEmailAliasCase(
+            testDescription: "redacted dashboard mode keeps alias text around colon prefixed emails",
+            alias: "Work:owner@example.com",
+            expectedLabel: "Work:redacted@example.com"),
+    ])
+    func `redacted dashboard mode rewrites email addresses in aliases`(_ testCase: RedactedEmailAliasCase) throws {
         let accounts = ClaudeSwapAccountProjection.accountSnapshots(
             from: ClaudeSwapAccountList(
                 activeAccountNumber: 1,
@@ -137,7 +122,7 @@ struct DashboardClaudeSwapSnapshotTests {
                         number: 1,
                         email: "shared@example.com",
                         organizationName: "Sendbird",
-                        alias: "Work (owner@example.com)",
+                        alias: testCase.alias,
                         active: true),
                     self.accountRow(
                         number: 2,
@@ -152,41 +137,7 @@ struct DashboardClaudeSwapSnapshotTests {
         let claude = try #require(providers.first { $0["id"] as? String == "claude" })
         let rows = try #require(claude["accounts"] as? [[String: Any]])
         #expect(rows.compactMap { $0["label"] as? String } == [
-            "Work (redacted@example.com)",
-            "redacted@example.com · Acme",
-        ])
-        #expect(rows.compactMap { ($0["identity"] as? [String: Any])?["accountEmail"] as? String } == [
-            "redacted@example.com",
-            "redacted@example.com",
-        ])
-    }
-
-    @Test
-    func `redacted dashboard mode keeps alias text around colon prefixed emails`() throws {
-        let accounts = ClaudeSwapAccountProjection.accountSnapshots(
-            from: ClaudeSwapAccountList(
-                activeAccountNumber: 1,
-                accounts: [
-                    self.accountRow(
-                        number: 1,
-                        email: "shared@example.com",
-                        organizationName: "Sendbird",
-                        alias: "Work:owner@example.com",
-                        active: true),
-                    self.accountRow(
-                        number: 2,
-                        email: "shared@example.com",
-                        organizationName: "Acme",
-                        active: false),
-                ]),
-            now: self.generatedAt)
-        let providers = try self.providers(
-            identityMode: .redacted,
-            claudeSwap: DashboardAccountsInput(accounts: accounts, adapterError: nil, weeklyWorkDays: nil))
-        let claude = try #require(providers.first { $0["id"] as? String == "claude" })
-        let rows = try #require(claude["accounts"] as? [[String: Any]])
-        #expect(rows.compactMap { $0["label"] as? String } == [
-            "Work:redacted@example.com",
+            testCase.expectedLabel,
             "redacted@example.com · Acme",
         ])
         #expect(rows.compactMap { ($0["identity"] as? [String: Any])?["accountEmail"] as? String } == [
@@ -224,38 +175,49 @@ struct DashboardClaudeSwapSnapshotTests {
         ])
     }
 
-    @Test
-    func `redacted dashboard mode rewrites internal and domain literal addresses`() throws {
-        let accounts = ClaudeSwapAccountProjection.accountSnapshots(
-            from: ClaudeSwapAccountList(
-                activeAccountNumber: 1,
-                accounts: [
-                    self.accountRow(
-                        number: 1,
-                        email: "shared@example.com",
-                        organizationName: "Sendbird",
-                        alias: "Work (owner@corp)",
-                        active: true),
-                    self.accountRow(
-                        number: 2,
-                        email: "shared@example.com",
-                        organizationName: "ops@[192.0.2.1]",
-                        active: false),
-                ]),
-            now: self.generatedAt)
-        let providers = try self.providers(
-            identityMode: .redacted,
-            claudeSwap: DashboardAccountsInput(accounts: accounts, adapterError: nil, weeklyWorkDays: nil))
-        let claude = try #require(providers.first { $0["id"] as? String == "claude" })
-        let rows = try #require(claude["accounts"] as? [[String: Any]])
-        #expect(rows.compactMap { $0["label"] as? String } == [
-            "Work (redacted@corp)",
-            "redacted@example.com · redacted@[192.0.2.1]",
-        ])
+    struct RedactedAliasCase: CustomTestStringConvertible, Sendable {
+        let testDescription: String
+        let alias: String
+        let secondOrganization: String
+        let expectedAliasLabel: String
+        let expectedSecondLabel: String
     }
 
-    @Test
-    func `redacted dashboard mode rewrites apostrophe local parts`() throws {
+    @Test(arguments: [
+        RedactedAliasCase(
+            testDescription: "redacted dashboard mode rewrites internal and domain literal addresses",
+            alias: "Work (owner@corp)",
+            secondOrganization: "ops@[192.0.2.1]",
+            expectedAliasLabel: "Work (redacted@corp)",
+            expectedSecondLabel: "redacted@example.com · redacted@[192.0.2.1]"),
+        RedactedAliasCase(
+            testDescription: "redacted dashboard mode rewrites apostrophe local parts",
+            alias: "Work (o'connor@example.com)",
+            secondOrganization: "Acme",
+            expectedAliasLabel: "Work (redacted@example.com)",
+            expectedSecondLabel: "redacted@example.com · Acme"),
+        RedactedAliasCase(
+            testDescription: "redacted dashboard mode rewrites quoted local parts",
+            alias: "Contact \"owner\"@example.com",
+            secondOrganization: "Acme",
+            expectedAliasLabel: "Contact redacted@example.com",
+            expectedSecondLabel: "redacted@example.com · Acme"),
+        RedactedAliasCase(
+            testDescription: "redacted dashboard mode rewrites quoted local parts that contain spaces",
+            alias: "Contact \"owner smith\"@example.com",
+            secondOrganization: "Acme",
+            expectedAliasLabel: "Contact redacted@example.com",
+            expectedSecondLabel: "redacted@example.com · Acme"),
+        RedactedAliasCase(
+            testDescription: "redacted dashboard mode rewrites slash separated addresses independently",
+            alias: "owner@example.com/backup@example.net",
+            secondOrganization: "Acme",
+            expectedAliasLabel: "redacted@example.com/redacted@example.net",
+            expectedSecondLabel: "redacted@example.com · Acme"),
+    ])
+    func `redacted dashboard mode rewrites addresses inside aliases and organization suffixes`(
+        _ testCase: RedactedAliasCase) throws
+    {
         let accounts = ClaudeSwapAccountProjection.accountSnapshots(
             from: ClaudeSwapAccountList(
                 activeAccountNumber: 1,
@@ -264,12 +226,12 @@ struct DashboardClaudeSwapSnapshotTests {
                         number: 1,
                         email: "shared@example.com",
                         organizationName: "Sendbird",
-                        alias: "Work (o'connor@example.com)",
+                        alias: testCase.alias,
                         active: true),
                     self.accountRow(
                         number: 2,
                         email: "shared@example.com",
-                        organizationName: "Acme",
+                        organizationName: testCase.secondOrganization,
                         active: false),
                 ]),
             now: self.generatedAt)
@@ -279,8 +241,8 @@ struct DashboardClaudeSwapSnapshotTests {
         let claude = try #require(providers.first { $0["id"] as? String == "claude" })
         let rows = try #require(claude["accounts"] as? [[String: Any]])
         #expect(rows.compactMap { $0["label"] as? String } == [
-            "Work (redacted@example.com)",
-            "redacted@example.com · Acme",
+            testCase.expectedAliasLabel,
+            testCase.expectedSecondLabel,
         ])
     }
 
@@ -303,96 +265,6 @@ struct DashboardClaudeSwapSnapshotTests {
         let claude = try #require(providers.first { $0["id"] as? String == "claude" })
         let rows = try #require(claude["accounts"] as? [[String: Any]])
         #expect(rows.compactMap { $0["label"] as? String } == ["redacted@例子.公司"])
-    }
-
-    @Test
-    func `redacted dashboard mode rewrites quoted local parts`() throws {
-        let accounts = ClaudeSwapAccountProjection.accountSnapshots(
-            from: ClaudeSwapAccountList(
-                activeAccountNumber: 1,
-                accounts: [
-                    self.accountRow(
-                        number: 1,
-                        email: "shared@example.com",
-                        organizationName: "Sendbird",
-                        alias: "Contact \"owner\"@example.com",
-                        active: true),
-                    self.accountRow(
-                        number: 2,
-                        email: "shared@example.com",
-                        organizationName: "Acme",
-                        active: false),
-                ]),
-            now: self.generatedAt)
-        let providers = try self.providers(
-            identityMode: .redacted,
-            claudeSwap: DashboardAccountsInput(accounts: accounts, adapterError: nil, weeklyWorkDays: nil))
-        let claude = try #require(providers.first { $0["id"] as? String == "claude" })
-        let rows = try #require(claude["accounts"] as? [[String: Any]])
-        #expect(rows.compactMap { $0["label"] as? String } == [
-            "Contact redacted@example.com",
-            "redacted@example.com · Acme",
-        ])
-    }
-
-    @Test
-    func `redacted dashboard mode rewrites quoted local parts that contain spaces`() throws {
-        let accounts = ClaudeSwapAccountProjection.accountSnapshots(
-            from: ClaudeSwapAccountList(
-                activeAccountNumber: 1,
-                accounts: [
-                    self.accountRow(
-                        number: 1,
-                        email: "shared@example.com",
-                        organizationName: "Sendbird",
-                        alias: "Contact \"owner smith\"@example.com",
-                        active: true),
-                    self.accountRow(
-                        number: 2,
-                        email: "shared@example.com",
-                        organizationName: "Acme",
-                        active: false),
-                ]),
-            now: self.generatedAt)
-        let providers = try self.providers(
-            identityMode: .redacted,
-            claudeSwap: DashboardAccountsInput(accounts: accounts, adapterError: nil, weeklyWorkDays: nil))
-        let claude = try #require(providers.first { $0["id"] as? String == "claude" })
-        let rows = try #require(claude["accounts"] as? [[String: Any]])
-        #expect(rows.compactMap { $0["label"] as? String } == [
-            "Contact redacted@example.com",
-            "redacted@example.com · Acme",
-        ])
-    }
-
-    @Test
-    func `redacted dashboard mode rewrites slash separated addresses independently`() throws {
-        let accounts = ClaudeSwapAccountProjection.accountSnapshots(
-            from: ClaudeSwapAccountList(
-                activeAccountNumber: 1,
-                accounts: [
-                    self.accountRow(
-                        number: 1,
-                        email: "shared@example.com",
-                        organizationName: "Sendbird",
-                        alias: "owner@example.com/backup@example.net",
-                        active: true),
-                    self.accountRow(
-                        number: 2,
-                        email: "shared@example.com",
-                        organizationName: "Acme",
-                        active: false),
-                ]),
-            now: self.generatedAt)
-        let providers = try self.providers(
-            identityMode: .redacted,
-            claudeSwap: DashboardAccountsInput(accounts: accounts, adapterError: nil, weeklyWorkDays: nil))
-        let claude = try #require(providers.first { $0["id"] as? String == "claude" })
-        let rows = try #require(claude["accounts"] as? [[String: Any]])
-        #expect(rows.compactMap { $0["label"] as? String } == [
-            "redacted@example.com/redacted@example.net",
-            "redacted@example.com · Acme",
-        ])
     }
 
     @Test

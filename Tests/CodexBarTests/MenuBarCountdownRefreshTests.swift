@@ -27,12 +27,10 @@ struct MenuBarCountdownRefreshTests {
             fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
         defer { controller.releaseStatusItemsForTesting() }
         let now = Date()
@@ -240,12 +238,10 @@ struct MenuBarCountdownRefreshTests {
                 updatedAt: now),
             provider: .claude)
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -282,12 +278,10 @@ struct MenuBarCountdownRefreshTests {
                 updatedAt: Date()),
             provider: .codex)
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -430,12 +424,10 @@ struct MenuBarCountdownRefreshTests {
                 updatedAt: now),
             provider: .codex)
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -515,12 +507,10 @@ struct MenuBarCountdownRefreshTests {
                     updatedAt: now),
                 provider: .claude)
 
-            let controller = StatusItemController(
+            let controller = makeStatusItemControllerForTesting(
                 store: store,
                 settings: settings,
                 account: fetcher.loadAccountInfo(),
-                updater: DisabledUpdaterController(),
-                preferencesSelection: PreferencesSelection(),
                 statusBar: .system)
             controller.updateIcons()
 
@@ -576,12 +566,10 @@ struct MenuBarCountdownRefreshTests {
             updatedAt: now)
         store._setSnapshotForTesting(snapshot, provider: .claude)
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -607,12 +595,10 @@ struct MenuBarCountdownRefreshTests {
             fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -700,12 +686,10 @@ struct MenuBarCountdownRefreshTests {
             fetcher: fetcher,
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: testStatusBar())
 
         let now = Date()
@@ -775,12 +759,10 @@ struct MenuBarCountdownRefreshTests {
                 updatedAt: now),
             provider: .claude)
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -833,12 +815,10 @@ struct MenuBarCountdownRefreshTests {
                 updatedAt: now),
             provider: .claude)
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 

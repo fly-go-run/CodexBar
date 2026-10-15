@@ -40,12 +40,10 @@ extension StatusMenuTests {
         settings.agentSessionsEnabled = true
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -81,12 +79,10 @@ extension StatusMenuTests {
         settings.agentSessionsEnabled = true
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 

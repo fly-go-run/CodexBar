@@ -35,12 +35,10 @@ extension StatusMenuTests {
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
@@ -94,12 +92,10 @@ extension StatusMenuTests {
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
@@ -156,12 +152,10 @@ extension StatusMenuTests {
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
@@ -210,12 +204,10 @@ extension StatusMenuTests {
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
@@ -271,12 +263,10 @@ extension StatusMenuTests {
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
@@ -328,12 +318,10 @@ extension StatusMenuTests {
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
@@ -384,12 +372,10 @@ extension StatusMenuTests {
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
@@ -449,12 +435,10 @@ extension StatusMenuTests {
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
@@ -509,12 +493,10 @@ extension StatusMenuTests {
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true
@@ -572,12 +554,10 @@ extension StatusMenuTests {
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
         store._setTokenSnapshotForTesting(snapshotA, provider: .claude)
         store._setTokenSnapshotForTesting(snapshotA, provider: .codex)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         controller.menuRefreshEnabledOverrideForTesting = true

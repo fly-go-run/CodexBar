@@ -44,12 +44,10 @@ struct BatteryDrainDiagnosticTests {
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -90,12 +88,10 @@ struct BatteryDrainDiagnosticTests {
             updatedAt: Date())
         store._setSnapshotForTesting(snapshot, provider: .codex)
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -129,12 +125,10 @@ struct BatteryDrainDiagnosticTests {
             browserDetection: BrowserDetection(cacheTTL: 0),
             settings: settings)
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -166,12 +160,10 @@ struct BatteryDrainDiagnosticTests {
             settings: settings)
         store._setErrorForTesting("simulated Codex RPC timeout", provider: .codex)
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
 
         #expect(store.isStale(provider: .codex) == true)

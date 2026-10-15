@@ -28,20 +28,53 @@ struct UsagePaceTextTests {
         "%@ · %@",
     ]
 
-    @Test
-    func `weekly pace detail provides left right labels`() throws {
+    struct WeeklyPaceDetailCase: CustomTestStringConvertible, Sendable {
+        let testDescription: String
+        let usedPercent: Double
+        let daysUntilReset: Double
+        let expectedLeftLabel: String
+        let expectedRightLabel: String
+    }
+
+    @Test(arguments: [
+        WeeklyPaceDetailCase(
+            testDescription: "weekly pace detail provides left right labels",
+            usedPercent: 50,
+            daysUntilReset: 4,
+            expectedLeftLabel: "7% in deficit",
+            expectedRightLabel: "Runs out in 3d"),
+        WeeklyPaceDetailCase(
+            testDescription: "weekly pace detail reports lasts until reset",
+            usedPercent: 10,
+            daysUntilReset: 4,
+            expectedLeftLabel: "33% in reserve",
+            expectedRightLabel: "Lasts until reset · 1.5× headroom"),
+        WeeklyPaceDetailCase(
+            testDescription: "weekly pace detail reports capped speed headroom when under pace",
+            usedPercent: 20,
+            daysUntilReset: 3,
+            expectedLeftLabel: "37% in reserve",
+            expectedRightLabel: "Lasts until reset · 1.5× headroom"),
+        WeeklyPaceDetailCase(
+            testDescription: "weekly pace detail reports remaining headroom late in window",
+            usedPercent: 70,
+            daysUntilReset: 0.7,
+            expectedLeftLabel: "20% in reserve",
+            expectedRightLabel: "Lasts until reset · 1.5× headroom"),
+    ])
+    func `weekly pace detail labels`(_ testCase: WeeklyPaceDetailCase) throws {
         let now = Date(timeIntervalSince1970: 0)
         let window = RateWindow(
-            usedPercent: 50,
+            usedPercent: testCase.usedPercent,
             windowMinutes: 10080,
-            resetsAt: now.addingTimeInterval(4 * 24 * 3600),
+            resetsAt: now.addingTimeInterval(testCase.daysUntilReset * 24 * 3600),
             resetDescription: nil)
         let pace = try #require(UsagePace.weekly(window: window, now: now))
 
         let detail = UsagePaceText.weeklyDetail(provider: .codex, pace: pace, now: now)
 
-        #expect(detail.leftLabel == "7% in deficit")
-        #expect(detail.rightLabel == "Runs out in 3d")
+        #expect(detail.leftLabel == testCase.expectedLeftLabel)
+        #expect(detail.rightLabel == testCase.expectedRightLabel)
     }
 
     @Test
@@ -61,22 +94,6 @@ struct UsagePaceTextTests {
     }
 
     @Test
-    func `weekly pace detail reports lasts until reset`() throws {
-        let now = Date(timeIntervalSince1970: 0)
-        let window = RateWindow(
-            usedPercent: 10,
-            windowMinutes: 10080,
-            resetsAt: now.addingTimeInterval(4 * 24 * 3600),
-            resetDescription: nil)
-        let pace = try #require(UsagePace.weekly(window: window, now: now))
-
-        let detail = UsagePaceText.weeklyDetail(provider: .codex, pace: pace, now: now)
-
-        #expect(detail.leftLabel == "33% in reserve")
-        #expect(detail.rightLabel == "Lasts until reset · 1.5× headroom")
-    }
-
-    @Test
     func `weekly pace summary formats single line text`() throws {
         let now = Date(timeIntervalSince1970: 0)
         let window = RateWindow(
@@ -92,22 +109,6 @@ struct UsagePaceTextTests {
     }
 
     @Test
-    func `weekly pace detail reports capped speed headroom when under pace`() throws {
-        let now = Date(timeIntervalSince1970: 0)
-        let window = RateWindow(
-            usedPercent: 20,
-            windowMinutes: 10080,
-            resetsAt: now.addingTimeInterval(3 * 24 * 3600),
-            resetDescription: nil)
-        let pace = try #require(UsagePace.weekly(window: window, now: now))
-
-        let detail = UsagePaceText.weeklyDetail(provider: .codex, pace: pace, now: now)
-
-        #expect(detail.leftLabel == "37% in reserve")
-        #expect(detail.rightLabel == "Lasts until reset · 1.5× headroom")
-    }
-
-    @Test
     func `weekly pace detail limits headroom hint to Codex`() throws {
         let now = Date(timeIntervalSince1970: 0)
         let window = RateWindow(
@@ -120,22 +121,6 @@ struct UsagePaceTextTests {
         let detail = UsagePaceText.weeklyDetail(provider: .claude, pace: pace, now: now)
 
         #expect(detail.rightLabel == "Lasts until reset")
-    }
-
-    @Test
-    func `weekly pace detail reports remaining headroom late in window`() throws {
-        let now = Date(timeIntervalSince1970: 0)
-        let window = RateWindow(
-            usedPercent: 70,
-            windowMinutes: 10080,
-            resetsAt: now.addingTimeInterval(0.7 * 24 * 3600),
-            resetDescription: nil)
-        let pace = try #require(UsagePace.weekly(window: window, now: now))
-
-        let detail = UsagePaceText.weeklyDetail(provider: .codex, pace: pace, now: now)
-
-        #expect(detail.leftLabel == "20% in reserve")
-        #expect(detail.rightLabel == "Lasts until reset · 1.5× headroom")
     }
 
     @Test

@@ -40,12 +40,10 @@ extension StatusMenuTests {
         enableTestProviders([.codex], settings: settings)
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         StatusItemController.setClosedMenuPreparationDelayForTesting(.zero)
@@ -86,12 +84,10 @@ extension StatusMenuTests {
         enableTestProviders([.codex], settings: settings)
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         StatusItemController.setClosedMenuPreparationDelayForTesting(.zero)
@@ -143,12 +139,10 @@ extension StatusMenuTests {
         enableTestProviders([.codex], settings: settings)
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         StatusItemController.setClosedMenuPreparationDelayForTesting(.zero)
@@ -198,12 +192,10 @@ extension StatusMenuTests {
         settings.mergeIcons = false
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         StatusItemController.setClosedMenuPreparationDelayForTesting(.milliseconds(50))
@@ -251,12 +243,10 @@ extension StatusMenuTests {
         enableTestProviders([.codex], settings: settings)
 
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: false)
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: UsageFetcher().loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: self.makeStatusBarForTesting())
         defer { controller.releaseStatusItemsForTesting() }
         StatusItemController.setClosedMenuPreparationDelayForTesting(.zero)

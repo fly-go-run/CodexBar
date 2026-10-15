@@ -39,12 +39,10 @@ struct StatusMenuNativeSectionSpacingTests {
         store.openAIDashboardAttachmentAuthorized = true
         store.openAIDashboardRequiresLogin = false
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -121,12 +119,10 @@ struct StatusMenuNativeSectionSpacingTests {
             ],
             updatedAt: Date()), provider: .codex)
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -191,12 +187,10 @@ struct StatusMenuNativeSectionSpacingTests {
             ],
             updatedAt: Date()), provider: .claude)
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 
@@ -257,12 +251,10 @@ struct StatusMenuNativeSectionSpacingTests {
             ],
             updatedAt: Date()), provider: .codex)
 
-        let controller = StatusItemController(
+        let controller = makeStatusItemControllerForTesting(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
-            updater: DisabledUpdaterController(),
-            preferencesSelection: PreferencesSelection(),
             statusBar: .system)
         defer { controller.releaseStatusItemsForTesting() }
 

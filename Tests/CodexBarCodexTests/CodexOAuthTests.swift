@@ -295,74 +295,65 @@ struct CodexOAuthTests {
         #expect(snapshot.secondary?.windowMinutes == 10080)
     }
 
-    @Test
-    func `keeps single session window as primary`() throws {
-        let json = """
-        {
-          "rate_limit": {
-            "primary_window": {
-              "used_percent": 9,
-              "reset_at": 1766948068,
-              "limit_window_seconds": 18000
-            },
-            "secondary_window": null
-          }
-        }
-        """
-        let creds = CodexOAuthCredentials(
-            accessToken: "access",
-            refreshToken: "refresh",
-            idToken: nil,
-            accountId: nil,
-            lastRefresh: Date())
-        let mapped = try CodexOAuthFetchStrategy._mapUsageForTesting(Data(json.utf8), credentials: creds)
-        let snapshot = try #require(mapped)
-        #expect(snapshot.primary?.usedPercent == 9)
-        #expect(snapshot.primary?.windowMinutes == 300)
-        #expect(snapshot.secondary == nil)
+    struct LonePrimaryWindowCase: CustomTestStringConvertible, Sendable {
+        let testDescription: String
+        let json: String
+        let expectedUsedPercent: Double
+        let expectedWindowMinutes: Int
     }
 
-    @Test
-    func `preserves unknown single window as primary`() throws {
-        let json = """
-        {
-          "rate_limit": {
-            "primary_window": {
-              "used_percent": 17,
-              "reset_at": 1766948068,
-              "limit_window_seconds": 32400
-            },
-            "secondary_window": null
-          }
-        }
-        """
-        let creds = CodexOAuthCredentials(
-            accessToken: "access",
-            refreshToken: "refresh",
-            idToken: nil,
-            accountId: nil,
-            lastRefresh: Date())
-        let mapped = try CodexOAuthFetchStrategy._mapUsageForTesting(Data(json.utf8), credentials: creds)
-        let snapshot = try #require(mapped)
-        #expect(snapshot.primary?.usedPercent == 17)
-        #expect(snapshot.primary?.windowMinutes == 540)
-        #expect(snapshot.secondary == nil)
-    }
-
-    @Test
-    func `preserves unknown secondary only window as primary`() throws {
-        let json = """
-        {
-          "rate_limit": {
-            "primary_window": null,
-            "secondary_window": {
-              "used_percent": 17,
-              "reset_at": 1766948068,
-              "limit_window_seconds": 32400
+    @Test(arguments: [
+        LonePrimaryWindowCase(
+            testDescription: "keeps single session window as primary",
+            json: """
+            {
+              "rate_limit": {
+                "primary_window": {
+                  "used_percent": 9,
+                  "reset_at": 1766948068,
+                  "limit_window_seconds": 18000
+                },
+                "secondary_window": null
+              }
             }
-          }
-        }
-        """
+            """,
+            expectedUsedPercent: 9,
+            expectedWindowMinutes: 300),
+        LonePrimaryWindowCase(
+            testDescription: "preserves unknown single window as primary",
+            json: """
+            {
+              "rate_limit": {
+                "primary_window": {
+                  "used_percent": 17,
+                  "reset_at": 1766948068,
+                  "limit_window_seconds": 32400
+                },
+                "secondary_window": null
+              }
+            }
+            """,
+            expectedUsedPercent: 17,
+            expectedWindowMinutes: 540),
+        LonePrimaryWindowCase(
+            testDescription: "preserves unknown secondary only window as primary",
+            json: """
+            {
+              "rate_limit": {
+                "primary_window": null,
+                "secondary_window": {
+                  "used_percent": 17,
+                  "reset_at": 1766948068,
+                  "limit_window_seconds": 32400
+                }
+              }
+            }
+            """,
+            expectedUsedPercent: 17,
+            expectedWindowMinutes: 540),
+    ])
+    func `keeps a lone usage window as primary`(_ testCase: LonePrimaryWindowCase) throws {
+        let json = testCase.json
         let creds = CodexOAuthCredentials(
             accessToken: "access",
             refreshToken: "refresh",
@@ -371,8 +362,8 @@ struct CodexOAuthTests {
             lastRefresh: Date())
         let mapped = try CodexOAuthFetchStrategy._mapUsageForTesting(Data(json.utf8), credentials: creds)
         let snapshot = try #require(mapped)
-        #expect(snapshot.primary?.usedPercent == 17)
-        #expect(snapshot.primary?.windowMinutes == 540)
+        #expect(snapshot.primary?.usedPercent == testCase.expectedUsedPercent)
+        #expect(snapshot.primary?.windowMinutes == testCase.expectedWindowMinutes)
         #expect(snapshot.secondary == nil)
     }
 
@@ -462,24 +453,53 @@ struct CodexOAuthTests {
         #expect(result.usage.dataConfidence == .unknown)
     }
 
-    @Test
-    func `auto mode keeps weekly window when primary window is malformed`() throws {
-        let json = """
-        {
-          "rate_limit": {
-            "primary_window": {
-              "used_percent": "bad",
-              "reset_at": 1766948068,
-              "limit_window_seconds": 18000
-            },
-            "secondary_window": {
-              "used_percent": 43,
-              "reset_at": 1767407914,
-              "limit_window_seconds": 604800
+    struct AutoMalformedSessionCase: CustomTestStringConvertible, Sendable {
+        let testDescription: String
+        let json: String
+    }
+
+    @Test(arguments: [
+        AutoMalformedSessionCase(
+            testDescription: "auto mode keeps weekly window when primary window is malformed",
+            json: """
+            {
+              "rate_limit": {
+                "primary_window": {
+                  "used_percent": "bad",
+                  "reset_at": 1766948068,
+                  "limit_window_seconds": 18000
+                },
+                "secondary_window": {
+                  "used_percent": 43,
+                  "reset_at": 1767407914,
+                  "limit_window_seconds": 604800
+                }
+              }
             }
-          }
-        }
-        """
+            """),
+        AutoMalformedSessionCase(
+            testDescription: "auto mode keeps weekly window when reversed session window is malformed",
+            json: """
+            {
+              "rate_limit": {
+                "primary_window": {
+                  "used_percent": 43,
+                  "reset_at": 1767407914,
+                  "limit_window_seconds": 604800
+                },
+                "secondary_window": {
+                  "used_percent": "bad",
+                  "reset_at": 1766948068,
+                  "limit_window_seconds": 18000
+                }
+              }
+            }
+            """),
+    ])
+    func `auto mode keeps weekly window when a session window is malformed`(
+        _ testCase: AutoMalformedSessionCase) throws
+    {
+        let json = testCase.json
         let creds = CodexOAuthCredentials(
             accessToken: "access",
             refreshToken: "refresh",
@@ -497,24 +517,53 @@ struct CodexOAuthTests {
         #expect(result.usage.secondary?.windowMinutes == 10080)
     }
 
-    @Test
-    func `explicit oauth keeps weekly window when primary window is malformed`() throws {
-        let json = """
-        {
-          "rate_limit": {
-            "primary_window": {
-              "used_percent": "bad",
-              "reset_at": 1766948068,
-              "limit_window_seconds": 18000
-            },
-            "secondary_window": {
-              "used_percent": 43,
-              "reset_at": 1767407914,
-              "limit_window_seconds": 604800
+    struct ExplicitMalformedSessionCase: CustomTestStringConvertible, Sendable {
+        let testDescription: String
+        let json: String
+    }
+
+    @Test(arguments: [
+        ExplicitMalformedSessionCase(
+            testDescription: "explicit oauth keeps weekly window when primary window is malformed",
+            json: """
+            {
+              "rate_limit": {
+                "primary_window": {
+                  "used_percent": "bad",
+                  "reset_at": 1766948068,
+                  "limit_window_seconds": 18000
+                },
+                "secondary_window": {
+                  "used_percent": 43,
+                  "reset_at": 1767407914,
+                  "limit_window_seconds": 604800
+                }
+              }
             }
-          }
-        }
-        """
+            """),
+        ExplicitMalformedSessionCase(
+            testDescription: "explicit oauth keeps weekly window when reversed session window is malformed",
+            json: """
+            {
+              "rate_limit": {
+                "primary_window": {
+                  "used_percent": 43,
+                  "reset_at": 1767407914,
+                  "limit_window_seconds": 604800
+                },
+                "secondary_window": {
+                  "used_percent": "bad",
+                  "reset_at": 1766948068,
+                  "limit_window_seconds": 18000
+                }
+              }
+            }
+            """),
+    ])
+    func `explicit oauth keeps weekly window when a session window is malformed`(
+        _ testCase: ExplicitMalformedSessionCase) throws
+    {
+        let json = testCase.json
         let creds = CodexOAuthCredentials(
             accessToken: "access",
             refreshToken: "refresh",
@@ -565,76 +614,6 @@ struct CodexOAuthTests {
         #expect(result.usage.primary?.usedPercent == 18)
         #expect(result.usage.primary?.windowMinutes == 300)
         #expect(result.usage.secondary == nil)
-    }
-
-    @Test
-    func `auto mode keeps weekly window when reversed session window is malformed`() throws {
-        let json = """
-        {
-          "rate_limit": {
-            "primary_window": {
-              "used_percent": 43,
-              "reset_at": 1767407914,
-              "limit_window_seconds": 604800
-            },
-            "secondary_window": {
-              "used_percent": "bad",
-              "reset_at": 1766948068,
-              "limit_window_seconds": 18000
-            }
-          }
-        }
-        """
-        let creds = CodexOAuthCredentials(
-            accessToken: "access",
-            refreshToken: "refresh",
-            idToken: nil,
-            accountId: nil,
-            lastRefresh: Date())
-
-        let result = try CodexOAuthFetchStrategy._mapResultForTesting(
-            Data(json.utf8),
-            credentials: creds,
-            sourceMode: .auto)
-
-        #expect(result.usage.primary == nil)
-        #expect(result.usage.secondary?.usedPercent == 43)
-        #expect(result.usage.secondary?.windowMinutes == 10080)
-    }
-
-    @Test
-    func `explicit oauth keeps weekly window when reversed session window is malformed`() throws {
-        let json = """
-        {
-          "rate_limit": {
-            "primary_window": {
-              "used_percent": 43,
-              "reset_at": 1767407914,
-              "limit_window_seconds": 604800
-            },
-            "secondary_window": {
-              "used_percent": "bad",
-              "reset_at": 1766948068,
-              "limit_window_seconds": 18000
-            }
-          }
-        }
-        """
-        let creds = CodexOAuthCredentials(
-            accessToken: "access",
-            refreshToken: "refresh",
-            idToken: nil,
-            accountId: nil,
-            lastRefresh: Date())
-
-        let result = try CodexOAuthFetchStrategy._mapResultForTesting(
-            Data(json.utf8),
-            credentials: creds,
-            sourceMode: .oauth)
-
-        #expect(result.usage.primary == nil)
-        #expect(result.usage.secondary?.usedPercent == 43)
-        #expect(result.usage.secondary?.windowMinutes == 10080)
     }
 
     @Test

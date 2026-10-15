@@ -80,38 +80,31 @@ struct CLIOpenAIDashboardCacheTests {
         #expect(OpenAIDashboardCacheStore.load() == nil)
     }
 
-    @Test
-    func `cached dashboard returns nil on fail closed and clears cache`() throws {
-        OpenAIDashboardCacheStore.clear()
-        defer { OpenAIDashboardCacheStore.clear() }
-
-        let authHome = try self.makeAuthHome(
-            email: "owner@example.com",
-            accountId: "acct-owner")
-        defer { try? FileManager.default.removeItem(at: authHome) }
-
-        let context = self.makeContext(
-            authHome: authHome,
-            knownOwners: [
-                CodexDashboardKnownOwnerCandidate(
-                    identity: .providerAccount(id: "acct-other"),
-                    normalizedEmail: "owner@example.com"),
-            ])
-        OpenAIDashboardCacheStore.save(OpenAIDashboardCache(
-            accountEmail: "owner@example.com",
-            snapshot: self.makeDashboard(email: "owner@example.com")))
-
-        let restored = CodexBarCLI.loadOpenAIDashboardIfAvailable(
-            usage: self.makeUsage(email: "owner@example.com"),
-            sourceLabel: "codex-cli",
-            context: context)
-
-        #expect(restored == nil)
-        #expect(OpenAIDashboardCacheStore.load() == nil)
+    struct RejectedCacheCase: CustomTestStringConvertible, Sendable {
+        let testDescription: String
+        let accountID: String
+        let cachedEmail: String
+        let signedInEmail: String
     }
 
-    @Test
-    func `cached dashboard wrong email returns nil and clears cache`() throws {
+    @Test(arguments: [
+        RejectedCacheCase(
+            testDescription: "cached dashboard returns nil on fail closed and clears cache",
+            accountID: "acct-other",
+            cachedEmail: "owner@example.com",
+            signedInEmail: "owner@example.com"),
+        RejectedCacheCase(
+            testDescription: "cached dashboard wrong email returns nil and clears cache",
+            accountID: "acct-owner",
+            cachedEmail: "other@example.com",
+            signedInEmail: "other@example.com"),
+        RejectedCacheCase(
+            testDescription: "cached dashboard ignores cached account email equality when authority rejects",
+            accountID: "acct-other",
+            cachedEmail: "owner@example.com",
+            signedInEmail: "owner@example.com"),
+    ])
+    func `cached dashboard rejects mismatched ownership and clears cache`(_ testCase: RejectedCacheCase) throws {
         OpenAIDashboardCacheStore.clear()
         defer { OpenAIDashboardCacheStore.clear() }
 
@@ -124,12 +117,12 @@ struct CLIOpenAIDashboardCacheTests {
             authHome: authHome,
             knownOwners: [
                 CodexDashboardKnownOwnerCandidate(
-                    identity: .providerAccount(id: "acct-owner"),
+                    identity: .providerAccount(id: testCase.accountID),
                     normalizedEmail: "owner@example.com"),
             ])
         OpenAIDashboardCacheStore.save(OpenAIDashboardCache(
-            accountEmail: "other@example.com",
-            snapshot: self.makeDashboard(email: "other@example.com")))
+            accountEmail: testCase.cachedEmail,
+            snapshot: self.makeDashboard(email: testCase.signedInEmail)))
 
         let restored = CodexBarCLI.loadOpenAIDashboardIfAvailable(
             usage: self.makeUsage(email: "owner@example.com"),
@@ -276,36 +269,6 @@ struct CLIOpenAIDashboardCacheTests {
         let restored = CodexBarCLI.loadOpenAIDashboardIfAvailable(
             usage: self.makeUsage(email: "owner@example.com"),
             sourceLabel: "openai-web",
-            context: context)
-
-        #expect(restored == nil)
-        #expect(OpenAIDashboardCacheStore.load() == nil)
-    }
-
-    @Test
-    func `cached dashboard ignores cached account email equality when authority rejects`() throws {
-        OpenAIDashboardCacheStore.clear()
-        defer { OpenAIDashboardCacheStore.clear() }
-
-        let authHome = try self.makeAuthHome(
-            email: "owner@example.com",
-            accountId: "acct-owner")
-        defer { try? FileManager.default.removeItem(at: authHome) }
-
-        let context = self.makeContext(
-            authHome: authHome,
-            knownOwners: [
-                CodexDashboardKnownOwnerCandidate(
-                    identity: .providerAccount(id: "acct-other"),
-                    normalizedEmail: "owner@example.com"),
-            ])
-        OpenAIDashboardCacheStore.save(OpenAIDashboardCache(
-            accountEmail: "owner@example.com",
-            snapshot: self.makeDashboard(email: "owner@example.com")))
-
-        let restored = CodexBarCLI.loadOpenAIDashboardIfAvailable(
-            usage: self.makeUsage(email: "owner@example.com"),
-            sourceLabel: "codex-cli",
             context: context)
 
         #expect(restored == nil)
