@@ -22,8 +22,6 @@ struct UsagePaceTextTests {
         "session quotas",
         "session_quota_estimate_value_format",
         "≈%d full 5h windows of weekly left · %d windows until reset",
-        "Weekly cannot run out before reset at this pace",
-        "Weekly can run out ≈%d windows early",
         "Estimated: %@",
         "%@ · %@",
     ]

@@ -34,7 +34,7 @@ struct WidgetLocalizationTests {
                 let locale = Locale(identifier: language.rawValue == "ar" ? "ar@numbers=arab" : language.rawValue)
                 #expect(WidgetLaneCopy.caption(title: "Session", showUsed: true) ==
                     String(format: format, locale: locale, W("Session")))
-                #expect(W("Reset: %@", "MARKER").contains("MARKER"))
+                #expect(W("Resets %@", "MARKER").contains("MARKER"))
                 #expect(CompactMetricFormatter.costMetricLabel("30d API est. · not billed", provider: .codex) ==
                     W("%@ API est. · not billed", W("%dd", 30)))
                 #expect(CompactMetricFormatter.costMetricLabel("Today", provider: .claude) ==

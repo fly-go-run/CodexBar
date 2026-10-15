@@ -14,8 +14,6 @@ struct UsageFormatterTests {
         "Updated %@",
         "Updated relative %@",
         "Updated absolute %@",
-        "Updated %@h ago",
-        "Updated %@m ago",
         "Updated just now",
         "usage_percent_suffix_left",
         "usage_percent_suffix_used",

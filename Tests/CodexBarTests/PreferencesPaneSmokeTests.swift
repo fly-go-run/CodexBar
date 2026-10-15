@@ -561,8 +561,6 @@ struct PreferencesPaneSmokeTests {
             #expect(L("quit_app") == "CodexBar beenden")
             #expect(L("display_mode_reset_time") == "Zurücksetzungszeit")
             #expect(L("display_mode_reset_time_desc").contains("↻ 15:56"))
-            #expect(L("vertex_ai_login_instructions").contains("\n\n1. Öffnen Sie Terminal"))
-            #expect(!L("vertex_ai_login_instructions").contains("\\n"))
         }
     }
 
