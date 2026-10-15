@@ -105,6 +105,8 @@ public final class TokenOutputSpeedScanner: @unchecked Sendable {
         let modifiedAt: Date
         /// End of the last complete line that was parsed; a half-written tail is retried next time.
         let committedOffset: Int64
+        /// The last bytes before `committedOffset`: proof, before resuming, that what was parsed is still there.
+        let tailFingerprint: Data
         let parser: ParserState
     }
 
@@ -203,7 +205,9 @@ public final class TokenOutputSpeedScanner: @unchecked Sendable {
 
         var parser: ParserState
         var offset: Int64 = 0
-        if let cached, cached.fileID == file.fileID, file.size > cached.size, cached.committedOffset <= file.size {
+        if let cached, cached.fileID == file.fileID, file.size > cached.size, cached.committedOffset <= file.size,
+           Self.tailFingerprint(of: file.url, endingAt: cached.committedOffset) == cached.tailFingerprint
+        {
             parser = cached.parser
             offset = cached.committedOffset
         } else {
@@ -243,6 +247,7 @@ public final class TokenOutputSpeedScanner: @unchecked Sendable {
                 size: file.size,
                 modifiedAt: file.modifiedAt,
                 committedOffset: committed,
+                tailFingerprint: Self.tailFingerprint(of: file.url, endingAt: committed) ?? Data(),
                 parser: parser),
             provider: provider,
             key: key)
@@ -291,6 +296,24 @@ public final class TokenOutputSpeedScanner: @unchecked Sendable {
             }
         }
         return files
+    }
+
+    static let tailFingerprintLength = 256
+
+    /// Up to 256 bytes ending at `offset`; nil when they cannot be read (the file shrank or vanished).
+    /// A same-inode file that grew can still have been truncated and rewritten, which this exposes.
+    private static func tailFingerprint(of url: URL, endingAt offset: Int64) -> Data? {
+        guard offset > 0 else { return Data() }
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? handle.close() }
+        let length = min(Int64(Self.tailFingerprintLength), offset)
+        do {
+            try handle.seek(toOffset: UInt64(offset - length))
+            let data = try handle.read(upToCount: Int(length)) ?? Data()
+            return data.count == Int(length) ? data : nil
+        } catch {
+            return nil
+        }
     }
 
     /// Device + inode, so a log that was replaced by another file at the same path starts over.
