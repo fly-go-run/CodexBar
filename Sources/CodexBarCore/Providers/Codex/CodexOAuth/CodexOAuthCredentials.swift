@@ -92,16 +92,8 @@ public enum CodexOAuthCredentialsStore {
         fileManager: FileManager = .default,
         homeDirectory: URL? = nil) -> URL
     {
-        let home =
-            if self.nonEmpty(env["CODEX_HOME"]) != nil {
-                CodexHomeScope.ambientHomeURL(env: env, fileManager: fileManager)
-            } else {
-                (homeDirectory ?? fileManager.homeDirectoryForCurrentUser)
-                    .appendingPathComponent(".codex", isDirectory: true)
-            }
-        return
-            home
-                .appendingPathComponent("auth.json")
+        CodexHomeScope.ambientHomeURL(env: env, fileManager: fileManager, homeDirectory: homeDirectory)
+            .appendingPathComponent("auth.json")
     }
 
     public static func load(

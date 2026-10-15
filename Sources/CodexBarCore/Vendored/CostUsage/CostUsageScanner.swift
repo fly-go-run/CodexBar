@@ -2213,28 +2213,16 @@ enum CostUsageScanner {
         if let override = options.codexSessionsRoot {
             return override
         }
-        let env = ProcessInfo.processInfo.environment["CODEX_HOME"]?.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let env, !env.isEmpty {
-            return URL(fileURLWithPath: env, isDirectory: true).appendingPathComponent("sessions", isDirectory: true)
-        }
-        return FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".codex", isDirectory: true)
-            .appendingPathComponent("sessions", isDirectory: true)
+        let home = CodexHomeScope.ambientHomeURL(env: ProcessInfo.processInfo.environment)
+        return CodexHomeScope.sessionsRoot(home: home)
     }
 
     static func codexSessionsRoots(options: Options) -> [URL] {
         let root = self.defaultCodexSessionsRoot(options: options)
-        if let archived = self.codexArchivedSessionsRoot(sessionsRoot: root) {
+        if let archived = CodexHomeScope.archivedSessionsRoot(sessionsRoot: root) {
             return [root, archived]
         }
         return [root]
-    }
-
-    private static func codexArchivedSessionsRoot(sessionsRoot: URL) -> URL? {
-        guard sessionsRoot.lastPathComponent == "sessions" else { return nil }
-        return sessionsRoot
-            .deletingLastPathComponent()
-            .appendingPathComponent("archived_sessions", isDirectory: true)
     }
 
     static func listCodexSessionFiles(

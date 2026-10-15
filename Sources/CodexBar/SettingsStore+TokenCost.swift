@@ -56,22 +56,9 @@ extension SettingsStore {
             return false
         }
 
-        let codexRoot: URL = {
-            let raw = env["CODEX_HOME"]?.trimmingCharacters(in: .whitespacesAndNewlines)
-            if let raw, !raw.isEmpty {
-                return URL(fileURLWithPath: raw).appendingPathComponent("sessions", isDirectory: true)
-            }
-            return home
-                .appendingPathComponent(".codex", isDirectory: true)
-                .appendingPathComponent("sessions", isDirectory: true)
-        }()
-
-        let archivedCodexRoot: URL? = {
-            guard codexRoot.lastPathComponent == "sessions" else { return nil }
-            return codexRoot
-                .deletingLastPathComponent()
-                .appendingPathComponent("archived_sessions", isDirectory: true)
-        }()
+        let codexRoot = CodexHomeScope.sessionsRoot(
+            home: CodexHomeScope.ambientHomeURL(env: env, fileManager: fileManager, homeDirectory: home))
+        let archivedCodexRoot = CodexHomeScope.archivedSessionsRoot(sessionsRoot: codexRoot)
 
         if hasAnyJsonl(in: codexRoot) {
             return true
