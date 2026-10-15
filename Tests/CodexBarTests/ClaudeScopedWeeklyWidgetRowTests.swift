@@ -25,7 +25,6 @@ struct ClaudeScopedWeeklyWidgetRowTests {
             tokenUsage: nil,
             dailyUsage: [])
 
-        #expect(WidgetUsageRow.smallWidgetRowLimit(for: entry) == nil)
         #expect(WidgetUsageRow.rows(for: entry).map(\.id) == [
             "primary",
             "secondary",

@@ -8,32 +8,11 @@ enum PercentWindow: String, CaseIterable, Codable, Hashable, Sendable {
     case automatic
 
     /// Shared by the simplified picker and legacy layout migration.
-    static func forMetric(
-        _ metric: ProviderMenuBarMetric,
-        primarySemanticWindow: ProviderSemanticWindow,
-        secondarySemanticWindow: ProviderSemanticWindow) -> Self
-    {
+    static func forMetric(_ metric: ProviderMenuBarMetric) -> Self {
         switch metric {
-        case .primary: self.forSemanticWindow(primarySemanticWindow)
-        case .secondary: self.forSemanticWindow(secondarySemanticWindow)
+        case .primary: .session
+        case .secondary: .weekly
         case .automatic, .primaryAndSecondary, .tertiary, .extraUsage, .average, .monthlyPlan: .automatic
-        }
-    }
-
-    static func forSemanticWindow(_ window: ProviderSemanticWindow) -> Self {
-        switch window {
-        case .session: .session
-        case .weekly: .weekly
-        }
-    }
-
-    func providerLabel(provider: UsageProvider?) -> String? {
-        guard let provider else { return nil }
-        let presentation = ProviderDescriptorRegistry.descriptor(for: provider).presentation
-        return switch self {
-        case .session: presentation.menuBarLayoutPrimaryLabel.map(L)
-        case .weekly: presentation.menuBarLayoutSecondaryLabel.map(L)
-        case .scopedWeekly, .automatic: nil
         }
     }
 }
@@ -554,8 +533,7 @@ enum MenuBarLayoutBalanceResolver {
                 .number.precision(.fractionLength(0)).locale(Locale(identifier: "en_US")))
         default:
             let descriptor = ProviderDescriptorRegistry.descriptor(for: provider)
-            let labels = descriptor.presentation.menuBarBalanceDetailLabels
-                ?? (descriptor.metadata.balanceOnly ? ["Balance"] : [])
+            let labels = descriptor.metadata.balanceOnly ? ["Balance"] : []
             let prepaid = self.prepaidBalanceCost(
                 provider: provider,
                 snapshot: snapshot,
@@ -566,10 +544,7 @@ enum MenuBarLayoutBalanceResolver {
             if self.ownsSnapshot(provider: provider, snapshot: snapshot),
                let balance = labels.lazy.compactMap({ snapshot?.detailRow(label: $0)?.value }).first
             { return balance }
-            guard descriptor.presentation.menuBarBalanceDetailLabels == nil else { return nil }
-            guard descriptor.presentation.planRow.stripsBalancePrefix else { return nil }
-            return MenuBarDisplayText.prefixedValue(
-                from: snapshot?.loginMethod(for: provider), prefix: "Balance:", removingSuffix: "")
+            return nil
         }
     }
 
@@ -769,21 +744,21 @@ extension MenuBarLayout {
             if metricPreference == .primaryAndSecondary {
                 return MenuBarLayout(lines: [[
                     icon,
-                    .percent(window: Self.percentWindow(for: .primary, provider: provider)),
+                    .percent(window: Self.percentWindow(for: .primary)),
                     .separatorDot,
-                    .percent(window: Self.percentWindow(for: .secondary, provider: provider)),
+                    .percent(window: Self.percentWindow(for: .secondary)),
                 ]])
             }
             return MenuBarLayout(lines: [[
                 icon,
-                .percent(window: Self.percentWindow(for: metricPreference, provider: provider)),
+                .percent(window: Self.percentWindow(for: metricPreference)),
             ]])
         case .pace:
             return MenuBarLayout(lines: [[icon, .runsOut]])
         case .both:
             return MenuBarLayout(lines: [[
                 icon,
-                .percent(window: Self.percentWindow(for: metricPreference, provider: provider)),
+                .percent(window: Self.percentWindow(for: metricPreference)),
                 .separatorDot,
                 .runsOut,
             ]])
@@ -795,17 +770,9 @@ extension MenuBarLayout {
         }
     }
 
-    private static func percentWindow(
-        for preference: MenuBarMetricPreference,
-        provider: UsageProvider?)
-        -> PercentWindow
-    {
+    private static func percentWindow(for preference: MenuBarMetricPreference) -> PercentWindow {
         guard preference == .primary || preference == .secondary else { return .automatic }
-        let presentation = ProviderDescriptorRegistry.descriptor(for: provider ?? .codex).presentation
-        return PercentWindow.forMetric(
-            preference.providerMetric,
-            primarySemanticWindow: presentation.primarySemanticWindow,
-            secondarySemanticWindow: presentation.secondarySemanticWindow)
+        return PercentWindow.forMetric(preference.providerMetric)
     }
 }
 

@@ -1110,31 +1110,7 @@ extension MenuBarLayoutToken {
         if case let .extraPercent(id) = self, let title = MenuBarLayoutNamedExtra.title(id: id) {
             return L("%@ %@", title, "%")
         }
-        if let providerLabel = self.providerEditorLabel(provider: provider) {
-            return providerLabel
-        }
         return self.defaultEditorLabel
-    }
-
-    private func providerEditorLabel(provider: UsageProvider?) -> String? {
-        let window: PercentWindow? = switch self {
-        case let .percent(window), let .pace(window),
-             let .windowResetCountdown(window), let .windowResetAbsolute(window),
-             let .progressBar(window): window
-        default: nil
-        }
-        guard let localizedLabel = window?.providerLabel(provider: provider) else { return nil }
-        return switch self {
-        case .percent: L("%@ %@", localizedLabel, "%")
-        case .pace: L("%@ %@", localizedLabel, L("display_mode_pace").lowercased())
-        case .windowResetCountdown:
-            L("%@: %@", localizedLabel, L("menu_bar_layout_token_resets_in"))
-        case .windowResetAbsolute:
-            L("%@: %@", localizedLabel, L("menu_bar_layout_token_reset_at"))
-        case .progressBar:
-            L("%@ %@", localizedLabel, L("menu_bar_layout_token_bar"))
-        default: nil
-        }
     }
 
     private var defaultEditorLabel: String {

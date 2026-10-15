@@ -33,7 +33,7 @@ enum MenuBarMetricWindowResolver {
         case .primary, .secondary, .tertiary:
             return ProviderUsagePresentation.window(
                 in: snapshot,
-                following: presentation.requestedMenuBarLaneOrder(for: metric))
+                following: metric == .secondary ? [.secondary, .primary, .tertiary] : [.primary, .secondary, .tertiary])
         case .primaryAndSecondary:
             // Claude accounts that only expose an enterprise/extra-usage spend limit have no real
             // session/weekly lanes; surface the spend limit (as `.automatic` does) instead of an empty

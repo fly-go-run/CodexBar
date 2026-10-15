@@ -31,14 +31,7 @@ struct MenuCardCompactAccountRowView: View {
                 let percent = UsageFormatter.percentText(
                     detail.window.remainingPercent,
                     suffix: L("usage_percent_suffix_left"))
-                let reset: String? = switch detail.resetPresentation {
-                case .standard:
-                    UsageFormatter.resetLine(for: detail.window, style: resetTimeDisplayStyle, now: now)
-                case .hidden:
-                    nil
-                case .providerDescription:
-                    detail.window.resetDescription?.trimmingCharacters(in: .whitespacesAndNewlines)
-                }
+                let reset = UsageFormatter.resetLine(for: detail.window, style: resetTimeDisplayStyle, now: now)
                 let line = ["\(title) \(percent)", reset].compactMap(\.self).filter { !$0.isEmpty }
                     .joined(separator: " · ")
                 return PersonalInfoRedactor.redactEmails(in: line, isEnabled: hidePersonalInfo) ?? line

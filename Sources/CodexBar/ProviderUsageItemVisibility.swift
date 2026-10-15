@@ -52,7 +52,7 @@ extension ProviderUsageItemID {
         }
         guard let rawTitle = self.detailSectionTitle else { return false }
         let policy = ProviderDescriptorRegistry.descriptor(for: provider).presentation.optionalDetails
-        return policy.hidesAllWithoutOptionalUsage || policy.hiddenTitlesWithoutOptionalUsage.contains(rawTitle)
+        return policy.hiddenTitlesWithoutOptionalUsage.contains(rawTitle)
     }
 
     /// Label used when the provider is not reporting the item right now, so the settings row still

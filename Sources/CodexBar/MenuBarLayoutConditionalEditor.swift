@@ -370,10 +370,10 @@ extension MenuBarConditionalMetric {
         case .tertiaryLane: MenuBarLayoutToken.lanePercent(lane: .tertiary).editorLabel(provider: provider)
         case .sessionResetsIn: L(
                 "menu_bar_layout_conditional_metric_resets_in",
-                PercentWindow.session.providerLabel(provider: provider) ?? L("Session"))
+                L("Session"))
         case .weeklyResetsIn: L(
                 "menu_bar_layout_conditional_metric_resets_in",
-                PercentWindow.weekly.providerLabel(provider: provider) ?? L("Weekly"))
+                L("Weekly"))
         case .scopedWeeklyResetsIn: L(
                 "menu_bar_layout_conditional_metric_resets_in",
                 L("menu_bar_layout_conditional_metric_scoped_weekly"))

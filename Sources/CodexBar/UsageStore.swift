@@ -328,7 +328,6 @@ final class UsageStore {
     @ObservationIgnored var lastQueuedWidgetSnapshot: WidgetSnapshot?
     @ObservationIgnored var lastQueuedWidgetSnapshotFingerprint: (fingerprint: Data, queuedAt: Date)?
     @ObservationIgnored var invalidatedQueuedWidgetProviders: Set<ProviderInstanceID> = []
-    @ObservationIgnored var lastWidgetSourceSnapshots: [ProviderInstanceID: UsageSnapshot] = [:]
     @ObservationIgnored let widgetSnapshotURL: URL?
     @ObservationIgnored let widgetTimelineReloader: @MainActor () -> Void
     @ObservationIgnored var widgetUsagePreservationBlockedProviders: Set<ProviderInstanceID> = []

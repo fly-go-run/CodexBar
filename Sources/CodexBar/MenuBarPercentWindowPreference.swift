@@ -48,27 +48,13 @@ enum MenuBarPercentWindowPreference: Hashable, Identifiable, Sendable {
         if self == .tertiary {
             return MenuBarLayoutLaneLabels(provider: provider, snapshot: nil).label(for: .tertiary)
         }
-        let primary = PercentWindow.forSemanticWindow(descriptor.presentation.primarySemanticWindow)
-        let presentation = descriptor.presentation
-        return L(self.percentWindow == primary
-            ? presentation.menuBarLayoutPrimaryLabel ?? descriptor.metadata.sessionLabel
-            : presentation.menuBarLayoutSecondaryLabel ?? descriptor.metadata.weeklyLabel)
+        return L(self.percentWindow == .session ? descriptor.metadata.sessionLabel : descriptor.metadata.weeklyLabel)
     }
 
     /// Semantic windows keep their existing mapping; an independently selectable tertiary pool
     /// uses the already-supported direct lane token and its provider-owned label.
-    static func available(
-        metrics: ProviderMenuBarMetricCapabilities,
-        primarySemanticWindow: ProviderSemanticWindow = .session,
-        secondarySemanticWindow: ProviderSemanticWindow = .weekly) -> [Self]
-    {
-        var windows = Set<PercentWindow>()
-        for metric in metrics.supported {
-            windows.insert(PercentWindow.forMetric(
-                metric,
-                primarySemanticWindow: primarySemanticWindow,
-                secondarySemanticWindow: secondarySemanticWindow))
-        }
+    static func available(metrics: ProviderMenuBarMetricCapabilities) -> [Self] {
+        let windows = Set(metrics.supported.map(PercentWindow.forMetric))
         var options = Self.standardChoices.filter { preference in
             guard let window = preference.percentWindow else { return false }
             return windows.contains(window)
@@ -84,10 +70,7 @@ enum MenuBarPercentWindowPreference: Hashable, Identifiable, Sendable {
 
     static func available(for provider: UsageProvider, layout: MenuBarLayout? = nil) -> [Self] {
         let descriptor = ProviderDescriptorRegistry.descriptor(for: provider)
-        var options = Self.available(
-            metrics: descriptor.menuBarMetrics,
-            primarySemanticWindow: descriptor.presentation.primarySemanticWindow,
-            secondarySemanticWindow: descriptor.presentation.secondarySemanticWindow)
+        var options = Self.available(metrics: descriptor.menuBarMetrics)
         if let layout, !self.percentWindows(in: layout).isEmpty, self.hasTertiaryPercent(in: layout) {
             options.removeAll { $0 == .tertiary }
         }

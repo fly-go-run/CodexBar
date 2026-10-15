@@ -109,19 +109,13 @@ struct ProviderDetailView<SupplementaryContent: View>: View {
         return .progress
     }
 
-    static func planRow(provider: UsageProvider, planText: String?) -> (label: String, value: String)? {
+    static func planRow(provider _: UsageProvider, planText: String?) -> (label: String, value: String)? {
         guard let rawPlan = planText?.trimmingCharacters(in: .whitespacesAndNewlines),
               !rawPlan.isEmpty
         else {
             return nil
         }
-        let presentation = ProviderDescriptorRegistry.descriptor(for: provider).presentation.planRow
-        if presentation.stripsBalancePrefix,
-           let value = MenuBarDisplayText.prefixedValue(from: rawPlan, prefix: "Balance:")
-        {
-            return (label: L(presentation.balancePrefixedLabel), value: value)
-        }
-        return (label: L(presentation.label), value: rawPlan)
+        return (label: L("Plan"), value: rawPlan)
     }
 
     private var menuBarSettingsPickers: [ProviderSettingsPickerDescriptor] {

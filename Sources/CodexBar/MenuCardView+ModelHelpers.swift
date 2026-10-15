@@ -50,9 +50,7 @@ extension UsageMenuCardView.Model {
     }
 
     struct PrimaryMetricPresentation {
-        var statusText: String?
         var resetText: String?
-        var detailText: String?
         var detailLeft: String?
         var detailRight: String?
         var pacePercent: Double?
@@ -60,61 +58,11 @@ extension UsageMenuCardView.Model {
         var detailIsPaceDerived = false
     }
 
-    static func applyPrimaryQuotaPresentation(
-        _ presentation: inout PrimaryMetricPresentation,
-        input: Input,
-        primary: RateWindow)
-    {
-        let policy = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard
-        guard let detail = self.trimmedResetDescription(primary) else { return }
-        switch policy.primaryDescriptionPlacement {
-        case .reset:
-            presentation.resetText = detail
-        case .detailLeft:
-            presentation.detailLeft = detail
-        case .detail:
-            presentation.detailText = detail
-        case .standard:
-            break
-        }
-    }
-
-    static func applyPrimaryBalancePresentation(
-        _ presentation: inout PrimaryMetricPresentation,
-        input: Input,
-        primary: RateWindow)
-    {
-        let policy = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard
-        if policy.showsPrimaryBalanceDescription,
-           let detail = nonEmptyResetDescription(primary)
-        {
-            presentation.detailText = detail
-        }
-        if policy.clearsPrimaryReset {
-            presentation.resetText = nil
-        }
-    }
-
-    static func applyPrimaryResetPresentation(
-        _ presentation: inout PrimaryMetricPresentation,
-        input: Input,
-        primary: RateWindow)
-    {
-        let policy = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard
-        if policy.usesRawPrimaryResetDescription {
-            presentation.resetText = primary.resetDescription
-        }
-        if policy.hidesPrimaryResetWithoutDate, primary.resetsAt == nil {
-            presentation.resetText = nil
-        }
-    }
-
     static func applyPrimaryPacePresentation(
         _ presentation: inout PrimaryMetricPresentation,
         input: Input,
         primary: RateWindow)
     {
-        let policy = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard
         if let paceDetail = sessionPaceDetail(
             provider: input.provider,
             window: primary,
@@ -123,24 +71,8 @@ extension UsageMenuCardView.Model {
         {
             self.apply(paceDetail, to: &presentation)
         }
-        if let paceDetail = Self.resetWindowPaceDetail(
-            window: primary,
-            input: input,
-            pace: policy.resetWindowUsesWeeklyPace ? input.weeklyPace : nil)
-        {
+        if let paceDetail = Self.resetWindowPaceDetail(window: primary, input: input) {
             Self.apply(paceDetail, to: &presentation)
-        }
-    }
-
-    static func applyPrimaryFinalOverrides(
-        _ presentation: inout PrimaryMetricPresentation,
-        input: Input,
-        primary: RateWindow)
-    {
-        let policy = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard
-        if policy.movesPrimaryDetailToStatus(snapshot: input.snapshot) {
-            presentation.statusText = presentation.detailText
-            presentation.detailText = nil
         }
     }
 
@@ -152,53 +84,9 @@ extension UsageMenuCardView.Model {
         presentation.detailIsPaceDerived = paceDetail.isPaceDerived
     }
 
-    private static func nonEmptyResetDescription(_ window: RateWindow) -> String? {
-        guard let detail = window.resetDescription,
-              !detail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        else { return nil }
-        return detail
-    }
-
-    private static func trimmedResetDescription(_ window: RateWindow) -> String? {
-        guard let detail = window.resetDescription?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !detail.isEmpty
-        else { return nil }
-        return detail
-    }
-
     static func redactedMetricDetail(_ detail: String?, provider _: UsageProvider, metricID _: String) -> String? {
         guard let detail else { return nil }
         return PersonalInfoRedactor.redactEmails(in: detail, isEnabled: true)
-    }
-
-    static func blockingQuotaMetrics(_ metrics: [Metric], input: Input, snapshot: UsageSnapshot) -> [Metric] {
-        guard let policy = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard
-            .blockingQuota,
-            let blocker = snapshot.extraRateWindows?.first(where: { $0.id == policy.windowID && $0.usageKnown })
-        else { return metrics }
-        return metrics.map { metric in
-            let window: RateWindow? = switch metric.id {
-            case "primary": snapshot.primary
-            case "secondary": snapshot.secondary
-            case "tertiary": snapshot.tertiary
-            default: snapshot.extraRateWindows?.first { $0.id == metric.id && $0.usageKnown }?.window
-            }
-            guard let window, !window.isSyntheticPlaceholder,
-                  let projection = RateWindow.bindingQuotaProjection(
-                      primary: window, bindingLanes: [blocker.window], now: input.now)
-            else { return metric }
-            var blocked = metric
-            blocked.percent = input.usageBarsShowUsed ? projection.usedPercent : 100 - projection.usedPercent
-            blocked.statusText = L(policy.message)
-            // The blocking quota's own row owns its reset; shorter resets cannot restore access.
-            blocked.resetText = nil
-            blocked.detailText = nil
-            blocked.detailLeftText = nil
-            blocked.detailRightText = nil
-            blocked.pacePercent = nil
-            blocked.sessionEquivalentDetail = nil
-            return blocked
-        }
     }
 
     /// Clear only pace fields, preserving unrelated quota and workday decorations.
@@ -476,8 +364,7 @@ extension UsageMenuCardView.Model {
         let presentation = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation
         let primaryLabel = presentation.rateWindowLabels(
             metadata: input.metadata,
-            snapshot: snapshot,
-            now: input.now).primary
+            snapshot: snapshot).primary
         let secondaryLabel = input.metadata.weeklyLabel
         let tertiaryLabel = input.metadata.opusLabel.map(L) ?? L("Sonnet")
         return (
@@ -576,7 +463,7 @@ extension UsageMenuCardView.Model {
     private static func hasLocalCodexTokenUsage(_ input: Input) -> Bool {
         input.provider == .codex &&
             input.tokenCostUsageEnabled &&
-            self.tokenUsageSnapshot(input: input) != nil
+            input.tokenSnapshot != nil
     }
 
     private static func isRemoteCodexQuotaFetchError(_ error: String) -> Bool {
@@ -719,7 +606,6 @@ extension UsageMenuCardView.Model {
         {
             extraRateWindows.append(spend)
         }
-        let menuCard = ProviderDescriptorRegistry.descriptor(for: input.provider).presentation.menuCard
         // Codex additional limits (e.g. Codex Spark) are optional extra usage and follow the
         // "optional credits and extra usage" setting. Other extra windows are core data and must always render.
         if input.provider == .codex, !input.showOptionalCreditsAndExtraUsage {
@@ -741,13 +627,9 @@ extension UsageMenuCardView.Model {
                 window: namedWindow.window,
                 input: input)
             let usageKnown = namedWindow.usageKnown
-            let resolvedResetText = Self.extraRateWindowResetText(
+            let resetText = Self.extraRateWindowResetText(
                 namedWindow: namedWindow,
                 input: input)
-            let usesResetDetail = menuCard.extraRateWindowShowsResetDescriptionAsDetail(namedWindow)
-            let resetText = usesResetDetail && namedWindow.window.resetsAt == nil
-                ? nil
-                : resolvedResetText
             let detailText: String? = if namedWindow.id == "claude-extra-usage" {
                 Self.providerCostSection(
                     cost: snapshot.providerCost,
@@ -755,8 +637,6 @@ extension UsageMenuCardView.Model {
                     preferredCurrencyCode: input.preferredCurrencyCode).map {
                     [$0.spendLine, $0.balanceLine].compactMap(\.self).joined(separator: " · ")
                 }
-            } else if usesResetDetail {
-                namedWindow.window.resetDescription
             } else {
                 nil
             }

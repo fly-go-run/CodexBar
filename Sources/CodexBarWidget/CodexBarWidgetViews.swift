@@ -310,24 +310,6 @@ struct WidgetUsageRow: Identifiable, Equatable {
     var resetsAt: Date?
     var resetDescription: String?
 
-    static func smallWidgetRowLimit(for entry: WidgetSnapshot.ProviderEntry) -> Int? {
-        self.widgetRowLimit(for: entry, family: .small)
-    }
-
-    static func mediumWidgetRowLimit(for entry: WidgetSnapshot.ProviderEntry) -> Int? {
-        self.widgetRowLimit(for: entry, family: .medium)
-    }
-
-    private static func widgetRowLimit(
-        for entry: WidgetSnapshot.ProviderEntry,
-        family: ProviderWidgetFamily) -> Int?
-    {
-        guard let provider = entry.provider.firstPartyProvider else { return nil }
-        return ProviderDescriptorRegistry.descriptor(for: provider).presentation.widgetRowLimit(
-            rows: entry.usageRows,
-            family: family)
-    }
-
     static func rows(
         for entry: WidgetSnapshot.ProviderEntry,
         limit: Int? = nil,

@@ -843,9 +843,7 @@ final class MenuBarLayoutRenderer {
                 ?? self.primaryLabel(data: data).flatMap(\.first).map { String($0).uppercased() }
                 ?? Self.sessionPrefix(rateWindow)
         case .weekly:
-            let secondaryLabel = Self.secondaryLabel(data: data)
-            prefix = taggedPrefix
-                ?? secondaryLabel.flatMap(\.first).map { String($0).uppercased() } ?? "W"
+            prefix = taggedPrefix ?? "W"
         case .scopedWeekly:
             prefix = data.scopedWeeklyTitle.map { String($0.prefix(1)).uppercased() } ?? "F"
         case .automatic:
@@ -861,7 +859,7 @@ final class MenuBarLayoutRenderer {
         }
         return switch window {
         case .session: self.primaryLabel(data: data) ?? L("Session")
-        case .weekly: self.secondaryLabel(data: data) ?? L("Weekly")
+        case .weekly: L("Weekly")
         case .scopedWeekly: data.scopedWeeklyTitle ?? L("Scoped weekly")
         case .automatic: L("Usage")
         }
@@ -1153,14 +1151,8 @@ final class MenuBarLayoutRenderer {
 
     private static func primaryLabel(data: MenuBarLayoutRenderData) -> String? {
         let descriptor = ProviderDescriptorRegistry.descriptor(for: data.provider)
-        if let label = descriptor.presentation.menuBarLayoutPrimaryLabel { return L(label) }
         guard descriptor.metadata.usesDetailBackedWindow, data.session?.windowMinutes == nil else { return nil }
-        return descriptor.presentation.primarySemanticWindow == .session
-            ? data.laneLabels.primary : data.laneLabels.secondary
-    }
-
-    private static func secondaryLabel(data: MenuBarLayoutRenderData) -> String? {
-        PercentWindow.weekly.providerLabel(provider: data.provider)
+        return data.laneLabels.primary
     }
 
     private static func sessionPrefix(_ window: MenuBarLayoutRenderWindow?) -> String {
@@ -1245,14 +1237,10 @@ extension MenuBarLayoutRenderer {
     /// The tagged lane backing a session/weekly percentage, so a provider with explicit lane tags never falls
     /// back to colliding first-letter prefixes; nil when the window maps to no tagged lane.
     private static func taggedSemanticLane(_ window: PercentWindow, provider: UsageProvider) -> MenuBarLayoutLane? {
-        let presentation = ProviderDescriptorRegistry.descriptor(for: provider).presentation
-        let primaryWindow = PercentWindow.forSemanticWindow(presentation.primarySemanticWindow)
-        let lane: MenuBarLayoutLane? = if window == primaryWindow {
-            .primary
-        } else if window == PercentWindow.forSemanticWindow(presentation.secondarySemanticWindow) {
-            .secondary
-        } else {
-            nil
+        let lane: MenuBarLayoutLane? = switch window {
+        case .session: .primary
+        case .weekly: .secondary
+        case .scopedWeekly, .automatic: nil
         }
         guard let lane, self.laneShortLabel(lane, provider: provider) != nil else { return nil }
         return lane

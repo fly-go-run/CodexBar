@@ -253,7 +253,6 @@ struct MenuDescriptor {
         if let snap = store.snapshot(for: provider.instanceID) {
             let resetStyle = settings.resetTimeDisplayStyle
             let labels = Self.rateWindowLabels(provider: provider, metadata: meta, snapshot: snap)
-            let presentation = ProviderDescriptorRegistry.descriptor(for: provider).presentation
             let paceVisible = settings.paceVisible && ProviderDescriptorRegistry.descriptor(for: provider).pace
                 .allowsPace(dataConfidence: snap.dataConfidence)
             if let primary = snap.primary?.measured {
@@ -262,15 +261,7 @@ struct MenuDescriptor {
                     title: labels.primary,
                     window: primary,
                     resetStyle: resetStyle,
-                    showUsed: settings.usageBarsShowUsed,
-                    descriptionIsDetail: presentation.menu.usesPrimaryDescriptionAsDetail(snapshot: snap))
-                if paceVisible,
-                   presentation.menu.showsPrimaryWeeklyPace,
-                   let pace = store.weeklyPace(provider: provider, window: primary, dataConfidence: snap.dataConfidence)
-                {
-                    let paceSummary = UsagePaceText.weeklySummary(provider: provider, pace: pace)
-                    entries.append(.text(paceSummary, .secondary))
-                }
+                    showUsed: settings.usageBarsShowUsed)
                 if paceVisible,
                    let paceSummary = UsagePaceText.sessionSummary(provider: provider, window: primary)
                 {
@@ -278,32 +269,12 @@ struct MenuDescriptor {
                 }
             }
             if let weekly = snap.secondary {
-                let weeklyResetOverride: String? = {
-                    let detail = weekly.resetDescription?.trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard let detail, !detail.isEmpty else { return nil }
-                    switch presentation.menu.secondaryDescriptionMode {
-                    case .standard:
-                        return nil
-                    case .resetOverride:
-                        return detail
-                    case .detailWhenResetDatePresent:
-                        return weekly.resetsAt == nil ? detail : nil
-                    }
-                }()
                 Self.appendRateWindow(
                     entries: &entries,
                     title: labels.secondary,
                     window: weekly,
                     resetStyle: resetStyle,
-                    showUsed: settings.usageBarsShowUsed,
-                    resetOverride: weeklyResetOverride)
-                if presentation.menu.secondaryDescriptionMode == .detailWhenResetDatePresent,
-                   weekly.resetsAt != nil,
-                   let detail = weekly.resetDescription?.trimmingCharacters(in: .whitespacesAndNewlines),
-                   !detail.isEmpty
-                {
-                    entries.append(.text(detail, .secondary))
-                }
+                    showUsed: settings.usageBarsShowUsed)
                 if paceVisible,
                    let pace = store.weeklyPace(provider: provider, window: weekly, dataConfidence: snap.dataConfidence)
                 {
@@ -312,26 +283,12 @@ struct MenuDescriptor {
                 }
             }
             if labels.showsTertiary, let opus = snap.tertiary {
-                // Some providers' tertiary windows carry a description that replaces the reset text.
-                let opusResetOverride: String? = presentation.menu.tertiaryDescriptionOverridesReset
-                    ? opus.resetDescription?.trimmingCharacters(in: .whitespacesAndNewlines)
-                    : nil
                 Self.appendRateWindow(
                     entries: &entries,
                     title: labels.tertiary,
                     window: opus,
                     resetStyle: resetStyle,
-                    showUsed: settings.usageBarsShowUsed,
-                    resetOverride: opusResetOverride)
-            }
-            for extra in presentation.extraRateWindows(snapshot: snap) {
-                Self.appendRateWindow(
-                    entries: &entries,
-                    title: extra.title,
-                    window: extra.window,
-                    resetStyle: resetStyle,
-                    showUsed: settings.usageBarsShowUsed,
-                    descriptionIsDetail: presentation.menuCard.extraRateWindowShowsResetDescriptionAsDetail(extra))
+                    showUsed: settings.usageBarsShowUsed)
             }
 
             Self.appendProviderUsageSummaries(
@@ -378,17 +335,15 @@ struct MenuDescriptor {
             }
         }
         let policy = ProviderDescriptorRegistry.descriptor(for: provider).presentation.optionalDetails
-        if !policy.hidesAllWithoutOptionalUsage || showOptionalUsage {
-            let details = showOptionalUsage || policy.hiddenTitlesWithoutOptionalUsage.isEmpty
-                ? snapshot.details
-                : snapshot.details.filter { section in
-                    section.title.map(policy.hiddenTitlesWithoutOptionalUsage.contains) != true
-                }
-            for section in details {
-                for row in section.rows {
-                    let value = [row.value, row.secondaryValue].compactMap(\.self).joined(separator: " · ")
-                    entries.append(.text("\(row.label): \(value)", .secondary))
-                }
+        let details = showOptionalUsage || policy.hiddenTitlesWithoutOptionalUsage.isEmpty
+            ? snapshot.details
+            : snapshot.details.filter { section in
+                section.title.map(policy.hiddenTitlesWithoutOptionalUsage.contains) != true
+            }
+        for section in details {
+            for row in section.rows {
+                let value = [row.value, row.secondaryValue].compactMap(\.self).joined(separator: " · ")
+                entries.append(.text("\(row.label): \(value)", .secondary))
             }
         }
     }
@@ -660,25 +615,13 @@ struct MenuDescriptor {
         title: String,
         window: RateWindow,
         resetStyle: ResetTimeDisplayStyle,
-        showUsed: Bool,
-        resetOverride: String? = nil,
-        descriptionIsDetail: Bool = false)
+        showUsed: Bool)
     {
         let line = UsageFormatter
             .usageLine(remaining: window.remainingPercent, used: window.usedPercent, showUsed: showUsed)
         entries.append(.text("\(title): \(line)", .primary))
-        if let resetOverride {
-            entries.append(.text(resetOverride, .secondary))
-        } else if !descriptionIsDetail || window.resetsAt != nil,
-                  let reset = UsageFormatter.resetLine(for: window, style: resetStyle)
-        {
+        if let reset = UsageFormatter.resetLine(for: window, style: resetStyle) {
             entries.append(.text(reset, .secondary))
-        }
-        if descriptionIsDetail,
-           let detail = window.resetDescription?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !detail.isEmpty
-        {
-            entries.append(.text(detail, .secondary))
         }
     }
 }
