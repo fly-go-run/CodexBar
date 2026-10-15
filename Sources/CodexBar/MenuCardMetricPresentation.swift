@@ -22,13 +22,13 @@ extension UsageMenuCardView.Model.Metric {
     func cardPresentation(title: String) -> CardPresentation {
         let percentText = UsageFormatter.percentText(self.percent, suffix: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        let detailParts = [self.detailLeftText, self.detailRightText].compactMap(Self.nonEmpty)
+        let detailParts = [self.detailLeftText, self.detailRightText].compactMap(\.trimmedNonEmpty)
         var footnote: String?
         var footnoteIsWarning = false
-        var helpParts = [self.helpText].compactMap(Self.nonEmpty)
+        var helpParts = [self.helpText].compactMap(\.trimmedNonEmpty)
         if self.detailIsPaceDerived {
             // "Lasts until reset" is the healthy case; silence is the signal there.
-            if let right = Self.nonEmpty(self.detailRightText), !right.hasPrefix(L("Lasts until reset")) {
+            if let right = self.detailRightText.trimmedNonEmpty, !right.hasPrefix(L("Lasts until reset")) {
                 footnote = right
                 footnoteIsWarning = true
             }
@@ -43,15 +43,10 @@ extension UsageMenuCardView.Model.Metric {
             title: title,
             percentText: percentText,
             percentSuffix: self.percentStyle.labelSuffix,
-            resetText: Self.nonEmpty(self.resetText),
+            resetText: self.resetText.trimmedNonEmpty,
             footnoteText: footnote,
             footnoteIsWarning: footnoteIsWarning,
             helpText: helpParts.isEmpty ? nil : helpParts.joined(separator: "\n"))
-    }
-
-    private static func nonEmpty(_ text: String?) -> String? {
-        guard let text = text?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { return nil }
-        return text
     }
 }
 

@@ -53,7 +53,7 @@ public enum ClaudeCredentialRouting: Sendable, Equatable {
     }
 
     private static func normalizedOAuthToken(_ raw: String?) -> String? {
-        guard let trimmed = self.cleaned(raw) else { return nil }
+        guard let trimmed = raw.trimmedNonEmpty else { return nil }
         let lower = trimmed.lowercased()
         if lower.contains("cookie:") || trimmed.contains("=") {
             return nil
@@ -69,7 +69,7 @@ public enum ClaudeCredentialRouting: Sendable, Equatable {
     }
 
     private static func normalizedAdminAPIKey(_ raw: String?) -> String? {
-        guard let trimmed = self.cleaned(raw) else { return nil }
+        guard let trimmed = raw.trimmedNonEmpty else { return nil }
         let lower = trimmed.lowercased()
         if lower.contains("cookie:") || trimmed.contains("=") {
             return nil
@@ -89,14 +89,5 @@ public enum ClaudeCredentialRouting: Sendable, Equatable {
             return normalized
         }
         return "sessionKey=\(normalized)"
-    }
-
-    private static func cleaned(_ raw: String?) -> String? {
-        guard let trimmed = raw?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !trimmed.isEmpty
-        else {
-            return nil
-        }
-        return trimmed
     }
 }

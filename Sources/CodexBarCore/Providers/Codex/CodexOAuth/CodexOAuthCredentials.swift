@@ -208,8 +208,8 @@ public enum CodexOAuthCredentialsStore {
         source: CodexOAuthCredentialSource) -> CodexPATCredentials?
     {
         let token =
-            self.nonEmpty(json["personal_access_token"] as? String)
-            ?? self.nonEmpty(json["personalAccessToken"] as? String)
+            (json["personal_access_token"] as? String).trimmedNonEmpty
+                ?? (json["personalAccessToken"] as? String).trimmedNonEmpty
         guard let token else { return nil }
         return CodexPATCredentials(token: token, source: source)
     }
@@ -271,9 +271,8 @@ public enum CodexOAuthCredentialsStore {
 
         let idToken = Self.stringValue(in: tokens, snakeCaseKey: "id_token", camelCaseKey: "idToken")
         let accountId =
-            Self.nonEmpty(
-                Self.stringValue(in: tokens, snakeCaseKey: "account_id", camelCaseKey: "accountId"))
-            ?? Self.accountIDFromJWT(idToken: idToken, accessToken: accessToken)
+            Self.stringValue(in: tokens, snakeCaseKey: "account_id", camelCaseKey: "accountId").trimmedNonEmpty
+                ?? Self.accountIDFromJWT(idToken: idToken, accessToken: accessToken)
         let lastRefresh = Self.parseLastRefresh(from: json["last_refresh"])
         let expiresAt = source == .codexHome ? Self.expirationFromJWT(accessToken: accessToken) : nil
 
@@ -352,7 +351,7 @@ public enum CodexOAuthCredentialsStore {
         _ error: CodexOAuthCredentialsError,
         env: [String: String]) -> Bool
     {
-        guard self.nonEmpty(env["CODEX_HOME"]) == nil else { return false }
+        guard env["CODEX_HOME"].trimmedNonEmpty == nil else { return false }
         switch error {
         // A present-but-unreadable or malformed native file is an identity boundary, not an
         // invitation to silently substitute another application's session.
@@ -395,7 +394,7 @@ public enum CodexOAuthCredentialsStore {
         homeDirectory: URL? = nil) throws -> CodexOAuthCredentials
     {
         let root: URL =
-            if let configured = self.nonEmpty(env["XDG_DATA_HOME"]),
+            if let configured = env["XDG_DATA_HOME"].trimmedNonEmpty,
             let normalized = CodexHomeScope.normalizedHomePath(configured, fileManager: fileManager) {
                 URL(fileURLWithPath: normalized, isDirectory: true)
             } else {
@@ -414,17 +413,17 @@ public enum CodexOAuthCredentialsStore {
     private static func parseOpenCode(data: Data) throws -> CodexOAuthCredentials {
         let json = try self.decodeObject(data: data)
         guard let auth = json["openai"] as? [String: Any],
-              let type = self.nonEmpty(auth["type"] as? String),
+              let type = (auth["type"] as? String).trimmedNonEmpty,
               type.caseInsensitiveCompare("oauth") == .orderedSame,
-              let access = self.nonEmpty(auth["access"] as? String)
+              let access = (auth["access"] as? String).trimmedNonEmpty
         else {
             throw CodexOAuthCredentialsError.missingTokens
         }
         return CodexOAuthCredentials(
             accessToken: access,
-            refreshToken: self.nonEmpty(auth["refresh"] as? String) ?? "",
+            refreshToken: (auth["refresh"] as? String).trimmedNonEmpty ?? "",
             idToken: nil,
-            accountId: self.nonEmpty(auth["accountId"] as? String),
+            accountId: (auth["accountId"] as? String).trimmedNonEmpty,
             lastRefresh: nil,
             expiresAt: self.parseEpochMilliseconds(auth["expires"]),
             source: .openCode)
@@ -435,11 +434,6 @@ public enum CodexOAuthCredentialsStore {
         let milliseconds = number.doubleValue
         guard milliseconds.isFinite, milliseconds >= 0 else { return nil }
         return Date(timeIntervalSince1970: milliseconds / 1000)
-    }
-
-    private static func nonEmpty(_ value: String?) -> String? {
-        let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed?.isEmpty == false ? trimmed : nil
     }
 
     private static func parseLastRefresh(from raw: Any?) -> Date? {
@@ -477,18 +471,18 @@ public enum CodexOAuthCredentialsStore {
                   let payload = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any]
             else { continue }
 
-            if let accountID = Self.nonEmpty(payload["chatgpt_account_id"] as? String) {
+            if let accountID = (payload["chatgpt_account_id"] as? String).trimmedNonEmpty {
                 return accountID
             }
             if let auth = payload["https://api.openai.com/auth"] as? [String: Any],
-               let accountID = Self.nonEmpty(auth["chatgpt_account_id"] as? String)
+               let accountID = (auth["chatgpt_account_id"] as? String).trimmedNonEmpty
             {
                 return accountID
             }
             if let organizations = payload["organizations"] as? [[String: Any]],
                let accountID =
                organizations
-                   .compactMap({ Self.nonEmpty($0["id"] as? String) })
+                   .compactMap({ ($0["id"] as? String).trimmedNonEmpty })
                    .first
             {
                 return accountID

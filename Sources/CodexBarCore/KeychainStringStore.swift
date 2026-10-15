@@ -79,13 +79,13 @@ package struct KeychainStringStore: Sendable {
         if status == errSecItemNotFound { return nil }
         try self.check(status, operation: "read")
         guard let data else { throw KeychainStringStoreError.invalidData }
-        return Self.cleaned(String(data: data, encoding: .utf8))
+        return String(data: data, encoding: .utf8).trimmedNonEmpty
     }
 
     @discardableResult
     package func store(_ value: String?, isValid: (String) -> Bool = { _ in true }) throws -> Bool {
         guard !KeychainAccessGate.isDisabled else { return false }
-        guard let value = Self.cleaned(value), isValid(value) else {
+        guard let value = value.trimmedNonEmpty, isValid(value) else {
             try self.delete()
             return true
         }
@@ -116,10 +116,5 @@ package struct KeychainStringStore: Sendable {
             self.log.error("Keychain \(operation) failed: \(status)")
             throw KeychainStringStoreError.keychainStatus(status)
         }
-    }
-
-    private static func cleaned(_ value: String?) -> String? {
-        guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines), !value.isEmpty else { return nil }
-        return value
     }
 }

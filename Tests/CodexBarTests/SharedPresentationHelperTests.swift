@@ -33,3 +33,17 @@ struct SharedPresentationHelperTests {
         #expect(LocalizationBundleLookup.lprojBundle(named: "", in: resources) == nil)
     }
 }
+
+struct StringTrimmingTests {
+    @Test
+    func `trimmed non empty strips whitespace and drops blanks`() {
+        #expect(" value \n".trimmedNonEmpty == "value")
+        #expect("value".trimmedNonEmpty == "value")
+        #expect(" \t\n".trimmedNonEmpty == nil)
+        #expect("".trimmedNonEmpty == nil)
+        let missing: String? = nil
+        #expect(missing.trimmedNonEmpty == nil)
+        let present: String? = "  inner  "
+        #expect(present.trimmedNonEmpty == "inner")
+    }
+}

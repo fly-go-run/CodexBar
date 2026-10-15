@@ -126,14 +126,9 @@ enum CodexPATUsageFetcher {
 
         var model: CodexPATWhoami {
             CodexPATWhoami(
-                accountId: Self.nonEmpty(self.chatgptAccountId),
-                email: Self.nonEmpty(self.email),
-                planType: Self.nonEmpty(self.chatgptPlanType))
-        }
-
-        private static func nonEmpty(_ value: String?) -> String? {
-            let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines)
-            return trimmed?.isEmpty == false ? trimmed : nil
+                accountId: self.chatgptAccountId.trimmedNonEmpty,
+                email: self.email.trimmedNonEmpty,
+                planType: self.chatgptPlanType.trimmedNonEmpty)
         }
     }
 }
