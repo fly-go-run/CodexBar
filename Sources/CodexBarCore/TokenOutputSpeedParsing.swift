@@ -26,8 +26,33 @@ enum TokenSpeedLineExtractor {
     }
 
     private struct Reader {
-        enum TopKey { case type, uuid, timestamp, payload, other }
-        enum PayloadKey { case type, role, model, other }
+        enum TopKey {
+            case type, uuid, timestamp, payload, other
+
+            var bit: UInt8 {
+                switch self {
+                case .type: 0
+                case .uuid: 1
+                case .timestamp: 2
+                case .payload: 3
+                case .other: 7
+                }
+            }
+        }
+
+        enum PayloadKey {
+            case type, role, model, other
+
+            var bit: UInt8 {
+                switch self {
+                case .type: 0
+                case .role: 1
+                case .model: 2
+                case .other: 7
+                }
+            }
+        }
+
         enum StringResult { case read, unterminated, unreadable }
 
         let bytes: UnsafeBufferPointer<UInt8>
@@ -38,6 +63,10 @@ enum TokenSpeedLineExtractor {
         var inPayload = false
         var expectPayloadKey = false
         var payloadKey = PayloadKey.other
+        /// Bit sets of recognized keys already seen at this level. JSONSerialization keeps the last of
+        /// duplicate keys, so a repeat sends the line to the full decoder instead of guessing.
+        var seenTopKeys: UInt8 = 0
+        var seenPayloadKeys: UInt8 = 0
         var fields = TokenSpeedLineFields()
 
         init(bytes: UnsafeBufferPointer<UInt8>) {
@@ -85,6 +114,7 @@ enum TokenSpeedLineExtractor {
                 self.inPayload = true
                 self.expectPayloadKey = true
                 self.payloadKey = .other
+                self.seenPayloadKeys = 0
                 self.fields.hasPayloadObject = true
             }
         }
@@ -133,7 +163,10 @@ enum TokenSpeedLineExtractor {
                 guard !hasEscape else { return false }
                 self.topKey = self.classifyTop(range)
                 self.expectTopKey = false
-                return true
+                guard self.topKey != .other else { return true }
+                let bit = UInt8(1) << self.topKey.bit
+                defer { self.seenTopKeys |= bit }
+                return self.seenTopKeys & bit == 0
             }
             guard self.topKey != .other, self.topKey != .payload else { return true }
             guard !hasEscape, let value = self.string(range) else { return false }
@@ -151,7 +184,10 @@ enum TokenSpeedLineExtractor {
                 guard !hasEscape else { return false }
                 self.payloadKey = self.classifyPayload(range)
                 self.expectPayloadKey = false
-                return true
+                guard self.payloadKey != .other else { return true }
+                let bit = UInt8(1) << self.payloadKey.bit
+                defer { self.seenPayloadKeys |= bit }
+                return self.seenPayloadKeys & bit == 0
             }
             guard self.payloadKey != .other else { return true }
             guard !hasEscape, let value = self.string(range) else { return false }

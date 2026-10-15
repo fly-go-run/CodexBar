@@ -390,6 +390,39 @@ struct TokenOutputSpeedIncrementalTests {
     }
 
     @Test
+    func `a log rewritten in place with more bytes is not treated as an append`() throws {
+        let root = try Self.makeRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let now = Date()
+        let file = root.appendingPathComponent("project/session.jsonl")
+        let scanner = TokenOutputSpeedScanner()
+        try Self.jsonl(Self.claudeEntries(now)).write(to: file)
+        let inode = try FileManager.default.attributesOfItem(atPath: file.path)[.systemFileNumber] as? Int
+        _ = try scanner.snapshot(provider: .claude, claudeProjectsRoots: [root], now: now)
+
+        // Same inode, larger, and none of the bytes already parsed survive: other model, other ids.
+        let rewritten = Self.claudeEntries(now).map { entry -> [String: Any] in
+            var entry = entry
+            if let uuid = entry["uuid"] as? String { entry["uuid"] = "w-\(uuid)" }
+            if let parent = entry["parentUuid"] as? String { entry["parentUuid"] = "w-\(parent)" }
+            if var message = entry["message"] as? [String: Any], message["id"] != nil {
+                message["id"] = "w-\(message["id"] ?? "")"
+                message["model"] = "claude-opus-4-1"
+                entry["message"] = message
+            }
+            return entry
+        }
+        try (Self.jsonl(rewritten) + Self.jsonl(rewritten)).write(to: file)
+        #expect(try FileManager.default.attributesOfItem(atPath: file.path)[.systemFileNumber] as? Int == inode)
+
+        let result = try scanner.snapshot(provider: .claude, claudeProjectsRoots: [root], now: now)
+        let fresh = try TokenOutputSpeedScanner().snapshot(
+            provider: .claude, claudeProjectsRoots: [root], now: now)
+        #expect(result == fresh)
+        #expect(result?.models.map(\.model) == ["claude-opus-4-1"])
+    }
+
+    @Test
     func `oversized lines are skipped without breaking the lines around them`() throws {
         let root = try Self.makeRoot()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -491,6 +524,46 @@ struct TokenOutputSpeedIncrementalTests {
         }
         #expect(fastCodex.samples == referenceCodex.samples)
         #expect(fastCodex.samples.count == 3)
+    }
+
+    @Test
+    func `duplicate keys fall back to the full decoder`() {
+        let now = Date()
+        let stamp = Self.stamp(now, 40)
+        func fields(_ json: String) -> TokenSpeedLineFields? {
+            Array(json.utf8).withUnsafeBufferPointer {
+                TokenSpeedLineExtractor.extract($0, allowIncomplete: false)
+            }
+        }
+        let duplicatePayload = #"{"timestamp":"\#(stamp)","type":"response_item","#
+            + #""payload":{"type":"message","role":"user"},"payload":null}"#
+        let duplicateInner = #"{"timestamp":"\#(stamp)","type":"response_item","#
+            + #""payload":{"type":"message","type":"reasoning","role":"user"}}"#
+        let duplicateTop = #"{"uuid":"d1","uuid":"d2","type":"user","timestamp":"\#(stamp)"}"#
+        #expect(fields(duplicatePayload) == nil)
+        #expect(fields(duplicateInner) == nil)
+        #expect(fields(duplicateTop) == nil)
+        #expect(fields(#"{"timestamp":"\#(stamp)","type":"response_item","payload":{"type":"message"}}"#) != nil)
+
+        // A null payload wins over the earlier object: that line must do nothing, as with a full decode.
+        var fast = CodexSessionParser()
+        var reference = CodexSessionParser()
+        let lines = [
+            #"{"timestamp":"\#(Self.stamp(now, 60))","type":"turn_context","payload":{"model":"gpt-5"}}"#,
+            #"{"timestamp":"\#(Self.stamp(now, 55))","type":"response_item","#
+                + #""payload":{"type":"message","role":"user"}}"#,
+            duplicatePayload,
+            #"{"timestamp":"\#(Self.stamp(now, 45))","type":"response_item","payload":{"type":"reasoning"}}"#,
+            #"{"timestamp":"\#(Self.stamp(now, 44))","type":"event_msg","payload":{"type":"token_count","#
+                + #""info":{"last_token_usage":{"output_tokens":250}}}}"#,
+        ].map { Data($0.utf8) }
+        for line in lines {
+            fast.consume(line: line, truncated: false)
+            if let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any] {
+                reference.consume(object: object)
+            }
+        }
+        #expect(fast.samples == reference.samples)
     }
 
     @Test
