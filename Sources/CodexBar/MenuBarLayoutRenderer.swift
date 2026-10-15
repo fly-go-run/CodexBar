@@ -1048,18 +1048,10 @@ final class MenuBarLayoutRenderer {
         // Conservative reference backgrounds allow more translucency than pure black/white.
         // Require lighter accents on dark bars and darker accents on light bars.
         let gray = isDark ? 0.25 : 0.85
-        let background = self.relativeLuminance(of: ProviderColor(red: gray, green: gray, blue: gray))
-        let luminance = self.relativeLuminance(of: accent)
+        let background = ProviderColor(red: gray, green: gray, blue: gray).relativeLuminance
+        let luminance = accent.relativeLuminance
         return isDark ? (luminance + 0.05) / (background + 0.05) >= 2
             : (background + 0.05) / (luminance + 0.05) >= 2
-    }
-
-    static func relativeLuminance(of color: ProviderColor) -> Double {
-        func linear(_ value: Double) -> Double {
-            let clamped = min(1, max(0, value))
-            return clamped <= 0.04045 ? clamped / 12.92 : pow((clamped + 0.055) / 1.055, 2.4)
-        }
-        return 0.2126 * linear(color.red) + 0.7152 * linear(color.green) + 0.0722 * linear(color.blue)
     }
 
     private static func resetToken(

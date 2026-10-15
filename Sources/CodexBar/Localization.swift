@@ -146,7 +146,7 @@ private func localizedBundle(forLanguage language: String) -> Bundle {
 private func resolveLocalizedBundle(forLanguage language: String) -> Bundle {
     let resourceBundle = codexBarLocalizationResourceBundle()
     if !language.isEmpty {
-        if let bundle = lprojBundle(named: language, in: resourceBundle) {
+        if let bundle = LocalizationBundleLookup.lprojBundle(named: language, in: resourceBundle) {
             return bundle
         }
     } else {
@@ -156,30 +156,13 @@ private func resolveLocalizedBundle(forLanguage language: String) -> Bundle {
             from: localizations,
             forPreferences: Locale.preferredLanguages).first
         if let preferred,
-           let bundle = lprojBundle(named: preferred, in: resourceBundle)
+           let bundle = LocalizationBundleLookup.lprojBundle(named: preferred, in: resourceBundle)
         {
             return bundle
         }
     }
     // Fallback to en.lproj
-    if let path = resourceBundle.path(forResource: "en", ofType: "lproj"),
-       let bundle = Bundle(path: path)
-    {
-        return bundle
-    }
-    return resourceBundle
-}
-
-private func lprojBundle(named language: String, in resourceBundle: Bundle) -> Bundle? {
-    let candidates = [language, language.lowercased()]
-    for candidate in candidates where !candidate.isEmpty {
-        if let path = resourceBundle.path(forResource: candidate, ofType: "lproj"),
-           let bundle = Bundle(path: path)
-        {
-            return bundle
-        }
-    }
-    return nil
+    return LocalizationBundleLookup.lprojBundle(named: "en", in: resourceBundle) ?? resourceBundle
 }
 
 func L(_ key: String) -> String {
@@ -261,7 +244,7 @@ func codexBarLocalizedString(_ key: String, bundle: Bundle, resourceBundle: Bund
     }
 
     guard bundle.bundleURL.lastPathComponent != "en.lproj",
-          let englishBundle = lprojBundle(named: "en", in: resourceBundle)
+          let englishBundle = LocalizationBundleLookup.lprojBundle(named: "en", in: resourceBundle)
     else {
         return trimmed.isEmpty ? key : value
     }

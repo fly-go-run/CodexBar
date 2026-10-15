@@ -27,15 +27,7 @@ enum WidgetLocalization {
         let language = language.isEmpty
             ? Bundle.preferredLocalizations(from: resourceBundle.localizations).first ?? "en"
             : language
-        // Native SwiftPM builds lowercase language-directory names, including region and script suffixes.
-        for candidate in [language, language.lowercased()] {
-            if let path = resourceBundle.path(forResource: candidate, ofType: "lproj"),
-               let bundle = Bundle(path: path)
-            {
-                return bundle
-            }
-        }
-        return resourceBundle
+        return LocalizationBundleLookup.lprojBundle(named: language, in: resourceBundle) ?? resourceBundle
     }
 }
 
@@ -47,8 +39,7 @@ func W(_ key: String, _ arguments: CVarArg...) -> String {
     let bundle = WidgetLocalization.currentBundle
     var value = bundle.localizedString(forKey: key, value: nil, table: nil)
     if value.isEmpty || value == key,
-       let path = WidgetLocalization.resourceBundle.path(forResource: "en", ofType: "lproj"),
-       let english = Bundle(path: path)
+       let english = LocalizationBundleLookup.lprojBundle(named: "en", in: WidgetLocalization.resourceBundle)
     {
         value = english.localizedString(forKey: key, value: nil, table: nil)
     }
@@ -136,15 +127,7 @@ enum WidgetContrast {
     /// Highest-contrast label colour for text drawn on `color`. Brand palettes span light
     /// to mid (Claude terracotta); picking per colour keeps every mark legible.
     static func label(on color: ProviderColor) -> Color {
-        self.relativeLuminance(of: color) > self.crossoverLuminance ? .black : .white
-    }
-
-    static func relativeLuminance(of color: ProviderColor) -> Double {
-        func linear(_ value: Double) -> Double {
-            let clamped = min(1, max(0, value))
-            return clamped <= 0.03928 ? clamped / 12.92 : pow((clamped + 0.055) / 1.055, 2.4)
-        }
-        return 0.2126 * linear(color.red) + 0.7152 * linear(color.green) + 0.0722 * linear(color.blue)
+        color.relativeLuminance > self.crossoverLuminance ? .black : .white
     }
 }
 
