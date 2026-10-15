@@ -208,6 +208,7 @@ final class UsageStore {
     @ObservationIgnored private(set) var versionDetectionTask: Task<Void, Never>?
     @ObservationIgnored var claudeVersionRefreshTask: Task<Void, Never>?
     var isRefreshing = false
+    @ObservationIgnored var refreshFinishedWaiters: [UUID: CheckedContinuation<Void, Never>] = [:]
     var hasForcedRefreshEnrichmentInFlight = false
     var refreshingProviders: Set<ProviderInstanceID> = []
     var debugForceAnimation = false
@@ -808,7 +809,7 @@ final class UsageStore {
         let completedRefresh = await ProviderRefreshContext.$current.withValue(refreshPhase) {
             self.isRefreshing = true
             defer {
-                self.isRefreshing = false
+                self.markRefreshFinished()
                 self.hasCompletedInitialRefresh = true
                 self.startupConnectivityRetryRefreshActive = false
             }

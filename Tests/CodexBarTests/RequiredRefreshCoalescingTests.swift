@@ -551,3 +551,50 @@ private actor BlockingRequiredProviderRefresh {
         self.continuations.remove(at: index).continuation.resume()
     }
 }
+
+extension CodexBackgroundRefreshCoalescingTests {
+    @Test
+    func `required refresh waits for the running pass to signal instead of polling`() async throws {
+        let settings = try self.makeSettingsStore(
+            suite: "CodexBackgroundRefreshCoalescingTests-required-refresh-await-signal")
+        let store = self.makeStore(settings: settings)
+        store.isRefreshing = true
+        var finished = false
+        let waiter = Task { @MainActor in
+            let available = await store.waitForRequiredRefreshAvailability()
+            finished = true
+            return available
+        }
+        for _ in 0..<50 {
+            await Task.yield()
+        }
+        #expect(!finished)
+        #expect(store.refreshFinishedWaiters.count == 1)
+
+        store.markRefreshFinished()
+
+        #expect(await waiter.value)
+        #expect(store.refreshFinishedWaiters.isEmpty)
+    }
+
+    @Test
+    func `cancelling a required refresh wait releases it without finishing the pass`() async throws {
+        let settings = try self.makeSettingsStore(
+            suite: "CodexBackgroundRefreshCoalescingTests-required-refresh-await-cancel")
+        let store = self.makeStore(settings: settings)
+        store.isRefreshing = true
+        defer { store.isRefreshing = false }
+        let waiter = Task { @MainActor in
+            await store.waitForRequiredRefreshAvailability()
+        }
+        for _ in 0..<50 {
+            await Task.yield()
+        }
+        #expect(store.refreshFinishedWaiters.count == 1)
+
+        waiter.cancel()
+
+        #expect(await waiter.value == false)
+        #expect(store.refreshFinishedWaiters.isEmpty)
+    }
+}
