@@ -190,6 +190,7 @@ final class UsageStore {
     var tokenErrors: [ProviderInstanceID: String] = [:]
     var tokenOutputSpeeds: [ProviderInstanceID: TokenOutputSpeedSnapshot] = [:]
     @ObservationIgnored var tokenOutputSpeedScanStartedAt: [ProviderInstanceID: Date] = [:]
+    @ObservationIgnored var tokenOutputSpeedScanTasks: [ProviderInstanceID: Task<Void, Never>] = [:]
     var tokenRefreshInFlight: Set<ProviderInstanceID> = []
     var codexCostCatchUpActivity: CodexCostCatchUpActivity?
     var spendDashboardCodexCostCatchUpActivity: CodexCostCatchUpActivity?

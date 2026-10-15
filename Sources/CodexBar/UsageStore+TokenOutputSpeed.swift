@@ -2,7 +2,7 @@ import CodexBarCore
 import Foundation
 
 extension UsageStore {
-    /// Speed scans only re-read session files that changed, but still walk the log tree.
+    /// Speed scans only parse what was appended to the session logs, but still walk the log tree.
     static let tokenOutputSpeedMinInterval: TimeInterval = 30
 
     func tokenOutputSpeed(for provider: UsageProvider) -> TokenOutputSpeedSnapshot? {
@@ -11,9 +11,13 @@ extension UsageStore {
 
     /// Runs beside the cost refresh rather than inside it: cost snapshots are TTL-cached for a
     /// long time, while speed is only interesting while requests are happening.
+    ///
+    /// At most one scan per provider is in flight; requests that arrive meanwhile are dropped (the next
+    /// refresh tick asks again), and the minimum interval counts from the end of the previous scan.
     func scheduleTokenOutputSpeedRefresh(for provider: UsageProvider, now: Date = Date()) {
         guard provider == .claude || provider == .codex else { return }
         let id = provider.instanceID
+        guard self.tokenOutputSpeedScanTasks[id] == nil else { return }
         if let last = self.tokenOutputSpeedScanStartedAt[id],
            now.timeIntervalSince(last) >= 0,
            now.timeIntervalSince(last) < Self.tokenOutputSpeedMinInterval
@@ -22,11 +26,20 @@ extension UsageStore {
         }
         self.tokenOutputSpeedScanStartedAt[id] = now
         let codexHomePath = self.tokenCostScope(for: provider).codexHomePath
-        Task { [weak self] in
-            let snapshot = await Task.detached(priority: .utility) {
-                TokenOutputSpeedScanner.shared.snapshot(provider: provider, codexHomePath: codexHomePath)
-            }.value
+        self.tokenOutputSpeedScanTasks[id] = Task { [weak self] in
+            let scan = Task.detached(priority: .utility) {
+                try TokenOutputSpeedScanner.shared.snapshot(provider: provider, codexHomePath: codexHomePath)
+            }
+            let result: Result<TokenOutputSpeedSnapshot?, Error> = await withTaskCancellationHandler {
+                await scan.result
+            } onCancel: {
+                scan.cancel()
+            }
             guard let self else { return }
+            self.tokenOutputSpeedScanTasks[id] = nil
+            // The floor runs from when the scan finished, so a slow scan is never followed by another at once.
+            self.tokenOutputSpeedScanStartedAt[id] = Date()
+            guard case let .success(snapshot) = result else { return }
             let summary = snapshot?.models.map { "\($0.model ?? "?")=\(Int($0.tokensPerSecond))" }
                 .joined(separator: ",") ?? "none"
             self.tokenCostLogger.debug("output speed provider=\(provider.rawValue) \(summary)")
