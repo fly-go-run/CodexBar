@@ -83,117 +83,196 @@ public struct TokenOutputSpeedSnapshot: Sendable, Equatable {
 
 /// Scans recent Claude Code / Codex session logs for per-request output speed.
 ///
-/// Only files modified inside the window are read, and parsed samples are cached per file
-/// (keyed by size + mtime), so steady-state refreshes only re-read the sessions being written.
+/// Only files modified inside the window are read. Each file keeps its parser state and the byte
+/// offset it has been parsed up to, so a refresh only parses what was appended to the sessions being
+/// written (a shrunk, replaced or rewritten file is parsed again from the start).
 public final class TokenOutputSpeedScanner: @unchecked Sendable {
     public static let shared = TokenOutputSpeedScanner()
 
-    private struct CachedFile {
-        let size: Int
-        let modifiedAt: Date
-        let samples: [TokenOutputSpeedSample]
+    /// Only the parser for the file's provider is ever used; the other stays empty.
+    private struct ParserState {
+        var claude = ClaudeSessionParser()
+        var codex = CodexSessionParser()
+
+        func samples(for provider: UsageProvider) -> [TokenOutputSpeedSample] {
+            provider == .codex ? self.codex.samples : self.claude.samples
+        }
     }
 
+    private struct CachedFile {
+        let fileID: String
+        let size: Int
+        let modifiedAt: Date
+        /// End of the last complete line that was parsed; a half-written tail is retried next time.
+        let committedOffset: Int64
+        /// The last bytes before `committedOffset`: proof, before resuming, that what was parsed is still there.
+        let tailFingerprint: Data
+        let parser: ParserState
+    }
+
+    private struct SessionFile {
+        let url: URL
+        let size: Int
+        let modifiedAt: Date
+        let fileID: String
+    }
+
+    /// Lines past these caps are skipped, like the cost scanner does. Claude lines carry base64 images
+    /// and tool output of a few MB; Codex lines only need the fields at the start of the line.
+    static let defaultClaudeMaxLineBytes = 8 * 1024 * 1024
+    static let defaultCodexMaxLineBytes = 1024 * 1024
+
+    private let claudeMaxLineBytes: Int
+    private let codexMaxLineBytes: Int
     private let lock = NSLock()
-    private var cache: [String: CachedFile] = [:]
+    private var caches: [UsageProvider: [String: CachedFile]] = [:]
+    private var bytesParsed: Int64 = 0
 
-    public init() {}
+    public init() {
+        self.claudeMaxLineBytes = Self.defaultClaudeMaxLineBytes
+        self.codexMaxLineBytes = Self.defaultCodexMaxLineBytes
+    }
 
+    init(claudeMaxLineBytes: Int, codexMaxLineBytes: Int) {
+        self.claudeMaxLineBytes = claudeMaxLineBytes
+        self.codexMaxLineBytes = codexMaxLineBytes
+    }
+
+    /// Throws `CancellationError` when the surrounding task is cancelled; a file that was being
+    /// parsed at that moment is dropped from the cache rather than left half-updated.
     public func snapshot(
         provider: UsageProvider,
         codexHomePath: String? = nil,
         claudeProjectsRoots: [URL]? = nil,
         environment: [String: String] = ProcessInfo.processInfo.environment,
         now: Date = Date(),
-        windowSeconds: TimeInterval = 24 * 60 * 60) -> TokenOutputSpeedSnapshot?
+        windowSeconds: TimeInterval = 24 * 60 * 60) throws -> TokenOutputSpeedSnapshot?
     {
         let roots: [URL]
-        let parse: (Data) -> [TokenOutputSpeedSample]
         switch provider {
         case .claude:
-            roots = claudeProjectsRoots ?? Self.claudeProjectsRoots(environment: environment)
-            parse = Self.parseClaudeSession
+            roots = claudeProjectsRoots ?? ClaudeConfigPaths.costProjectsRoots(environment: environment)
         case .codex:
             roots = Self.codexSessionsRoots(codexHomePath: codexHomePath, environment: environment)
-            parse = Self.parseCodexSession
         default:
             return nil
         }
 
         let cutoff = now.addingTimeInterval(-windowSeconds)
+        let files = try Self.recentJSONLFiles(roots: roots, modifiedSince: cutoff)
+        self.evictFiles(for: provider, keeping: Set(files.map(\.url.path)))
         var samples: [TokenOutputSpeedSample] = []
-        for file in Self.recentJSONLFiles(roots: roots, modifiedSince: cutoff) {
-            samples.append(contentsOf: self.samples(for: file, parse: parse))
+        for file in files {
+            try Task.checkCancellation()
+            try samples.append(contentsOf: self.samples(for: file, provider: provider))
         }
         let snapshot = TokenOutputSpeedSnapshot(samples: samples, now: now, windowSeconds: windowSeconds)
         return snapshot.isEmpty ? nil : snapshot
     }
 
-    private func samples(
-        for file: (url: URL, size: Int, modifiedAt: Date),
-        parse: (Data) -> [TokenOutputSpeedSample]) -> [TokenOutputSpeedSample]
-    {
+    /// Number of session files with retained parser state (for tests).
+    func cachedFileCount(for provider: UsageProvider) -> Int {
+        self.lock.lock()
+        defer { self.lock.unlock() }
+        return self.caches[provider]?.count ?? 0
+    }
+
+    /// Total bytes handed to the parsers since creation (for tests).
+    var totalBytesParsed: Int64 {
+        self.lock.lock()
+        defer { self.lock.unlock() }
+        return self.bytesParsed
+    }
+
+    private func evictFiles(for provider: UsageProvider, keeping paths: Set<String>) {
+        self.lock.lock()
+        defer { self.lock.unlock() }
+        guard let cache = self.caches[provider] else { return }
+        self.caches[provider] = cache.filter { paths.contains($0.key) }
+    }
+
+    private func samples(for file: SessionFile, provider: UsageProvider) throws -> [TokenOutputSpeedSample] {
         let key = file.url.path
+        // Taken out of the cache while it is mutated so the parser state is not copied.
         self.lock.lock()
-        let cached = self.cache[key]
+        let cached = self.caches[provider]?.removeValue(forKey: key)
         self.lock.unlock()
-        if let cached, cached.size == file.size, cached.modifiedAt == file.modifiedAt {
-            return cached.samples
+
+        if let cached, cached.fileID == file.fileID, cached.size == file.size, cached.modifiedAt == file.modifiedAt {
+            self.store(cached, provider: provider, key: key)
+            return cached.parser.samples(for: provider)
         }
-        guard let data = try? Data(contentsOf: file.url, options: .mappedIfSafe) else { return [] }
-        let samples = parse(data)
+
+        var parser: ParserState
+        var offset: Int64 = 0
+        if let cached, cached.fileID == file.fileID, file.size > cached.size, cached.committedOffset <= file.size,
+           Self.tailFingerprint(of: file.url, endingAt: cached.committedOffset) == cached.tailFingerprint
+        {
+            parser = cached.parser
+            offset = cached.committedOffset
+        } else {
+            parser = ParserState()
+        }
+
+        let isCodex = provider == .codex
+        let maxLineBytes = isCodex ? self.codexMaxLineBytes : self.claudeMaxLineBytes
+        let committed: Int64
+        do {
+            committed = try CostUsageJsonl.scan(
+                fileURL: file.url,
+                offset: offset,
+                maxLineBytes: maxLineBytes,
+                prefixBytes: maxLineBytes,
+                checkCancellation: { try Task.checkCancellation() },
+                onLine: { line in
+                    guard !line.bytes.isEmpty else { return }
+                    if isCodex {
+                        parser.codex.consume(line: line.bytes, truncated: line.wasTruncated)
+                    } else {
+                        parser.claude.consume(line: line.bytes, truncated: line.wasTruncated)
+                    }
+                })
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            return []
+        }
+
         self.lock.lock()
-        self.cache[key] = CachedFile(size: file.size, modifiedAt: file.modifiedAt, samples: samples)
+        self.bytesParsed += max(0, committed - offset)
         self.lock.unlock()
-        return samples
+        self.store(
+            CachedFile(
+                fileID: file.fileID,
+                size: file.size,
+                modifiedAt: file.modifiedAt,
+                committedOffset: committed,
+                tailFingerprint: Self.tailFingerprint(of: file.url, endingAt: committed) ?? Data(),
+                parser: parser),
+            provider: provider,
+            key: key)
+        return parser.samples(for: provider)
+    }
+
+    private func store(_ file: CachedFile, provider: UsageProvider, key: String) {
+        self.lock.lock()
+        self.caches[provider, default: [:]][key] = file
+        self.lock.unlock()
     }
 
     // MARK: - Roots
 
-    static func claudeProjectsRoots(environment: [String: String]) -> [URL] {
-        if let env = environment["CLAUDE_CONFIG_DIR"]?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !env.isEmpty
-        {
-            return env.split(separator: ",").compactMap { part in
-                let raw = part.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !raw.isEmpty else { return nil }
-                let url = URL(fileURLWithPath: raw)
-                return url.lastPathComponent == "projects"
-                    ? url
-                    : url.appendingPathComponent("projects", isDirectory: true)
-            }
-        }
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        return [
-            home.appendingPathComponent(".config/claude/projects", isDirectory: true),
-            home.appendingPathComponent(".claude/projects", isDirectory: true),
-        ]
-    }
-
     static func codexSessionsRoots(codexHomePath: String?, environment: [String: String]) -> [URL] {
-        let home: URL = if let path = codexHomePath?.trimmingCharacters(in: .whitespacesAndNewlines),
-                           !path.isEmpty
-        {
-            URL(fileURLWithPath: path, isDirectory: true)
-        } else if let env = environment["CODEX_HOME"]?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  !env.isEmpty
-        {
-            URL(fileURLWithPath: env, isDirectory: true)
-        } else {
-            FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".codex", isDirectory: true)
-        }
-        return [
-            home.appendingPathComponent("sessions", isDirectory: true),
-            home.appendingPathComponent("archived_sessions", isDirectory: true),
-        ]
+        let home = CodexHomeScope.normalizedHomePath(codexHomePath).map { URL(fileURLWithPath: $0, isDirectory: true) }
+            ?? CodexHomeScope.ambientHomeURL(env: environment)
+        var options = CostUsageScanner.Options()
+        options.codexSessionsRoot = home.appendingPathComponent("sessions", isDirectory: true)
+        return CostUsageScanner.codexSessionsRoots(options: options)
     }
 
-    private static func recentJSONLFiles(
-        roots: [URL],
-        modifiedSince cutoff: Date) -> [(url: URL, size: Int, modifiedAt: Date)]
-    {
+    private static func recentJSONLFiles(roots: [URL], modifiedSince cutoff: Date) throws -> [SessionFile] {
         let keys: [URLResourceKey] = [.isRegularFileKey, .contentModificationDateKey, .fileSizeKey]
-        var files: [(url: URL, size: Int, modifiedAt: Date)] = []
+        var files: [SessionFile] = []
         var seen: Set<String> = []
         for root in roots {
             guard let enumerator = FileManager.default.enumerator(
@@ -202,150 +281,64 @@ public final class TokenOutputSpeedScanner: @unchecked Sendable {
                 options: [.skipsHiddenFiles])
             else { continue }
             for case let url as URL in enumerator where url.pathExtension == "jsonl" {
+                try Task.checkCancellation()
                 guard let values = try? url.resourceValues(forKeys: Set(keys)),
                       values.isRegularFile == true,
                       let modifiedAt = values.contentModificationDate,
                       modifiedAt >= cutoff,
                       seen.insert(url.resolvingSymlinksInPath().path).inserted
                 else { continue }
-                files.append((url, values.fileSize ?? 0, modifiedAt))
+                files.append(SessionFile(
+                    url: url,
+                    size: values.fileSize ?? 0,
+                    modifiedAt: modifiedAt,
+                    fileID: Self.fileID(of: url)))
             }
         }
         return files
     }
 
-    // MARK: - Parsing
+    static let tailFingerprintLength = 256
 
-    /// Claude Code writes one line per content block; lines of one response share `message.id`
-    /// and carry the final `usage.output_tokens`. A response's first line points (`parentUuid`)
-    /// at the entry that triggered the request — a prompt, tool result, or attachment.
+    /// Up to 256 bytes ending at `offset`; nil when they cannot be read (the file shrank or vanished).
+    /// A same-inode file that grew can still have been truncated and rewritten, which this exposes.
+    private static func tailFingerprint(of url: URL, endingAt offset: Int64) -> Data? {
+        guard offset > 0 else { return Data() }
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? handle.close() }
+        let length = min(Int64(Self.tailFingerprintLength), offset)
+        do {
+            try handle.seek(toOffset: UInt64(offset - length))
+            let data = try handle.read(upToCount: Int(length)) ?? Data()
+            return data.count == Int(length) ? data : nil
+        } catch {
+            return nil
+        }
+    }
+
+    /// Device + inode, so a log that was replaced by another file at the same path starts over.
+    private static func fileID(of url: URL) -> String {
+        var info = stat()
+        guard stat(url.path, &info) == 0 else { return "" }
+        return "\(info.st_dev):\(info.st_ino)"
+    }
+
+    // MARK: - Whole-file parsing
+
+    /// Parses a complete log held in memory; the incremental scanner feeds the same parsers line by line.
     static func parseClaudeSession(_ data: Data) -> [TokenOutputSpeedSample] {
-        struct Request {
-            let model: String
-            let startedAt: Date
-            var completedAt: Date
-            var outputTokens: Int
-        }
-        var entryTimes: [String: Date] = [:]
-        var requests: [String: Request?] = [:]
-        var order: [String] = []
-
-        self.forEachJSONObject(in: data) { object in
-            guard let timestamp = (object["timestamp"] as? String).flatMap(Self.parseTimestamp) else { return }
-            if let uuid = object["uuid"] as? String {
-                defer { entryTimes[uuid] = timestamp }
-                guard object["type"] as? String == "assistant" else { return }
-            } else {
-                return
-            }
-            guard let message = object["message"] as? [String: Any],
-                  let id = message["id"] as? String,
-                  let model = message["model"] as? String,
-                  model != "<synthetic>"
-            else { return }
-            let output = ((message["usage"] as? [String: Any])?["output_tokens"] as? NSNumber)?.intValue
-
-            if let existing = requests[id] {
-                guard var request = existing else { return }
-                request.completedAt = max(request.completedAt, timestamp)
-                if let output { request.outputTokens = max(request.outputTokens, output) }
-                requests[id] = request
-                return
-            }
-            order.append(id)
-            guard let parent = object["parentUuid"] as? String,
-                  let startedAt = entryTimes[parent],
-                  startedAt <= timestamp
-            else {
-                requests[id] = .some(nil)
-                return
-            }
-            requests[id] = Request(
-                model: model,
-                startedAt: startedAt,
-                completedAt: timestamp,
-                outputTokens: output ?? 0)
-        }
-
-        return order.compactMap { id in
-            guard case let .some(request?) = requests[id] else { return nil }
-            return TokenOutputSpeedSample(
-                model: request.model,
-                outputTokens: request.outputTokens,
-                startedAt: request.startedAt,
-                completedAt: request.completedAt)
-        }
+        var parser = ClaudeSessionParser()
+        self.forEachLine(in: data) { parser.consume(line: $0, truncated: false) }
+        return parser.samples
     }
 
-    /// Codex rollouts: a request starts at the user message or tool output that precedes it,
-    /// ends at the last model output item, and `token_count.info.last_token_usage` reports its
-    /// output tokens (reasoning included). `token_count` is often logged after the tool output
-    /// that already belongs to the next request, so that input is held until the count lands.
     static func parseCodexSession(_ data: Data) -> [TokenOutputSpeedSample] {
-        var samples: [TokenOutputSpeedSample] = []
-        var model: String?
-        var startedAt: Date?
-        var completedAt: Date?
-        var nextStartedAt: Date?
-
-        func input(_ timestamp: Date) {
-            if completedAt == nil {
-                startedAt = timestamp
-            } else {
-                nextStartedAt = timestamp
-            }
-        }
-
-        func output(_ timestamp: Date) {
-            if let next = nextStartedAt {
-                // The previous request never reported tokens; start over from the newer input.
-                startedAt = next
-                nextStartedAt = nil
-            }
-            if startedAt != nil { completedAt = timestamp }
-        }
-
-        self.forEachJSONObject(in: data) { object in
-            guard let timestamp = (object["timestamp"] as? String).flatMap(Self.parseTimestamp),
-                  let payload = object["payload"] as? [String: Any]
-            else { return }
-            let payloadType = payload["type"] as? String
-            switch (object["type"] as? String, payloadType) {
-            case ("turn_context", _):
-                if let value = payload["model"] as? String, !value.isEmpty { model = value }
-            case ("response_item", "message"):
-                switch payload["role"] as? String {
-                case "assistant": output(timestamp)
-                case "user": input(timestamp)
-                default: break
-                }
-            case ("response_item", "function_call_output"), ("response_item", "custom_tool_call_output"):
-                input(timestamp)
-            case ("response_item", _):
-                output(timestamp)
-            case ("event_msg", "token_count"):
-                guard let start = startedAt, let end = completedAt else { return }
-                let info = payload["info"] as? [String: Any]
-                let last = info?["last_token_usage"] as? [String: Any]
-                guard let tokens = (last?["output_tokens"] as? NSNumber)?.intValue else { return }
-                if let model {
-                    samples.append(TokenOutputSpeedSample(
-                        model: model,
-                        outputTokens: tokens,
-                        startedAt: start,
-                        completedAt: end))
-                }
-                startedAt = nextStartedAt
-                completedAt = nil
-                nextStartedAt = nil
-            default:
-                break
-            }
-        }
-        return samples
+        var parser = CodexSessionParser()
+        self.forEachLine(in: data) { parser.consume(line: $0, truncated: false) }
+        return parser.samples
     }
 
-    private static func forEachJSONObject(in data: Data, _ body: ([String: Any]) -> Void) {
+    private static func forEachLine(in data: Data, _ body: (Data) -> Void) {
         data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
             guard let base = buffer.baseAddress else { return }
             var lineStart = 0
@@ -358,22 +351,13 @@ public final class TokenOutputSpeedScanner: @unchecked Sendable {
                     count
                 }
                 if lineEnd > lineStart {
-                    let line = Data(
+                    body(Data(
                         bytesNoCopy: UnsafeMutableRawPointer(mutating: base + lineStart),
                         count: lineEnd - lineStart,
-                        deallocator: .none)
-                    autoreleasepool {
-                        if let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any] {
-                            body(object)
-                        }
-                    }
+                        deallocator: .none))
                 }
                 lineStart = lineEnd + 1
             }
         }
-    }
-
-    private static func parseTimestamp(_ raw: String) -> Date? {
-        CostUsageScanner.dateFromTimestamp(raw)
     }
 }

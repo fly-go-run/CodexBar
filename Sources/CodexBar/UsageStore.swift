@@ -22,6 +22,7 @@ extension UsageStore {
         _ = self.claudeSwapRevision
         _ = self.tokenSnapshotPublications
         _ = self.tokenErrors
+        _ = self.tokenOutputSpeeds
         _ = self.tokenRefreshInFlight
         _ = self.codexCostCatchUpActivity
         _ = self.credits
@@ -186,7 +187,11 @@ final class UsageStore {
     @ObservationIgnored var sharedSpendDashboardTokenPublicationDebounceTask: Task<Void, Never>?
     var tokenErrors: [ProviderInstanceID: String] = [:]
     var tokenOutputSpeeds: [ProviderInstanceID: TokenOutputSpeedSnapshot] = [:]
-    @ObservationIgnored var tokenOutputSpeedScanStartedAt: [ProviderInstanceID: Date] = [:]
+    @ObservationIgnored var tokenOutputSpeedSchedule: [ProviderInstanceID: TokenOutputSpeedScheduleState] = [:]
+    @ObservationIgnored var tokenOutputSpeedMinInterval: TimeInterval = UsageStore.tokenOutputSpeedMinInterval
+    @ObservationIgnored var _test_tokenOutputSpeedScan: TokenOutputSpeedScanOverride?
+    @ObservationIgnored var _test_tokenOutputSpeedCodexHomePath: (@MainActor (UsageProvider) -> String?)?
+    @ObservationIgnored var tokenOutputSpeedScanTasks: [ProviderInstanceID: Task<Void, Never>] = [:]
     var tokenRefreshInFlight: Set<ProviderInstanceID> = []
     var codexCostCatchUpActivity: CodexCostCatchUpActivity?
     var spendDashboardCodexCostCatchUpActivity: CodexCostCatchUpActivity?
@@ -203,6 +208,7 @@ final class UsageStore {
     @ObservationIgnored private(set) var versionDetectionTask: Task<Void, Never>?
     @ObservationIgnored var claudeVersionRefreshTask: Task<Void, Never>?
     var isRefreshing = false
+    @ObservationIgnored var refreshFinishedWaiters: [UUID: CheckedContinuation<Void, Never>] = [:]
     var hasForcedRefreshEnrichmentInFlight = false
     var refreshingProviders: Set<ProviderInstanceID> = []
     var debugForceAnimation = false
@@ -320,6 +326,7 @@ final class UsageStore {
         TimeInterval) async throws -> Void)?
     @ObservationIgnored var widgetSnapshotPersistTask: Task<Void, Never>?
     @ObservationIgnored var lastQueuedWidgetSnapshot: WidgetSnapshot?
+    @ObservationIgnored var lastQueuedWidgetSnapshotFingerprint: (fingerprint: Data, queuedAt: Date)?
     @ObservationIgnored var invalidatedQueuedWidgetProviders: Set<ProviderInstanceID> = []
     @ObservationIgnored var lastWidgetSourceSnapshots: [ProviderInstanceID: UsageSnapshot] = [:]
     @ObservationIgnored let widgetSnapshotURL: URL?
@@ -783,7 +790,7 @@ final class UsageStore {
         let completedRefresh = await ProviderRefreshContext.$current.withValue(refreshPhase) {
             self.isRefreshing = true
             defer {
-                self.isRefreshing = false
+                self.markRefreshFinished()
                 self.hasCompletedInitialRefresh = true
                 self.startupConnectivityRetryRefreshActive = false
             }

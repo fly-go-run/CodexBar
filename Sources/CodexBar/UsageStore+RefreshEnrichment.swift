@@ -129,20 +129,44 @@ extension UsageStore {
         return completedAnyRefresh
     }
 
-    private func waitForRequiredRefreshAvailability() async -> Bool {
+    func waitForRequiredRefreshAvailability() async -> Bool {
         while self.isRefreshing || self.hasForcedRefreshEnrichmentInFlight {
             guard !Task.isCancelled else { return false }
             if self.hasForcedRefreshEnrichmentInFlight {
                 await self.awaitForcedRefreshEnrichment()
             } else {
-                do {
-                    try await Task.sleep(for: .milliseconds(20))
-                } catch {
-                    return false
-                }
+                await self.awaitRefreshFinished()
             }
         }
         return !Task.isCancelled
+    }
+
+    /// Suspends until `markRefreshFinished()` runs (or the task is cancelled) instead of polling.
+    private func awaitRefreshFinished() async {
+        let id = UUID()
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                guard self.isRefreshing, !Task.isCancelled else {
+                    continuation.resume()
+                    return
+                }
+                self.refreshFinishedWaiters[id] = continuation
+            }
+        } onCancel: {
+            Task { @MainActor [weak self] in
+                self?.refreshFinishedWaiters.removeValue(forKey: id)?.resume()
+            }
+        }
+    }
+
+    /// Single place where a refresh pass ends, so waiters learn about it without polling.
+    func markRefreshFinished() {
+        self.isRefreshing = false
+        let waiters = self.refreshFinishedWaiters
+        self.refreshFinishedWaiters = [:]
+        for waiter in waiters.values {
+            waiter.resume()
+        }
     }
 
     private func completeRequiredRefreshTask(token: UUID) {

@@ -1,38 +1,120 @@
 import CodexBarCore
 import Foundation
 
+typealias TokenOutputSpeedScanOverride = @Sendable (UsageProvider, String?) async throws -> TokenOutputSpeedSnapshot?
+
 extension UsageStore {
-    /// Speed scans only re-read session files that changed, but still walk the log tree.
+    /// Speed scans only parse what was appended to the session logs, but still walk the log tree.
     static let tokenOutputSpeedMinInterval: TimeInterval = 30
 
+    /// What a speed scan reads from: results are only valid for the scope that was active when they ran.
+    struct TokenOutputSpeedScope: Equatable, Sendable {
+        let codexHomePath: String?
+        let signature: String
+    }
+
+    /// Per-provider scan bookkeeping.
+    struct TokenOutputSpeedScheduleState {
+        /// A request arrived that no scan has started for yet.
+        var pending = false
+        var lastFinishedAt: Date?
+        /// The scope the published speeds were measured for.
+        var publishedScope: TokenOutputSpeedScope?
+    }
+
+    /// Speeds measured for another scope (for example before a Codex home switch) are never shown, even
+    /// before the next scan has replaced them.
     func tokenOutputSpeed(for provider: UsageProvider) -> TokenOutputSpeedSnapshot? {
-        self.tokenOutputSpeeds[provider.instanceID]
+        let id = provider.instanceID
+        guard let snapshot = self.tokenOutputSpeeds[id],
+              self.tokenOutputSpeedSchedule[id]?.publishedScope == self.tokenOutputSpeedScope(for: provider)
+        else { return nil }
+        return snapshot
     }
 
     /// Runs beside the cost refresh rather than inside it: cost snapshots are TTL-cached for a
     /// long time, while speed is only interesting while requests are happening.
+    ///
+    /// At most one scan loop per provider exists. A request that arrives while a scan runs (or while
+    /// the loop waits out the minimum interval) is remembered and answered by one trailing scan with the
+    /// latest scope, so it is never lost even in manual refresh mode where no timer will ask again.
     func scheduleTokenOutputSpeedRefresh(for provider: UsageProvider, now: Date = Date()) {
         guard provider == .claude || provider == .codex else { return }
         let id = provider.instanceID
-        if let last = self.tokenOutputSpeedScanStartedAt[id],
-           now.timeIntervalSince(last) >= 0,
-           now.timeIntervalSince(last) < Self.tokenOutputSpeedMinInterval
-        {
-            return
+        self.tokenOutputSpeedSchedule[id, default: .init()].pending = true
+        guard self.tokenOutputSpeedScanTasks[id] == nil else { return }
+        self.tokenOutputSpeedScanTasks[id] = Task { [weak self] in
+            await self?.runTokenOutputSpeedScans(for: provider, firstRequestAt: now)
         }
-        self.tokenOutputSpeedScanStartedAt[id] = now
-        let codexHomePath = self.tokenCostScope(for: provider).codexHomePath
-        Task { [weak self] in
-            let snapshot = await Task.detached(priority: .utility) {
-                TokenOutputSpeedScanner.shared.snapshot(provider: provider, codexHomePath: codexHomePath)
-            }.value
-            guard let self else { return }
-            let summary = snapshot?.models.map { "\($0.model ?? "?")=\(Int($0.tokensPerSecond))" }
-                .joined(separator: ",") ?? "none"
-            self.tokenCostLogger.debug("output speed provider=\(provider.rawValue) \(summary)")
-            if self.tokenOutputSpeeds[id] != snapshot {
-                self.tokenOutputSpeeds[id] = snapshot
+    }
+
+    private func tokenOutputSpeedScope(for provider: UsageProvider) -> TokenOutputSpeedScope {
+        let scope = self.tokenCostScope(for: provider)
+        let codexHomePath = self._test_tokenOutputSpeedCodexHomePath?(provider) ?? scope.codexHomePath
+        return TokenOutputSpeedScope(codexHomePath: codexHomePath, signature: scope.signature)
+    }
+
+    private func runTokenOutputSpeedScans(for provider: UsageProvider, firstRequestAt: Date) async {
+        let id = provider.instanceID
+        var requestedAt: Date? = firstRequestAt
+        while !Task.isCancelled {
+            // The floor runs from the end of the previous scan, so a slow scan is never followed by another
+            // at once; a request inside the floor waits for its deadline instead of being dropped.
+            if let finished = self.tokenOutputSpeedSchedule[id]?.lastFinishedAt {
+                let elapsed = (requestedAt ?? Date()).timeIntervalSince(finished)
+                if elapsed >= 0, elapsed < self.tokenOutputSpeedMinInterval {
+                    do {
+                        try await Task.sleep(for: .seconds(self.tokenOutputSpeedMinInterval - elapsed))
+                    } catch {
+                        break
+                    }
+                }
             }
+            requestedAt = nil
+            // The scope is read when the scan starts and compared again when it ends: a switch in between
+            // (which may not have scheduled anything itself) makes the result stale.
+            let scope = self.tokenOutputSpeedScope(for: provider)
+            self.tokenOutputSpeedSchedule[id, default: .init()].pending = false
+            let result = await self.scanTokenOutputSpeed(provider: provider, scope: scope)
+            self.tokenOutputSpeedSchedule[id, default: .init()].lastFinishedAt = Date()
+            if scope != self.tokenOutputSpeedScope(for: provider) {
+                self.tokenOutputSpeeds[id] = nil
+                self.tokenOutputSpeedSchedule[id, default: .init()].publishedScope = nil
+                self.tokenOutputSpeedSchedule[id, default: .init()].pending = true
+            } else if case let .success(snapshot) = result {
+                let summary = snapshot?.models.map { "\($0.model ?? "?")=\(Int($0.tokensPerSecond))" }
+                    .joined(separator: ",") ?? "none"
+                self.tokenCostLogger.debug("output speed provider=\(provider.rawValue) \(summary)")
+                self.tokenOutputSpeedSchedule[id, default: .init()].publishedScope = scope
+                if self.tokenOutputSpeeds[id] != snapshot {
+                    self.tokenOutputSpeeds[id] = snapshot
+                }
+            }
+            // Checked without suspending, so a request cannot slip in between.
+            if self.tokenOutputSpeedSchedule[id]?.pending != true { break }
+        }
+        self.tokenOutputSpeedScanTasks[id] = nil
+    }
+
+    private func scanTokenOutputSpeed(
+        provider: UsageProvider,
+        scope: TokenOutputSpeedScope) async -> Result<TokenOutputSpeedSnapshot?, Error>
+    {
+        if let override = self._test_tokenOutputSpeedScan {
+            do {
+                return try await .success(override(provider, scope.codexHomePath))
+            } catch {
+                return .failure(error)
+            }
+        }
+        let codexHomePath = scope.codexHomePath
+        let scan = Task.detached(priority: .utility) {
+            try TokenOutputSpeedScanner.shared.snapshot(provider: provider, codexHomePath: codexHomePath)
+        }
+        return await withTaskCancellationHandler {
+            await scan.result
+        } onCancel: {
+            scan.cancel()
         }
     }
 }
