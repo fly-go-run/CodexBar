@@ -47,7 +47,7 @@ struct OpenAISubscriptionEnrichmentTests {
                         .padding(16)
                         .environment(\.colorScheme, .light)))
                 hosting.appearance = NSAppearance(named: .aqua)
-                let png = try #require(MenuLayoutScreenshotRenderTests.pngDataWithWindow(hosting: hosting))
+                let png = try #require(MenuRenderTestSupport.pngDataWithWindow(hosting: hosting))
                 try png.write(to: URL(fileURLWithPath: path))
             }
             #expect(live.subscriptionNotes == expectedNotes)
@@ -246,25 +246,6 @@ struct OpenAISubscriptionEnrichmentTests {
         await store.widgetSnapshotPersistTask?.value
         #expect(store.openAIDashboard == newer.withSubscriptionMetadata(.init(expiresAt: nil, renewsAt: self.renewal)))
         #expect(store.openAISubscriptionMetadataEnrichmentTask == nil)
-    }
-
-    @Test(.enabled(if: ProcessInfo.processInfo.environment["CODEXBAR_SUBSCRIPTION_NATIVE_PROOF"] == "1"))
-    func `signed native card shows the asynchronously attached subscription date`() async throws {
-        let store = try self.makeStore()
-        let blocker = BlockingSubscriptionMetadataLoader()
-        let task = try await self.start(store, dashboard: self.dashboard(stamp: 100, credits: 10), blocker: blocker)
-        let fixture = CodexExtraUsageFreshnessTests()
-        let before = try fixture.card(snapshot: #require(store.presentationSnapshot(for: .codex)), live: nil)
-        await blocker.resume(.success(.init(expiresAt: nil, renewsAt: self.renewal)))
-        await task.value
-        await store.widgetSnapshotPersistTask?.value
-        let after = try fixture.card(snapshot: #require(store.presentationSnapshot(for: .codex)), live: nil)
-        #expect(before.subscriptionNotes.isEmpty)
-        #expect(after.subscriptionNotes.count == 1)
-        #expect(after.subscriptionNotes[0].hasPrefix("Renews:"))
-        try captureSubscriptionNativeProof(
-            models: [before, after],
-            directory: #require(ProcessInfo.processInfo.environment["CODEXBAR_SUBSCRIPTION_PROOF_DIRECTORY"]))
     }
 
     @Test

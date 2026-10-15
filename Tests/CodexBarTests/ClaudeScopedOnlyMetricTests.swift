@@ -33,40 +33,6 @@ struct ClaudeScopedOnlyMetricTests {
     }
 
     @MainActor
-    @Test
-    func `render synthetic scoped only metric proof`() throws {
-        guard let directory = ProcessInfo.processInfo.environment["CODEXBAR_CLAUDE_PRESENTATION_PROOF_DIR"] else {
-            return
-        }
-        let snapshot = try Self.snapshot(withSpendLimit: false)
-        let scoped = MenuBarLayoutSemanticWindowResolver.scopedWeeklyNamedWindow(snapshot: snapshot)
-        let selected = MenuBarMetricWindowResolver.rateWindow(
-            preference: .automatic, provider: .claude, snapshot: snapshot, supportsAverage: false, now: Self.now)
-        // The red regression established that the previous automatic selector returned the raw placeholder.
-        for (stage, window) in [("before", snapshot.primary), ("after", selected)] {
-            let data = Self.renderData(snapshot: snapshot, scoped: scoped, automatic: window)
-            let layout = MenuBarLayout(lines: [[.providerName, .space, .percent(window: .automatic)]])
-            let options = MenuBarLayoutRenderOptions(
-                size: .regular,
-                highContrast: false,
-                showUsed: true,
-                conditionals: [],
-                appearanceName: NSAppearance.Name.aqua.rawValue,
-                isDebugApp: false,
-                now: Self.now)
-            let title = MenuBarLayoutRenderer().render(layout: layout, data: data, icon: nil, options: options)
-            let hosting = NSHostingView(rootView: Text(AttributedString(title.attributedTitle))
-                .padding(20)
-                .frame(width: 240, height: 70)
-                .background(Color(nsColor: .windowBackgroundColor))
-                .preferredColorScheme(.light))
-            hosting.appearance = NSAppearance(named: .aqua)
-            let png = try #require(MenuLayoutScreenshotRenderTests.pngDataWithWindow(hosting: hosting))
-            try png.write(to: URL(fileURLWithPath: directory).appendingPathComponent("scoped-\(stage).png"))
-        }
-    }
-
-    @MainActor
     private static func renderData(
         snapshot: UsageSnapshot,
         scoped: NamedRateWindow?,

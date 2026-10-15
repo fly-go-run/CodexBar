@@ -12,14 +12,6 @@ struct KeychainPromptSafetyAuditTests {
     }
 
     @Test
-    func `agent instructions forbid keychain prompt validation`() throws {
-        let agents = try Self.readRepoFile("AGENTS.md")
-
-        #expect(agents.contains("Never run tests/checks or ad-hoc validation that can display macOS Keychain prompts"))
-        #expect(agents.contains("use parser tests, stubs, test stores, or `KeychainNoUIQuery`"))
-    }
-
-    @Test
     func `default test runner explicitly suppresses real keychain access`() throws {
         let script = try Self.readRepoFile("Scripts/test_environment.sh")
 

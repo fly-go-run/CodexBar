@@ -21,7 +21,7 @@ struct MenuBarPercentWindowPreferenceTests {
         let other = MenuBarLayout(lines: [[.windowResetAbsolute(window: .weekly)]])
         let defaults = InMemoryUserDefaults()
         let config = testConfigStore(suiteName: "percent-reset-integration-\(UUID().uuidString)")
-        let settings = MenuBarPercentWindowNativeProofTests.settings(defaults: defaults, config: config)
+        let settings = Self.settings(defaults: defaults, config: config)
         defer { settings.configFileWatcher?.stop() }
         settings.menuBarIconStyle = .iconAndPercent
         settings.menuBarLayoutConditionals = [rule]
@@ -35,7 +35,7 @@ struct MenuBarPercentWindowPreferenceTests {
             .windowResetAbsolute(window: .session), .conditional(id: rule.id), .lanePercent(lane: .tertiary),
         ]])
         #expect(settings.menuBarLayoutResolution(for: .codex).layout == expected)
-        let reloaded = MenuBarPercentWindowNativeProofTests.settings(defaults: defaults, config: config)
+        let reloaded = Self.settings(defaults: defaults, config: config)
         defer { reloaded.configFileWatcher?.stop() }
         #expect(reloaded.menuBarLayoutResolution(for: .codex).layout == expected)
         #expect(reloaded.menuBarLayoutResolution(for: .claude).layout == other)
@@ -148,7 +148,7 @@ struct MenuBarPercentWindowPreferenceTests {
     @Test
     @MainActor
     func `persisting a provider window does not flip the global icon style`() {
-        let settings = MenuBarPercentWindowNativeProofTests.settings(
+        let settings = Self.settings(
             defaults: InMemoryUserDefaults(),
             config: testConfigStore(suiteName: "MenuBarPercentWindowPreferenceTests-preserve-style"))
         defer { settings.configFileWatcher?.stop() }
@@ -165,6 +165,18 @@ struct MenuBarPercentWindowPreferenceTests {
             .icon,
             .percent(window: .session),
         ]]))
+    }
+
+    @MainActor
+    private static func settings(defaults: UserDefaults, config: CodexBarConfigStore) -> SettingsStore {
+        SettingsStore(
+            userDefaults: defaults,
+            configStore: config,
+            codexCookieStore: InMemoryCookieHeaderStore(),
+            claudeCookieStore: InMemoryCookieHeaderStore(),
+            tokenAccountStore: InMemoryTokenAccountStore(),
+            keychainAccessPolicy: .init(setDisabled: { _ in }, isExplicitlyDisabled: { false }),
+            performInitialProviderDetection: false)
     }
 }
 

@@ -62,39 +62,6 @@ struct ClaudeCloudCreditsPublicationTests {
         #expect(snapshots[0].extraRateWindows == snapshots[1].extraRateWindows)
     }
 
-    @MainActor
-    @Test
-    func `render synthetic before and after cloud balances when requested`() throws {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment["CODEXBAR_CLOUD_CREDITS_PROOF_DIR"] else { return }
-        try #require(environment["CODEXBAR_SUPPRESS_TEST_KEYCHAIN_ACCESS"] == "1")
-        try #require(environment["CODEXBAR_ALLOW_TEST_KEYCHAIN_ACCESS"] != "1")
-        let directory = URL(fileURLWithPath: path, isDirectory: true)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        var object = try #require(JSONSerialization.jsonObject(with: Self.payload) as? [String: Any])
-        try CodexBarLocalizationOverride.$appLanguage.withValue("en") {
-            for phase in ["after", "before"] {
-                let usage = try ClaudeUsageFetcher
-                    ._mapOAuthUsageForTesting(JSONSerialization.data(withJSONObject: object))
-                let model = try Self.menuModel(ClaudeOAuthFetchStrategy._snapshotForTesting(from: usage))
-                let view = VStack(alignment: .leading, spacing: 12) {
-                    Text("Synthetic \(phase == "before" ? "baseline" : "cloud credits")").font(.caption)
-                    UsageMenuCardView(model: model, width: 320)
-                }
-                .padding(16)
-                .environment(\.locale, Locale(identifier: "en_US_POSIX"))
-                .environment(\.colorScheme, .light)
-                .background(Color(nsColor: .windowBackgroundColor))
-                let hosting = NSHostingView(rootView: view)
-                hosting.appearance = NSAppearance(named: .aqua)
-                try #require(MenuLayoutScreenshotRenderTests.pngDataWithWindow(hosting: hosting))
-                    .write(to: directory.appendingPathComponent("claude-cloud-credits-\(phase).png"))
-                // Reconstruct main's omission without changing quotas or Extra usage.
-                object.removeValue(forKey: "iguana_necktie")
-            }
-        }
-    }
-
     private static func menuModel(_ snapshot: UsageSnapshot) throws -> UsageMenuCardView.Model {
         try UsageMenuCardView.Model.make(.init(
             provider: .claude,

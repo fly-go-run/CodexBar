@@ -118,25 +118,6 @@ struct ClaudeExternalLoginPresentationTests {
         })
     }
 
-    @Test
-    @MainActor
-    func `render synthetic external login guidance`() throws {
-        guard let directory = ProcessInfo.processInfo.environment["CODEXBAR_CLAUDE_RELOGIN_PROOF_DIR"] else { return }
-        let after = ClaudeOAuthCredentialsError.credentialsChanged(Date(timeIntervalSinceNow: -120))
-        for (name, error) in [("before", ClaudeOAuthCredentialsError.notFound), ("after", after)] {
-            let hosting = NSHostingView(rootView: UsageMenuCardView(
-                model: Self.model(message: error.localizedDescription), width: 340)
-                .padding(16)
-                .frame(width: 372)
-                .environment(\.locale, Locale(identifier: "en"))
-                .background(Color(nsColor: .windowBackgroundColor))
-                .preferredColorScheme(.light))
-            hosting.appearance = NSAppearance(named: .aqua)
-            let png = try #require(MenuLayoutScreenshotRenderTests.pngDataWithWindow(hosting: hosting))
-            try png.write(to: URL(fileURLWithPath: directory).appendingPathComponent("\(name).png"))
-        }
-    }
-
     @MainActor
     private static func model(message: String) -> UsageMenuCardView.Model {
         UsageMenuCardView.Model.make(.init(

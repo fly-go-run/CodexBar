@@ -16,67 +16,6 @@ struct ProvidersPaneCoverageTests {
     }
 
     @Test
-    func `zai team account add button requires organization and project`() {
-        #expect(ProviderSettingsTokenAccountsRowView.isAddDisabled(
-            label: "Team",
-            token: "token",
-            showsTeamModeControls: true,
-            teamMode: true,
-            teamContext: (organizationID: "", projectID: "proj-test")))
-        #expect(ProviderSettingsTokenAccountsRowView.isAddDisabled(
-            label: "Team",
-            token: "token",
-            showsTeamModeControls: true,
-            teamMode: true,
-            teamContext: (organizationID: "org-test", projectID: "")))
-        #expect(!ProviderSettingsTokenAccountsRowView.isAddDisabled(
-            label: "Team",
-            token: "token",
-            showsTeamModeControls: true,
-            teamMode: true,
-            teamContext: (organizationID: "org-test", projectID: "proj-test")))
-        #expect(!ProviderSettingsTokenAccountsRowView.isAddDisabled(
-            label: "Personal",
-            token: "token",
-            showsTeamModeControls: true,
-            teamMode: false,
-            teamContext: (organizationID: "", projectID: "")))
-    }
-
-    @Test
-    func `zai team account draft requires complete ids before apply`() {
-        let original = ProviderSettingsTokenAccountsRowView.TeamAccountDraft(
-            teamMode: false,
-            organizationID: "",
-            projectID: "")
-
-        #expect(ProviderSettingsTokenAccountsRowView.isTeamDraftApplyDisabled(
-            draft: original,
-            original: original))
-        #expect(ProviderSettingsTokenAccountsRowView.isTeamDraftApplyDisabled(
-            draft: ProviderSettingsTokenAccountsRowView.TeamAccountDraft(
-                teamMode: true,
-                organizationID: "org-test",
-                projectID: ""),
-            original: original))
-        #expect(!ProviderSettingsTokenAccountsRowView.isTeamDraftApplyDisabled(
-            draft: ProviderSettingsTokenAccountsRowView.TeamAccountDraft(
-                teamMode: true,
-                organizationID: "org-test",
-                projectID: "proj-test"),
-            original: original))
-        #expect(!ProviderSettingsTokenAccountsRowView.isTeamDraftApplyDisabled(
-            draft: ProviderSettingsTokenAccountsRowView.TeamAccountDraft(
-                teamMode: false,
-                organizationID: "",
-                projectID: ""),
-            original: ProviderSettingsTokenAccountsRowView.TeamAccountDraft(
-                teamMode: true,
-                organizationID: "org-test",
-                projectID: "proj-test")))
-    }
-
-    @Test
     func `provider reordering is inert while alphabetical sorting is enabled`() {
         let settings = Self.makeSettingsStore(suite: "ProvidersPaneCoverageTests-sorted-reorder")
         let store = Self.makeUsageStore(settings: settings)

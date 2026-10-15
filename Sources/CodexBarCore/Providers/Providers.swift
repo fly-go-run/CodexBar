@@ -82,7 +82,6 @@ public struct ProviderMetadata: Sendable {
     /// Browser-only status link (no API polling); used when statusPageURL is nil.
     public let statusLinkURL: String?
     /// Google Workspace product ID for status polling (appsstatus dashboard).
-    public let statusWorkspaceProductID: String?
     /// Optional top-level component/group names to show from a provider status feed.
     public let statusComponentAllowlist: Set<String>?
 
@@ -114,7 +113,6 @@ public struct ProviderMetadata: Sendable {
         changelogURL: String? = nil,
         statusPageURL: String?,
         statusLinkURL: String? = nil,
-        statusWorkspaceProductID: String? = nil,
         statusComponentAllowlist: Set<String>? = nil)
     {
         self.id = id
@@ -144,7 +142,6 @@ public struct ProviderMetadata: Sendable {
         self.changelogURL = changelogURL
         self.statusPageURL = statusPageURL
         self.statusLinkURL = statusLinkURL
-        self.statusWorkspaceProductID = statusWorkspaceProductID
         self.statusComponentAllowlist = statusComponentAllowlist
     }
 }

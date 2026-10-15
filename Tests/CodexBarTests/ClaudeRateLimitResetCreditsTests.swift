@@ -284,31 +284,6 @@ struct ClaudeRateLimitResetCreditsTests {
 
     // MARK: - Fixtures
 
-    @Test
-    func `render synthetic Claude reset credits before and after when requested`() throws {
-        guard let path = ProcessInfo.processInfo.environment["CODEXBAR_CLAUDE_RESET_PROOF_DIR"] else { return }
-        let directory = URL(fileURLWithPath: path, isDirectory: true)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let now = Self.wholeSecondNow()
-        let grants = [
-            Self.grant(id: "fixture_a", resetsLeft: 1, endsIn: 2 * 86400, now: now),
-            Self.grant(id: "fixture_b", resetsLeft: 1, endsIn: 6 * 86400, now: now),
-        ]
-        try CodexBarLocalizationOverride.$appLanguage.withValue("en") {
-            for (name, values) in [("before", [String]()), ("after", grants)] {
-                let model = try Self.model(now: now, grants: values)
-                let hosting = NSHostingView(rootView: UsageMenuCardView(model: model, width: 360)
-                    .environment(\.locale, Locale(identifier: "en_US_POSIX"))
-                    .environment(\.colorScheme, .light)
-                    .environment(\.displayScale, 2)
-                    .background(Color(nsColor: .windowBackgroundColor)))
-                hosting.appearance = NSAppearance(named: .aqua)
-                try #require(MenuLayoutScreenshotRenderTests.pngDataWithWindow(hosting: hosting))
-                    .write(to: directory.appendingPathComponent("claude-resets-\(name).png"))
-            }
-        }
-    }
-
     private actor UsageRequestLog {
         var values: [String] = []
 

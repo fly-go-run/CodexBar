@@ -11,7 +11,7 @@ struct MenuBarLayoutDisplayOptionsTests {
         gap: MenuBarLayoutGap)
     {
         let hosting = Self.hostingView(width: 480, size: size, gap: gap)
-        let text = MenuLayoutScreenshotRenderTests.accessibilityText(hosting)
+        let text = MenuRenderTestSupport.accessibilityText(hosting)
 
         #expect(text.contains(L("menu_bar_layout_size")))
         #expect(text.contains(L("menu_bar_layout_gap")))
@@ -23,7 +23,7 @@ struct MenuBarLayoutDisplayOptionsTests {
     func `keyboard instructions remain in the footer without duplication in the row`() {
         let hosting = Self.hostingView(width: 720, size: .regular, gap: .regular)
         let hint = "Delete removes the selected token"
-        let text = MenuLayoutScreenshotRenderTests.accessibilityText(hosting)
+        let text = MenuRenderTestSupport.accessibilityText(hosting)
 
         #expect(text.contains(L("menu_bar_layout_footer")))
         #expect(!text.contains(hint))

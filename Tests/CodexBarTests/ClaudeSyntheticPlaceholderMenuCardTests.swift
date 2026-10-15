@@ -93,24 +93,6 @@ struct ClaudeSyntheticPlaceholderMenuCardTests {
         #expect(!OverviewMenuCardRowView(model: model, storageText: nil, width: 340).usesFullCard)
     }
 
-    @MainActor
-    @Test
-    func `render synthetic enterprise overview proof`() throws {
-        guard let directory = ProcessInfo.processInfo.environment["CODEXBAR_CLAUDE_PRESENTATION_PROOF_DIR"] else {
-            return
-        }
-        let hosting = NSHostingView(rootView: OverviewMenuCardRowView(
-            model: Self.enterpriseModel(showOptional: true), storageText: nil, width: 340, layout: .compact)
-            .padding(16)
-            .frame(width: 372)
-            .environment(\.locale, Locale(identifier: "en"))
-            .background(Color(nsColor: .windowBackgroundColor))
-            .preferredColorScheme(.light))
-        hosting.appearance = NSAppearance(named: .aqua)
-        let png = try #require(MenuLayoutScreenshotRenderTests.pngDataWithWindow(hosting: hosting))
-        try png.write(to: URL(fileURLWithPath: directory).appendingPathComponent("enterprise-overview.png"))
-    }
-
     private static func enterpriseModel(showOptional: Bool) -> UsageMenuCardView.Model {
         self.model(snapshot: UsageSnapshot(
             primary: self.syntheticSession,
@@ -118,25 +100,6 @@ struct ClaudeSyntheticPlaceholderMenuCardTests {
             providerCost: ProviderCostSnapshot(
                 used: 9.95, limit: 150, currencyCode: "USD", period: "Monthly cap", updatedAt: self.now),
             updatedAt: self.now), showOptional: showOptional)
-    }
-
-    @MainActor
-    @Test
-    func `render synthetic unavailable quota proof`() throws {
-        guard let directory = ProcessInfo.processInfo.environment["CODEXBAR_CLAUDE_PRESENTATION_PROOF_DIR"] else {
-            return
-        }
-        let model = Self.model(snapshot: UsageSnapshot(
-            primary: Self.syntheticSession, secondary: nil, updatedAt: Self.now))
-        let hosting = NSHostingView(rootView: UsageMenuCardView(model: model, width: 340)
-            .padding(16)
-            .frame(width: 372)
-            .environment(\.locale, Locale(identifier: "en"))
-            .background(Color(nsColor: .windowBackgroundColor))
-            .preferredColorScheme(.light))
-        hosting.appearance = NSAppearance(named: .aqua)
-        let png = try #require(MenuLayoutScreenshotRenderTests.pngDataWithWindow(hosting: hosting))
-        try png.write(to: URL(fileURLWithPath: directory).appendingPathComponent("quota.png"))
     }
 
     private static var syntheticSession: RateWindow {

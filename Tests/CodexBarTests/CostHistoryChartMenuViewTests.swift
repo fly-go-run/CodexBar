@@ -1248,7 +1248,7 @@ extension CostHistoryChartMenuViewTests {
         // land on that same content edge rather than floating inside its wider reserved frame.
         #expect(abs(controlFrameInHosting.maxX - (width - 16)) <= 1)
         if let directory = ProcessInfo.processInfo.environment["CODEXBAR_CHART_PICKER_SCREENSHOT_DIR"] {
-            let png = try #require(MenuLayoutScreenshotRenderTests.pngDataWithWindow(hosting: hosting))
+            let png = try #require(MenuRenderTestSupport.pngDataWithWindow(hosting: hosting))
             let url = URL(fileURLWithPath: directory, isDirectory: true)
             try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
             try png.write(to: url.appendingPathComponent("picker-\(Int(width)).png"))

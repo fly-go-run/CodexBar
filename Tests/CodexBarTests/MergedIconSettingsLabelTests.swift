@@ -20,7 +20,7 @@ struct MergedIconSettingsLabelTests {
             .environment(\.accessibilityEnabled, true))
         hosting.frame = CGRect(origin: .zero, size: hosting.fittingSize)
         hosting.layoutSubtreeIfNeeded()
-        let text = MenuLayoutScreenshotRenderTests.accessibilityText(hosting)
+        let text = MenuRenderTestSupport.accessibilityText(hosting)
         #expect(text.contains("Synthetic title"))
         #expect(text.contains("Synthetic explanation"))
     }
@@ -78,7 +78,7 @@ struct MergedIconSettingsLabelTests {
                     hosting.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
                     hosting.frame = CGRect(origin: .zero, size: hosting.fittingSize)
                     hosting.layoutSubtreeIfNeeded()
-                    let text = MenuLayoutScreenshotRenderTests.accessibilityText(hosting)
+                    let text = MenuRenderTestSupport.accessibilityText(hosting)
                     for key in [
                         "merge_icons_title", "merged_icon_style_title", "switcher_rows_title",
                         "merged_icon_source_title", "merged_icon_source_frontmost_app", "overview_tab_providers_title",

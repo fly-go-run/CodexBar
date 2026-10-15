@@ -4,7 +4,7 @@ import Testing
 
 struct ProviderDiagnosticExportTests {
     @Test
-    func `diagnostic export carries copilot credits detail`() throws {
+    func `diagnostic export carries detail sections`() throws {
         let now = Date(timeIntervalSince1970: 1_700_000_000)
         let snapshot = UsageSnapshot(
             primary: nil,
