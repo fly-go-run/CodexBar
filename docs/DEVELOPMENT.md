@@ -125,7 +125,7 @@ See the canonical [provider authoring guide](provider.md#adding-a-new-provider) 
 3. Follow the descriptor naming convention in the provider authoring guide.
 4. Add an app-side `ProviderImplementation` under `Sources/CodexBar/Providers/YourProvider/`; implementations can use
    protocol defaults when no custom UI or macOS integration is needed.
-5. Run `Scripts/regenerate-provider-manifests.sh` to update the Core descriptor manifest and the immutable app catalog.
+5. Add the descriptor to `ProviderManifest` and the implementation to `ProviderImplementationManifest`.
 6. Add icon assets under `Sources/CodexBar/Resources/`.
 7. Add focused tests under `Tests/CodexBarTests/`.
 

@@ -221,7 +221,7 @@ and never paste real cookie values or readable DevTools screenshots into public 
 
 ## Provider IDs
 
-See the [generated provider ID list](provider-ids.md), sourced from `UsageProvider` in enum order.
+See the [provider ID list](provider-ids.md), in `UsageProvider` enum order.
 
 ## Ordering
 The order of `providers` controls display/order in the app and CLI. Reorder the array to change ordering.
