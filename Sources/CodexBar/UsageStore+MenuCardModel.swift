@@ -122,6 +122,7 @@ extension UsageStore {
             planOverride: account?.plan ?? .automatic,
             planEmphasis: account?.planEmphasis ?? .none,
             lastKnownUsageCapturedAt: account?.lastKnownUsageCapturedAt ?? lastKnownUsageCapturedAt,
+            isOffline: isLive && !isSettings && self.offlineProviders.contains(provider.instanceID),
             isRefreshing: isSettings ? self.refreshingProviders.contains(provider.instanceID)
                 : self.shouldShowRefreshingMenuCardIndicator(for: provider),
             lastError: lastError,

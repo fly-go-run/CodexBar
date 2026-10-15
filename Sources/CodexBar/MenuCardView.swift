@@ -175,6 +175,8 @@ struct UsageMenuCardView: View {
         var usesLiveSubtitle: Bool = false
         let planText: String?
         var planEmphasis: PlanEmphasis = .none
+        /// Short renewal date shown after the plan in the header (Codex/Claude); replaces the note row.
+        var planRenewalText: String?
         var metrics: [Metric]
         var usageNotes: [String]
         var subscriptionNotes: [String] = []
@@ -399,13 +401,13 @@ private struct UsageMenuCardHeaderView: View {
                     Group {
                         if let planAction {
                             Button(action: planAction) {
-                                Text(plan)
+                                self.planLabel(plan)
                             }
                             .buttonStyle(.plain)
                             .menuCardInteractiveControl()
                             .accessibilityLabel(plan)
                         } else {
-                            Text(plan)
+                            self.planLabel(plan)
                         }
                     }
                     .font(.footnote)
@@ -426,6 +428,12 @@ private struct UsageMenuCardHeaderView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    private func planLabel(_ plan: String) -> Text {
+        guard let renewal = self.model.planRenewalText else { return Text(plan) }
+        return Text(plan) + Text(" · \(renewal)")
+            .foregroundColor(MenuHighlightStyle.secondary(self.isHighlighted))
     }
 
     private var liveSubtitle: MenuCardLiveSubtitle {
@@ -631,7 +639,7 @@ private struct UsageMenuCardUsageContentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             self.metricRows(self.model.metrics)
-            if !self.model.quotaSubscriptionNotes.isEmpty,
+            if !self.model.quotaSubscriptionNotes.isEmpty, self.model.planRenewalText == nil,
                self.model.showsOverviewSupplementalContent(compact: self.compactMetrics)
             {
                 UsageNotesContent(notes: self.model.quotaSubscriptionNotes)
@@ -925,6 +933,7 @@ extension UsageMenuCardView.Model {
                 isRefreshing: input.isRefreshing,
                 lastError: Self.lastError(input: input),
                 hasLastKnownUsage: input.lastKnownUsageCapturedAt != nil,
+                isOffline: input.isOffline,
                 now: input.now)
         let redacted = Self.redactedText(input: input, subtitle: subtitle)
         let placeholder = Self.placeholder(input: input)
@@ -945,6 +954,7 @@ extension UsageMenuCardView.Model {
             usesLiveSubtitle: input.usesLiveSubtitle,
             planText: planText,
             planEmphasis: input.planEmphasis,
+            planRenewalText: Self.planRenewalText(input: input),
             metrics: metrics,
             usageNotes: usageNotes,
             subscriptionNotes: Self.subscriptionMetadataNotes(snapshot: input.snapshot, provider: input.provider),
@@ -1038,6 +1048,7 @@ extension UsageMenuCardView.Model {
         isRefreshing: Bool,
         lastError: String?,
         hasLastKnownUsage: Bool,
+        isOffline: Bool = false,
         now: Date) -> (text: String, style: SubtitleStyle)
     {
         if let lastError, !lastError.isEmpty {
@@ -1054,7 +1065,8 @@ extension UsageMenuCardView.Model {
         }
 
         if let updated = snapshot?.updatedAt {
-            return (UsageFormatter.updatedString(from: updated, now: now), .info)
+            let updatedText = UsageFormatter.updatedString(from: updated, now: now)
+            return (isOffline ? L("Offline · %@", updatedText) : updatedText, .info)
         }
 
         return (L("Not fetched yet"), .info)

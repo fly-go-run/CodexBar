@@ -1297,6 +1297,9 @@ extension UsageStore {
                     (context.claudeUsesConsumerAutoPipeline ||
                         Self.isClaudeCLIRateLimitFailure(error) ||
                         isTerminalClaudeCLIParseFailure))
+            let offline = self.offlineDisposition(
+                for: error, id: provider.instanceID, prior: (hadPriorData, preservesPriorData))
+            if offline == .absorbed { return }
             let shouldSurface = self.shouldSurfaceProviderRefreshFailure(
                 provider: provider,
                 state: (hadPriorData, preservesPriorData, restoredClaudeHistory))
@@ -1322,7 +1325,7 @@ extension UsageStore {
                 return
             }
             if shouldSurface {
-                self.errors[provider.instanceID] = error.localizedDescription
+                self.errors[provider.instanceID] = offline == .offline ? L("Offline") : error.localizedDescription
                 if !preservesPriorData, !preservesClaudeWebSessionFailure {
                     self.snapshots.removeValue(forKey: provider.instanceID)
                 }
@@ -1375,18 +1378,7 @@ extension UsageStore {
     nonisolated static func isPreservableNetworkTransportError(_ error: Error) -> Bool {
         let nsError = self.underlyingProviderTransportError(error) as NSError
         guard nsError.domain == NSURLErrorDomain else { return false }
-        switch nsError.code {
-        case NSURLErrorTimedOut,
-             NSURLErrorCancelled,
-             NSURLErrorNetworkConnectionLost,
-             NSURLErrorNotConnectedToInternet,
-             NSURLErrorCannotFindHost,
-             NSURLErrorCannotConnectToHost,
-             NSURLErrorDNSLookupFailed:
-            return true
-        default:
-            return false
-        }
+        return nsError.code == NSURLErrorCancelled || self.transientURLErrorCodes.contains(nsError.code)
     }
 
     static func startupConnectivityRetryDelay(forAttempt attempt: Int) -> TimeInterval? {
@@ -1403,24 +1395,12 @@ extension UsageStore {
 
         let nsError = transportError as NSError
         if nsError.domain == NSURLErrorDomain {
-            switch nsError.code {
-            case NSURLErrorTimedOut,
-                 NSURLErrorNetworkConnectionLost,
-                 NSURLErrorNotConnectedToInternet,
-                 NSURLErrorCannotFindHost,
-                 NSURLErrorCannotConnectToHost,
-                 NSURLErrorDNSLookupFailed:
-                return true
-            default:
-                return false
-            }
+            return self.transientURLErrorCodes.contains(nsError.code)
         }
 
         let message = error.localizedDescription.lowercased()
-        return message.contains("timed out") ||
-            message.contains("timeout") ||
-            message.contains("network connection was lost") ||
-            message.contains("not connected to the internet") ||
+        return self.messageIndicatesTimeout(message) ||
+            self.messageIndicatesOffline(message) ||
             message.contains("cannot find host") ||
             message.contains("cannot connect to host") ||
             message.contains("dns lookup")

@@ -1,6 +1,7 @@
 import AppKit
 import CodexBarCore
 import Foundation
+import Network
 import Observation
 import SweetCookieKit
 
@@ -151,6 +152,8 @@ final class UsageStore {
 
     var snapshots: [ProviderInstanceID: UsageSnapshot] = [:]
     var errors: [ProviderInstanceID: String] = [:]
+    /// Providers whose last refresh failed only because the network is unreachable; they keep their last snapshot.
+    var offlineProviders: Set<ProviderInstanceID> = []
     var diagnostics: [ProviderInstanceID: String] = [:]
     var knownLimitsAvailabilityByProvider: [ProviderInstanceID: UsageLimitsAvailability] = [:]
     var lastSourceLabels: [ProviderInstanceID: String] = [:]
@@ -393,6 +396,11 @@ final class UsageStore {
     @ObservationIgnored var startupConnectivityRetryTask: Task<Void, Never>?
     @ObservationIgnored var startupConnectivityRetryNeeded = false
     @ObservationIgnored var startupConnectivityRetryRefreshActive = false
+    @ObservationIgnored var networkPathMonitor: NWPathMonitor?
+    @ObservationIgnored var networkPathUnsatisfied = false
+    @ObservationIgnored var networkRecoveryTask: Task<Void, Never>?
+    @ObservationIgnored var _test_networkRecoverySleepOverride: (@MainActor (TimeInterval) async throws -> Void)?
+    @ObservationIgnored var _test_networkRecoveryRefresh: (@MainActor () async -> Void)?
     @ObservationIgnored var storageRefreshTask: Task<Void, Never>?
     @ObservationIgnored var storageRefreshGeneration: UInt64 = 0
     @ObservationIgnored var storageRefreshInFlightSignature: String?
@@ -586,6 +594,7 @@ final class UsageStore {
         }
         Task { await self.refresh(enrichmentMode: .automatic) }
         self.startTimer()
+        self.startNetworkPathMonitor()
     }
 
     var iconStyle: IconStyle {
@@ -960,6 +969,8 @@ final class UsageStore {
         self.openAISubscriptionMetadataEnrichmentTask?.cancel()
         self.memoryPressureReliefTask?.cancel()
         self.startupConnectivityRetryTask?.cancel()
+        self.networkRecoveryTask?.cancel()
+        self.networkPathMonitor?.cancel()
         self.storageRefreshTask?.cancel()
         self.codexPlanHistoryBackfillTask?.cancel()
         self.resetBoundaryRefreshTask?.cancel()

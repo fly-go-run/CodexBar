@@ -27,7 +27,7 @@ extension CodexAccountScopedRefreshTests {
     }
 
     @Test
-    func `withheld success restores first failure suppression and retains a subsequent outage`() async throws {
+    func `withheld success restores gate state and keeps a subsequent outage offline`() async throws {
         try await self.withWithheldPublicationFixture { fixture in
             let script = WithheldPublicationFetchScript(success: fixture.low)
             self.installContextualCodexProvider(on: fixture.store, sourceLabel: "oauth", kind: .oauth) { _ in
@@ -41,10 +41,13 @@ extension CodexAccountScopedRefreshTests {
 
             await script.setFailing(true)
             await fixture.store.refreshProvider(.codex, allowDisabled: true)
-            #expect(fixture.store.errors[.codex] == nil)
+            // The fixture's prior data is long stale, so the outage surfaces the calm offline notice at once.
+            let staleOffline = ProviderTransportRegressionSupport.offlineError(preservingPriorData: true)
+            #expect(fixture.store.errors[.codex] == staleOffline)
             await fixture.store.refreshProvider(.codex, allowDisabled: true)
-            #expect(fixture.store.errors[.codex] != nil)
-            #expect(fixture.store.failureGates[.codex]?.streak == 2)
+            #expect(fixture.store.errors[.codex] == staleOffline)
+            #expect(fixture.store.offlineProviders.contains(.codex))
+            #expect(fixture.store.failureGates[.codex]?.streak == 0)
             let persisted = try #require(fixture.snapshotStore.load(for: fixture.accounts).first)
             try expectWithheldSnapshot(persisted.snapshot, matches: fixture.prior)
         }

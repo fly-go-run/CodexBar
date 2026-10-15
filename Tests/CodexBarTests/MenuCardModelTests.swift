@@ -137,7 +137,7 @@ struct ProviderInlineDashboardModelTests {
 
         #expect(model.inlineUsageDashboard?.kpis.first?.value == "$0.25")
         #expect(model.inlineUsageDashboard?.points.count == 2)
-        #expect(model.inlineUsageDashboard?.detailLines.contains { $0.contains("claude-opus-4") } == true)
+        #expect(model.inlineUsageDashboard?.detailLines.contains { $0.contains("claude-opus-4") } == false)
         #expect(model.tokenUsage?.sessionLine.contains("$0.25") == true)
         #expect(model.tokenUsage?.monthLine.contains("$0.37") == true)
     }

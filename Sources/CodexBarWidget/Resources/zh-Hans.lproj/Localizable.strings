@@ -127,7 +127,7 @@
 "Reset: %@" = "重置：%@";
 "Resets %@" = "重置于 %@";
 "Resets in" = "距离重置";
-"Resets in %@" = "%@后重置";
+"Resets in %@" = "%@ 后重置";
 "Reviews" = "代码审查";
 "Rolling" = "滚动";
 "Runs out" = "预计耗尽";

@@ -2638,3 +2638,11 @@
 "Claude Platform exposes Console credit balance and monthly spend, not local token cost history." = "Claude Platform exposes Console credit balance and monthly spend, not local token cost history.";
 "token_speed_window_line" = "Speed (24h): %@";
 "token_speed_last_hour_line" = "Last hour: %@ tok/s · %@ requests";
+"token_speed_title_last_hour" = "Output speed · last hour";
+"token_speed_title_24h" = "Output speed · 24h";
+"token_speed_slowdown_help" = "%@%% slower than the 24h average";
+"plan_renews_short" = "renews %@";
+"menu_tokens_short" = "%@ tokens";
+
+"Offline · %@" = "Offline · %@";
+"Offline · data may be outdated" = "Offline · data may be outdated";

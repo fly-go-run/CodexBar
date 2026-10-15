@@ -2637,3 +2637,11 @@
 "Claude Platform exposes Console credit balance and monthly spend, not local token cost history." = "يعرض Claude Platform رصيد الائتمان في Console والإنفاق الشهري، وليس سجل تكلفة الرموز المحلي.";
 "token_speed_window_line" = "السرعة (24 ساعة): %@";
 "token_speed_last_hour_line" = "آخر ساعة: %@ tok/s · %@ طلبات";
+"token_speed_title_last_hour" = "سرعة الإخراج · آخر ساعة";
+"token_speed_title_24h" = "سرعة الإخراج · 24 ساعة";
+"token_speed_slowdown_help" = "أبطأ بنسبة %@%% من متوسط 24 ساعة";
+"plan_renews_short" = "التجديد %@";
+"menu_tokens_short" = "رموز %@";
+
+"Offline · %@" = "غير متصل · %@";
+"Offline · data may be outdated" = "غير متصل · قد تكون البيانات قديمة";

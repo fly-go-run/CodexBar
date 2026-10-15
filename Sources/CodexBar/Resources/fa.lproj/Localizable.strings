@@ -2637,3 +2637,11 @@
 "Claude Platform exposes Console credit balance and monthly spend, not local token cost history." = "Claude Platform موجودی اعتبار و هزینه ماهانه Console را نشان می‌دهد، نه تاریخچه هزینه محلی توکن‌ها.";
 "token_speed_window_line" = "سرعت (۲۴ ساعت): %@";
 "token_speed_last_hour_line" = "ساعت گذشته: %@ tok/s · %@ درخواست";
+"token_speed_title_last_hour" = "سرعت خروجی · ساعت گذشته";
+"token_speed_title_24h" = "سرعت خروجی · ۲۴ ساعت";
+"token_speed_slowdown_help" = "%@٪ کندتر از میانگین ۲۴ ساعت";
+"plan_renews_short" = "تمدید %@";
+"menu_tokens_short" = "توکن های %@";
+
+"Offline · %@" = "آفلاین · %@";
+"Offline · data may be outdated" = "آفلاین · ممکن است داده‌ها قدیمی باشند";

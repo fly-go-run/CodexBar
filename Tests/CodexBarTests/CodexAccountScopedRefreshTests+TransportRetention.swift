@@ -23,7 +23,7 @@ extension CodexAccountScopedRefreshTests {
 
         await store.refreshProvider(.codex, allowDisabled: true)
         #expect(store.snapshots[.codex]?.updatedAt == prior.updatedAt)
-        #expect(store.errors[.codex] == nil)
+        #expect(store.errors[.codex] == ProviderTransportRegressionSupport.offlineError(preservingPriorData: true))
         await store.refreshProvider(.codex, allowDisabled: true)
 
         #expect(await transport.requests().count == 2)
@@ -31,7 +31,7 @@ extension CodexAccountScopedRefreshTests {
         #expect(store.snapshots[.codex]?.secondary == prior.secondary)
         #expect(store.snapshots[.codex]?.updatedAt == prior.updatedAt)
         #expect(store.snapshots[.codex]?.accountEmail(for: .codex) == "retained@example.com")
-        #expect(store.errors[.codex] == "Network error: Verbindung fehlgeschlagen")
+        #expect(store.errors[.codex] == ProviderTransportRegressionSupport.offlineError(preservingPriorData: true))
         #expect(store.lastCodexUsagePublicationGuard == owner)
         #expect(store.freshCodexAccountScopedRefreshGuard() == owner)
 
@@ -56,7 +56,7 @@ extension CodexAccountScopedRefreshTests {
         await store.refreshProvider(.codex, allowDisabled: true)
         #expect(await transport.requests().count == 2)
         #expect(store.snapshots[.codex] == nil)
-        #expect(store.errors[.codex] == "Network error: Verbindung fehlgeschlagen")
+        #expect(store.errors[.codex] == ProviderTransportRegressionSupport.offlineError(preservingPriorData: false))
         #expect(store.freshCodexAccountScopedRefreshGuard() == owner)
 
         store.persistWidgetSnapshot(reason: "codex-transport-no-prior")
@@ -111,7 +111,7 @@ extension CodexAccountScopedRefreshTests {
         #expect(store.snapshots[.codex] == nil)
         #expect(store.lastKnownResetSnapshots[.codex] == nil)
         #expect(store.lastCodexUsagePublicationGuard?.identity == .providerAccount(id: "acct-next"))
-        #expect(store.errors[.codex] == "Network error: Verbindung fehlgeschlagen")
+        #expect(store.errors[.codex] == ProviderTransportRegressionSupport.offlineError(preservingPriorData: false))
 
         store.persistWidgetSnapshot(reason: "after-codex-account-change")
         await store.widgetSnapshotPersistTask?.value

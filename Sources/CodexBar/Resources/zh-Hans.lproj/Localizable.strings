@@ -847,7 +847,7 @@
 "Latest billing day (%@)" = "最近结算日（%@）";
 "%@ left" = "%@ 剩余";
 "Resets %@" = "重置于 %@";
-"Resets in %@" = "%@后重置";
+"Resets in %@" = "%@ 后重置";
 "Resets now" = "立即重置";
 "reset_tomorrow_format" = "明天 %@";
 "Lasts until reset" = "持续到重置";
@@ -2625,3 +2625,11 @@
 "Claude Platform exposes Console credit balance and monthly spend, not local token cost history." = "Claude Platform 显示 Console 额度余额和每月支出，而不是本地 token 成本历史记录。";
 "token_speed_window_line" = "输出速度 (24h): %@";
 "token_speed_last_hour_line" = "近 1 小时: %@ tok/s · %@ 次请求";
+"token_speed_title_last_hour" = "输出速度 · 近 1 小时";
+"token_speed_title_24h" = "输出速度 · 24h";
+"token_speed_slowdown_help" = "比 24 小时平均慢 %@%%";
+"plan_renews_short" = "%@ 续订";
+"menu_tokens_short" = "%@ tokens";
+
+"Offline · %@" = "离线 · %@";
+"Offline · data may be outdated" = "离线 · 数据可能已过期";

@@ -12,14 +12,15 @@ struct MetricTextUpdateLayoutTests {
 
         var initialText: String {
             switch self {
-            case .pace: "On pace · Lasts until reset"
+            // The card only shows pace when it is a risk; "Lasts until reset" stays silent.
+            case .pace: "Lasts until reset"
             case .detail: "100 credits remaining"
             }
         }
 
         var updatedText: String {
             switch self {
-            case .pace: "32% in deficit · Runs out in 1d 11m"
+            case .pace: "Runs out in 1d 11m"
             case .detail: "1234 credits remaining this week"
             }
         }

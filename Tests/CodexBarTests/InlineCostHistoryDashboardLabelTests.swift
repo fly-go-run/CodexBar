@@ -368,10 +368,9 @@ struct InlineCostHistoryDashboardLabelTests {
             "Latest tokens",
             "30d tokens",
         ])
-        #expect(dashboard.detailLines == [
-            "Top model: test-model",
-            "Estimated from token usage · not a subscription bill",
-        ])
+        // The top model lives in the chart breakdown and the estimate hint in the chart's help.
+        #expect(dashboard.detailLines.isEmpty)
+        #expect(dashboard.chartHelp == "Estimated from token usage · not a subscription bill")
 
         let japaneseAccessibilityLabels = CodexBarLocalizationOverride.$appLanguage.withValue("ja") {
             [7, 30].map { historyDays in
@@ -565,22 +564,11 @@ extension InlineCostHistoryDashboardLabelTests {
             now: now))
 
         let dashboard = try #require(model.inlineUsageDashboard)
-        #expect(dashboard.kpis.map(\.title) == [
-            "Today",
-            "Est. Current window",
-            "Latest tokens",
-            "Est. Current window tokens",
-            "30d",
-            "30d tokens",
-        ])
-        #expect(dashboard.kpis.map(\.value) == [
-            "$10.00",
-            "$10.00",
-            "1K",
-            "1K",
-            "$14.00",
-            "1.4K",
-        ])
+        // Two headline numbers with token counts underneath; the 30d totals caption the chart.
+        #expect(dashboard.kpis.map(\.title) == ["Today", "Current window"])
+        #expect(dashboard.kpis.map(\.value) == ["$10.00", "$10.00"])
+        #expect(dashboard.kpis.map(\.detail) == ["1K tokens", "1K tokens"])
+        #expect(dashboard.chartCaption == "Last 30 days  $14.00 · 1.4K tokens")
         #expect(dashboard.detailLines.contains { $0.contains("Previous window") } == false)
         #expect(dashboard.quotaWindows.map(\.title) == ["Current window", "Previous window"])
         #expect(dashboard.quotaWindows.map(\.value) == ["$10.00 · 1K", "$4.00 · 400"])

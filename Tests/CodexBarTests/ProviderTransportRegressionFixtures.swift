@@ -73,6 +73,11 @@ enum ProviderTransportRegressionSupport {
         ])
     }
 
+    /// What an offline outage publishes for fixtures whose prior data is far older than the stale-surface window.
+    static func offlineError(preservingPriorData: Bool) -> String {
+        preservingPriorData ? L("Offline · data may be outdated") : L("Offline")
+    }
+
     static func browser(root: URL) -> BrowserDetection {
         BrowserDetection(
             homeDirectory: root.path,
@@ -116,5 +121,70 @@ enum ProviderTransportRegressionSupport {
         let hook = code == .cancelled ? "cancelled" : code == .timedOut ? "timeout" : "offline"
         #expect(UsageStore.refreshFailureHookStatus(error) == hook)
         if let description { #expect(error.localizedDescription == description) }
+    }
+
+    @MainActor
+    static func withStore(
+        provider: UsageProvider,
+        hasPriorData: Bool = true,
+        operation: @MainActor (UsageStore, UsageSnapshot) async throws -> Void) async throws
+    {
+        let root = ProviderTransportRegressionFixtures.root.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let configStore = CodexBarConfigStore(fileURL: root.appendingPathComponent("config.json"))
+        try configStore.save(testConfigWithAllProvidersDisabled())
+        let settings = SettingsStore(
+            userDefaults: InMemoryUserDefaults(),
+            configStore: configStore,
+            codexCookieStore: InMemoryCookieHeaderStore(),
+            claudeCookieStore: InMemoryCookieHeaderStore(),
+            tokenAccountStore: InMemoryTokenAccountStore(fileURL: root.appendingPathComponent("accounts.json")),
+            keychainAccessPolicy: SettingsStoreKeychainAccessPolicy(
+                setDisabled: { _ in }, isExplicitlyDisabled: { false }),
+            performInitialProviderDetection: false)
+        settings.providerDetectionCompleted = true
+        settings.refreshFrequency = .manual
+        settings.statusChecksEnabled = false
+        settings.openAIWebAccessEnabled = false
+        settings.claudeUsageDataSource = .oauth
+        settings.updateProviderConfig(provider: provider) { config in
+            config.source = .oauth
+        }
+        enableTestProviders([provider], settings: settings)
+        let environment = Self.environment
+        let store = UsageStore(
+            fetcher: UsageFetcher(environment: environment),
+            browserDetection: Self.browser(root: root),
+            settings: settings,
+            historicalUsageHistoryStore: HistoricalUsageHistoryStore(fileURL: root
+                .appendingPathComponent("history.json")),
+            planUtilizationHistoryStore: PlanUtilizationHistoryStore(directoryURL: nil),
+            startupBehavior: .testing,
+            environmentBase: environment,
+            widgetSnapshotURL: root.appendingPathComponent("widget.json"),
+            widgetTimelineReloader: {})
+        defer {
+            store._test_providerFetchOutcomeOverride = nil
+            store._test_widgetSnapshotSaveOverride = nil
+            store.stopSharedSpendDashboardPublication()
+            settings.configFileWatcher?.stop()
+        }
+        let prior = UsageSnapshot(
+            primary: RateWindow(usedPercent: 17, windowMinutes: 300, resetsAt: nil, resetDescription: nil),
+            secondary: RateWindow(usedPercent: 31, windowMinutes: 10080, resetsAt: nil, resetDescription: nil),
+            updatedAt: Self.capturedAt,
+            identity: ProviderIdentitySnapshot(
+                providerID: provider.instanceID,
+                accountEmail: "fixture@example.test",
+                accountOrganization: nil,
+                loginMethod: "Pro"))
+        if hasPriorData { store._setSnapshotForTesting(prior, provider: provider) }
+        do {
+            try await operation(store, prior)
+        } catch {
+            await store.widgetSnapshotPersistTask?.value
+            throw error
+        }
+        await store.widgetSnapshotPersistTask?.value
     }
 }

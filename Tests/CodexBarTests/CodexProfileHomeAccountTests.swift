@@ -105,7 +105,6 @@ struct CodexProfileHomeAccountTests {
 
         #expect(originalModel.tokenUsage?.sessionLine.contains("$12") == true)
         #expect(originalModel.inlineUsageDashboard?.points.isEmpty == false)
-        #expect(originalModel.inlineUsageDashboard?.detailLines.contains { $0.contains("fictional-profile-a") } == true)
 
         fixture.settings.selectDisplayedCodexVisibleAccount(fixture.secondAccount)
 
@@ -192,10 +191,6 @@ struct CodexProfileHomeAccountTests {
         #expect(completedPoints.count == 30)
         #expect(completedPoints.last?.id == "2026-08-21")
         #expect(completedPoints.last?.value == 34)
-        #expect(completedModel.inlineUsageDashboard?.detailLines
-            .contains { $0.contains("fictional-profile-b") } == true)
-        #expect(completedModel.inlineUsageDashboard?.detailLines
-            .contains { $0.contains("fictional-profile-a") } == false)
     }
 
     @Test

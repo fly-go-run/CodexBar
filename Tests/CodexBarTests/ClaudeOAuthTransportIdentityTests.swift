@@ -26,7 +26,7 @@ struct ClaudeOAuthTransportIdentityTests {
         #expect(!ClaudeOAuthFetchStrategy().shouldFallback(on: error, context: Self.context()))
     }
 
-    @Test(arguments: [URLError.Code.badURL, .secureConnectionFailed])
+    @Test(arguments: [URLError.Code.badURL, .serverCertificateUntrusted])
     func `explicit OAuth does not broaden the URL retention allowlist`(code: URLError.Code) async {
         let (error, _) = await Self.failure(underlying: ProviderTransportRegressionSupport.urlError(code))
         #expect(!UsageStore.shouldPreservePriorSnapshot(after: error, hadPriorData: true))

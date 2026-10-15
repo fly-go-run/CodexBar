@@ -31,6 +31,7 @@ extension UsageStore {
         self.snapshots.removeValue(forKey: provider.instanceID)
         self.lastKnownResetSnapshots.removeValue(forKey: provider.instanceID)
         self.errors[provider.instanceID] = nil
+        self.offlineProviders.remove(provider.instanceID)
         self.diagnostics[provider.instanceID] = nil
         self.knownLimitsAvailabilityByProvider.removeValue(forKey: provider.instanceID)
         self.lastSourceLabels.removeValue(forKey: provider.instanceID)

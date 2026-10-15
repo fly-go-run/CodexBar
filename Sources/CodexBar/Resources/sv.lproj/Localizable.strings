@@ -2632,3 +2632,11 @@
 "Claude Platform exposes Console credit balance and monthly spend, not local token cost history." = "Claude Platform visar Console-kreditsaldo och månadsutgifter, inte lokal tokenkostnadshistorik.";
 "token_speed_window_line" = "Hastighet (24 h): %@";
 "token_speed_last_hour_line" = "Senaste timmen: %@ tok/s · %@ förfrågningar";
+"token_speed_title_last_hour" = "Utdatahastighet · senaste timmen";
+"token_speed_title_24h" = "Utdatahastighet · 24 h";
+"token_speed_slowdown_help" = "%@ %% långsammare än 24 h-snittet";
+"plan_renews_short" = "förnyas %@";
+"menu_tokens_short" = "%@ token";
+
+"Offline · %@" = "Offline · %@";
+"Offline · data may be outdated" = "Offline · data kan vara inaktuella";

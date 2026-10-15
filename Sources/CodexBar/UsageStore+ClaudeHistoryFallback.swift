@@ -22,6 +22,7 @@ extension UsageStore {
 
     func recordProviderFetchSuccessErrorState(provider: UsageProvider) {
         self.errors[provider.instanceID] = nil
+        self.offlineProviders.remove(provider.instanceID)
         self.clearClaudeHistoryFallbackEligibility(provider: provider)
     }
 
@@ -85,11 +86,9 @@ extension UsageStore {
         }
 
         let message = error.localizedDescription.lowercased()
-        return message.contains("timed out") ||
-            message.contains("timeout") ||
-            message.contains("cancelled") ||
-            message.contains("network connection was lost") ||
-            message.contains("not connected to the internet")
+        return self.messageIndicatesTimeout(message) ||
+            self.messageIndicatesOffline(message) ||
+            message.contains("cancelled")
     }
 
     nonisolated static func lastAvailableFailedFetchKind(

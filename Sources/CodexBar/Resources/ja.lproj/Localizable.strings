@@ -2633,3 +2633,11 @@
 "Claude Platform exposes Console credit balance and monthly spend, not local token cost history." = "Claude Platform は、ローカルのトークンコスト履歴ではなく、Console のクレジット残高と月間支出を表示します。";
 "token_speed_window_line" = "出力速度 (24時間): %@";
 "token_speed_last_hour_line" = "直近1時間: %@ tok/s · %@ リクエスト";
+"token_speed_title_last_hour" = "出力速度 · 直近1時間";
+"token_speed_title_24h" = "出力速度 · 24時間";
+"token_speed_slowdown_help" = "24時間平均より %@%% 遅い";
+"plan_renews_short" = "%@ 更新";
+"menu_tokens_short" = "%@ トークン";
+
+"Offline · %@" = "オフライン · %@";
+"Offline · data may be outdated" = "オフライン · データが古い可能性があります";
