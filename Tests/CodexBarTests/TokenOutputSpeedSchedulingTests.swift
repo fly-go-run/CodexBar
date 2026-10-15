@@ -112,4 +112,36 @@ struct TokenOutputSpeedSchedulingTests {
         #expect(await gate.scopes == ["/homes/a", "/homes/b"])
         #expect(store.tokenOutputSpeeds[id]?.models.first?.outputTokens == 900)
     }
+
+    @Test
+    func `a scope switch that schedules nothing still discards the old result and rescans`() async {
+        let store = self.makeStore()
+        let gate = ScanGate()
+        var home: String? = "/homes/a"
+        store._test_tokenOutputSpeedCodexHomePath = { _ in home }
+        let (first, second) = (self.speed(tokens: 500), self.speed(tokens: 900))
+        store._test_tokenOutputSpeedScan = { _, scope in
+            _ = await gate.enter(scope: scope)
+            return scope == "/homes/a" ? first : second
+        }
+        let id = UsageProvider.codex.instanceID
+
+        store.scheduleTokenOutputSpeedRefresh(for: .codex)
+        #expect(await self.waitUntil { await gate.startedCount == 1 })
+        // The account switch only changes the live scope; it does not ask for another speed refresh.
+        home = "/homes/b"
+        await gate.releaseNext()
+
+        #expect(await self.waitUntil { await gate.startedCount == 2 })
+        #expect(store.tokenOutputSpeeds[id] == nil)
+        #expect(store.tokenOutputSpeed(for: .codex) == nil)
+        await gate.releaseNext()
+        #expect(await self.waitUntil { store.tokenOutputSpeedScanTasks[id] == nil })
+        #expect(await gate.scopes == ["/homes/a", "/homes/b"])
+        #expect(store.tokenOutputSpeed(for: .codex)?.models.first?.outputTokens == 900)
+
+        // Switching back and forth hides the numbers immediately, without any scan in between.
+        home = "/homes/a"
+        #expect(store.tokenOutputSpeed(for: .codex) == nil)
+    }
 }

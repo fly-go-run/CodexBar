@@ -190,9 +190,7 @@ final class UsageStore {
     @ObservationIgnored var sharedSpendDashboardTokenPublicationDebounceTask: Task<Void, Never>?
     var tokenErrors: [ProviderInstanceID: String] = [:]
     var tokenOutputSpeeds: [ProviderInstanceID: TokenOutputSpeedSnapshot] = [:]
-    @ObservationIgnored var tokenOutputSpeedLastScanFinishedAt: [ProviderInstanceID: Date] = [:]
-    @ObservationIgnored var tokenOutputSpeedScopes: [ProviderInstanceID: TokenOutputSpeedScope] = [:]
-    @ObservationIgnored var tokenOutputSpeedScanPending: Set<ProviderInstanceID> = []
+    @ObservationIgnored var tokenOutputSpeedSchedule: [ProviderInstanceID: TokenOutputSpeedScheduleState] = [:]
     @ObservationIgnored var tokenOutputSpeedMinInterval: TimeInterval = UsageStore.tokenOutputSpeedMinInterval
     @ObservationIgnored var _test_tokenOutputSpeedScan: TokenOutputSpeedScanOverride?
     @ObservationIgnored var _test_tokenOutputSpeedCodexHomePath: (@MainActor (UsageProvider) -> String?)?

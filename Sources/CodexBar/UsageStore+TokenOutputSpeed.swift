@@ -13,8 +13,23 @@ extension UsageStore {
         let signature: String
     }
 
+    /// Per-provider scan bookkeeping.
+    struct TokenOutputSpeedScheduleState {
+        /// A request arrived that no scan has started for yet.
+        var pending = false
+        var lastFinishedAt: Date?
+        /// The scope the published speeds were measured for.
+        var publishedScope: TokenOutputSpeedScope?
+    }
+
+    /// Speeds measured for another scope (for example before a Codex home switch) are never shown, even
+    /// before the next scan has replaced them.
     func tokenOutputSpeed(for provider: UsageProvider) -> TokenOutputSpeedSnapshot? {
-        self.tokenOutputSpeeds[provider.instanceID]
+        let id = provider.instanceID
+        guard let snapshot = self.tokenOutputSpeeds[id],
+              self.tokenOutputSpeedSchedule[id]?.publishedScope == self.tokenOutputSpeedScope(for: provider)
+        else { return nil }
+        return snapshot
     }
 
     /// Runs beside the cost refresh rather than inside it: cost snapshots are TTL-cached for a
@@ -26,13 +41,7 @@ extension UsageStore {
     func scheduleTokenOutputSpeedRefresh(for provider: UsageProvider, now: Date = Date()) {
         guard provider == .claude || provider == .codex else { return }
         let id = provider.instanceID
-        let scope = self.tokenOutputSpeedScope(for: provider)
-        if let previous = self.tokenOutputSpeedScopes[id], previous != scope {
-            // The published numbers belong to the old scope.
-            self.tokenOutputSpeeds[id] = nil
-        }
-        self.tokenOutputSpeedScopes[id] = scope
-        self.tokenOutputSpeedScanPending.insert(id)
+        self.tokenOutputSpeedSchedule[id, default: .init()].pending = true
         guard self.tokenOutputSpeedScanTasks[id] == nil else { return }
         self.tokenOutputSpeedScanTasks[id] = Task { [weak self] in
             await self?.runTokenOutputSpeedScans(for: provider, firstRequestAt: now)
@@ -51,7 +60,7 @@ extension UsageStore {
         while !Task.isCancelled {
             // The floor runs from the end of the previous scan, so a slow scan is never followed by another
             // at once; a request inside the floor waits for its deadline instead of being dropped.
-            if let finished = self.tokenOutputSpeedLastScanFinishedAt[id] {
+            if let finished = self.tokenOutputSpeedSchedule[id]?.lastFinishedAt {
                 let elapsed = (requestedAt ?? Date()).timeIntervalSince(finished)
                 if elapsed >= 0, elapsed < self.tokenOutputSpeedMinInterval {
                     do {
@@ -62,20 +71,27 @@ extension UsageStore {
                 }
             }
             requestedAt = nil
-            guard let scope = self.tokenOutputSpeedScopes[id] else { break }
-            self.tokenOutputSpeedScanPending.remove(id)
+            // The scope is read when the scan starts and compared again when it ends: a switch in between
+            // (which may not have scheduled anything itself) makes the result stale.
+            let scope = self.tokenOutputSpeedScope(for: provider)
+            self.tokenOutputSpeedSchedule[id, default: .init()].pending = false
             let result = await self.scanTokenOutputSpeed(provider: provider, scope: scope)
-            self.tokenOutputSpeedLastScanFinishedAt[id] = Date()
-            if case let .success(snapshot) = result, self.tokenOutputSpeedScopes[id] == scope {
+            self.tokenOutputSpeedSchedule[id, default: .init()].lastFinishedAt = Date()
+            if scope != self.tokenOutputSpeedScope(for: provider) {
+                self.tokenOutputSpeeds[id] = nil
+                self.tokenOutputSpeedSchedule[id, default: .init()].publishedScope = nil
+                self.tokenOutputSpeedSchedule[id, default: .init()].pending = true
+            } else if case let .success(snapshot) = result {
                 let summary = snapshot?.models.map { "\($0.model ?? "?")=\(Int($0.tokensPerSecond))" }
                     .joined(separator: ",") ?? "none"
                 self.tokenCostLogger.debug("output speed provider=\(provider.rawValue) \(summary)")
+                self.tokenOutputSpeedSchedule[id, default: .init()].publishedScope = scope
                 if self.tokenOutputSpeeds[id] != snapshot {
                     self.tokenOutputSpeeds[id] = snapshot
                 }
             }
-            // Checked and cleared without suspending, so a request cannot slip in between.
-            if !self.tokenOutputSpeedScanPending.contains(id) { break }
+            // Checked without suspending, so a request cannot slip in between.
+            if self.tokenOutputSpeedSchedule[id]?.pending != true { break }
         }
         self.tokenOutputSpeedScanTasks[id] = nil
     }
