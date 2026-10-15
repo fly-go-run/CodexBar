@@ -705,6 +705,7 @@
 "Unavailable" = "Недоступний";
 "Weekly" = "Щотижня";
 "not detected" = "не виявлено";
+"installed (version not detected)" = "встановлено (версію не виявлено)";
 "Estimated from local Codex logs for the selected account." = "Оцінено з локальних журналів Codex для вибраного облікового запису.";
 
 /* Additional provider settings and alerts */

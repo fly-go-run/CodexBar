@@ -46,7 +46,7 @@ struct ClaudeVersionRecoveryTests {
     }
 
     @Test
-    func `user initiated OAuth success does not trigger the CLI version probe`() async throws {
+    func `user initiated OAuth refresh also fills the missing Claude version`() async throws {
         try await self.withMissingCredentialsFile {
             let probe = ProbeState()
             self.configureVersionProbe(probe)
@@ -58,11 +58,91 @@ struct ClaudeVersionRecoveryTests {
             await ProviderInteractionContext.$current.withValue(.userInitiated) {
                 await fixture.store.refreshProvider(.claude)
             }
+            await fixture.store.claudeVersionRefreshTask?.value
 
-            #expect(await fixture.store.claudeVersionRefreshTask == nil)
-            #expect(await fixture.store.version(for: .claude) == nil)
-            #expect(probe.callCount == 0)
+            #expect(await fixture.store.version(for: .claude) == "2.1.229 (Claude Code)")
+            #expect(probe.callCount == 1)
         }
+    }
+
+    @Test
+    func `manual refresh probes the Claude version only while it is missing`() async throws {
+        try await self.withMissingCredentialsFile {
+            let probe = ProbeState()
+            self.configureVersionProbe(probe)
+            defer { ProviderVersionDetector.resetHooksAndCache() }
+
+            let fixture = try await MainActor.run {
+                try self.makeFixture(strategyKind: .oauth)
+            }
+            for _ in 0..<2 {
+                await ProviderInteractionContext.$current.withValue(.userInitiated) {
+                    await fixture.store.refreshProvider(.claude)
+                }
+                await fixture.store.claudeVersionRefreshTask?.value
+            }
+
+            #expect(await fixture.store.version(for: .claude) == "2.1.229 (Claude Code)")
+            #expect(probe.callCount == 1)
+        }
+    }
+
+    @Test
+    func `gated background probe marks a resolved Claude binary as installed without version`() async throws {
+        try await ClaudeCLIBackgroundAvailability.withIsolatedStoreForTesting {
+            try await self.withMissingCredentialsFile {
+                let probe = ProbeState()
+                self.configureVersionProbe(probe, binaryPath: "/mock/bin/claude-\(UUID().uuidString)")
+                defer { ProviderVersionDetector.resetHooksAndCache() }
+
+                let fixture = try await MainActor.run {
+                    try self.makeFixture(strategyKind: .oauth)
+                }
+                await ProviderInteractionContext.$current.withValue(.background) {
+                    await fixture.store.detectVersions()
+                    await fixture.store.versionDetectionTask?.value
+                }
+
+                #expect(probe.callCount == 0)
+                #expect(await fixture.store.version(for: .claude) == nil)
+                #expect(await fixture.store.claudeBinaryResolvedWithoutVersion)
+                #expect(await fixture.store.versionDisplayText(for: .claude) == L("installed (version not detected)"))
+
+                await ProviderInteractionContext.$current.withValue(.userInitiated) {
+                    await fixture.store.refreshProvider(.claude)
+                }
+                await fixture.store.claudeVersionRefreshTask?.value
+
+                #expect(await !fixture.store.claudeBinaryResolvedWithoutVersion)
+                #expect(await fixture.store.versionDisplayText(for: .claude) == "2.1.229 (Claude Code)")
+            }
+        }
+    }
+
+    @Test
+    @MainActor
+    func `version display text distinguishes installed from missing`() throws {
+        let fixture = try self.makeFixture(strategyKind: .oauth)
+        let store = fixture.store
+        #expect(store.versionDisplayText(for: .claude) == L("not detected"))
+        #expect(store.versionDisplayText(for: .codex) == L("not detected"))
+
+        store.claudeBinaryResolvedWithoutVersion = true
+        #expect(store.versionDisplayText(for: .claude) == L("installed (version not detected)"))
+        #expect(store.versionDisplayText(for: .codex) == L("not detected"))
+
+        let context = ProviderPresentationContext(
+            provider: .claude,
+            settings: store.settings,
+            store: store,
+            metadata: store.metadata(for: .claude))
+        let line = ClaudeProviderImplementation().presentation(context: context).detailLine(context)
+        #expect(line.hasSuffix(L("installed (version not detected)")))
+
+        store.versions[UsageProvider.claude.instanceID] = "2.1.296 (Claude Code)"
+        #expect(store.versionDisplayText(for: .claude) == "2.1.296 (Claude Code)")
+        let trimmed = ClaudeProviderImplementation().presentation(context: context).detailLine(context)
+        #expect(trimmed.hasSuffix(" 2.1.296"))
     }
 
     @Test

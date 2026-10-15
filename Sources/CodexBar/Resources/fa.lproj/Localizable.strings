@@ -709,6 +709,7 @@
 "Unavailable" = "در دسترس نیست";
 "Weekly" = "هفتگی";
 "not detected" = "شناسایی نشد";
+"installed (version not detected)" = "نصب‌شده (نسخه شناسایی نشد)";
 "Estimated from local Codex logs for the selected account." = "برآورد شده از لاگ های محلی Codex حساب انتخاب شده.";
 
 /* Additional provider settings and alerts */

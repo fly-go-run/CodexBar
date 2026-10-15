@@ -204,6 +204,8 @@ final class UsageStore {
     var openAIDashboardCookieImportStatus: String?
     var openAIDashboardCookieImportDebugLog: String?
     var versions: [ProviderInstanceID: String] = [:]
+    /// The Claude binary resolves but its gated version probe produced no version yet.
+    var claudeBinaryResolvedWithoutVersion = false
     @ObservationIgnored var versionDetectionProviders: Set<ProviderInstanceID> = []
     @ObservationIgnored private(set) var versionDetectionTask: Task<Void, Never>?
     @ObservationIgnored var claudeVersionRefreshTask: Task<Void, Never>?
@@ -1237,6 +1239,9 @@ extension UsageStore {
                 versions[claudeID] = recoveredClaudeVersion
             }
             self.versions = versions
+            self.claudeBinaryResolvedWithoutVersion = probesClaude
+                && versions[claudeID] == nil
+                && detection.claudeBinaryResolvable
         }
     }
 

@@ -187,6 +187,7 @@
 "Weekly" = "每週";
 "Weekly usage unavailable for this account." = "此帳號無法取得每週使用量。";
 "not detected" = "未偵測到";
+"installed (version not detected)" = "已安裝（未偵測到版本）";
 "built_format" = "建置於 %@";
 "cost_status_error" = "%1$@：%2$@";
 "cost_status_fetching" = "%1$@：取得中… %2$@";

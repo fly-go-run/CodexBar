@@ -705,6 +705,7 @@
 "Unavailable" = "Indisponible";
 "Weekly" = "Hebdomadaire";
 "not detected" = "non détecté";
+"installed (version not detected)" = "installé (version non détectée)";
 "Estimated from local Codex logs for the selected account." = "Estimé à partir des journaux Codex locaux pour le compte sélectionné.";
 
 /* Additional provider settings and alerts */

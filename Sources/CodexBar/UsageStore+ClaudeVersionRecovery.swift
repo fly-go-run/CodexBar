@@ -3,16 +3,12 @@ import Foundation
 
 extension UsageStore {
     /// #2899: the startup version probe runs in a detached background task, where the Claude
-    /// opaque-child gate denies `claude --version` on a cold profile. A successful user-initiated
-    /// CLI usage fetch proves the same resolved binary works, so re-run only the Claude version
-    /// probe in that user-initiated context while the version is still missing.
-    func refreshClaudeVersionAfterUserInitiatedCLIFetch(
-        provider: UsageProvider,
-        strategyKind: ProviderFetchKind)
-    {
-        // Provider-specific by design: only Claude's gated version probe recovers from a user-initiated CLI success.
+    /// opaque-child gate denies `claude --version` on a cold profile. A manual refresh is user-initiated,
+    /// so the gate allows the probe; run only the Claude version probe once per manual refresh while the
+    /// version is still missing, whatever usage source the refresh ends up using (OAuth, CLI or web).
+    func refreshMissingClaudeVersionForUserInitiatedRefresh(provider: UsageProvider) {
+        // Provider-specific by design: only Claude's version probe is background-gated.
         guard provider == .claude,
-              strategyKind == .cli,
               ProviderInteractionContext.current == .userInitiated,
               self.versions[provider.instanceID] == nil,
               self.claudeVersionRefreshTask == nil,
@@ -26,6 +22,7 @@ extension UsageStore {
             self.claudeVersionRefreshTask = nil
             guard let version, !version.isEmpty else { return }
             self.versions[UsageProvider.claude.instanceID] = version
+            self.claudeBinaryResolvedWithoutVersion = false
         }
     }
 }

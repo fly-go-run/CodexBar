@@ -780,6 +780,7 @@
 "No usage breakdown data available." = "No hay datos de desglose de uso disponibles.";
 "No utilization data yet." = "Aún no hay datos de utilización.";
 "not detected" = "no detectado";
+"installed (version not detected)" = "instalado (versión no detectada)";
 "On pace" = "Al ritmo previsto";
 "Pace: %@" = "Ritmo: %@";
 "Pace: %@ · %@" = "Ritmo: %@ · %@";

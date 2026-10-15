@@ -702,6 +702,7 @@
 "Unavailable" = "利用不可";
 "Weekly" = "週間";
 "not detected" = "未検出";
+"installed (version not detected)" = "インストール済み（バージョン未検出）";
 "Estimated from local Codex logs for the selected account." = "選択したアカウントのローカル Codex ログから推定しています。";
 
 /* Additional provider settings and alerts */

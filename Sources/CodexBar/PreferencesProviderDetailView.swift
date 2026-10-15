@@ -97,7 +97,7 @@ struct ProviderDetailView<SupplementaryContent: View>: View {
         let presentation = ProviderCatalog.implementation(for: provider)?.presentation(context: context)
             ?? ProviderPresentation(detailLine: ProviderPresentation.standardDetailLine)
         guard presentation.showsVersionInSettings else { return nil }
-        return store.version(for: provider) ?? L("not detected")
+        return store.versionDisplayText(for: provider)
     }
 
     static func metricInlinePresentation(

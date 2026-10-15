@@ -706,6 +706,7 @@
 "Unavailable" = "Kullanılamıyor";
 "Weekly" = "Haftalık";
 "not detected" = "algılanmadı";
+"installed (version not detected)" = "yüklü (sürüm algılanmadı)";
 "Estimated from local Codex logs for the selected account." = "Seçili hesap için yerel Codex günlüklerinden tahmin edildi.";
 
 /* Additional provider settings and alerts */

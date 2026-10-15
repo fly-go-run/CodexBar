@@ -653,6 +653,7 @@
 "Unavailable" = "Inte tillgänglig";
 "Weekly" = "Vecka";
 "not detected" = "inte hittad";
+"installed (version not detected)" = "installerad (version inte hittad)";
 "Estimated from local Codex logs for the selected account." = "Uppskattat från lokala Codex-loggar för valt konto.";
 
 /* Added after rebasing Swedish localization on current main. */

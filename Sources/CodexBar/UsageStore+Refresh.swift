@@ -74,6 +74,7 @@ extension UsageStore {
         // Codex source reconciliation can persist a settings correction. Perform it before
         // capturing the publication revision so the request cannot invalidate itself.
         self.prepareRefreshState(for: provider)
+        self.refreshMissingClaudeVersionForUserInitiatedRefresh(provider: provider)
         while coalesceIfRefreshing,
               let existingState = self.providerRefreshCoordinator.coalescingState(for: provider.instanceID)
         {
@@ -663,7 +664,6 @@ extension UsageStore {
         }
         guard let publication else { return }
         let backfilled = publication.snapshot
-        self.refreshClaudeVersionAfterUserInitiatedCLIFetch(provider: provider, strategyKind: result.strategyKind)
         let isClaudeOAuthSample = provider == .claude && result.strategyKind == .oauth
         let claudeOAuthPersistentRefHash: String? = if isClaudeOAuthSample,
                                                        result.claudeOAuthKeychainPersistentRefHash == context

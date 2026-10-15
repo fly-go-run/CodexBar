@@ -15,7 +15,7 @@ struct ProviderPresentation {
 
     @MainActor
     static func standardDetailLine(context: ProviderPresentationContext) -> String {
-        let versionText = context.store.version(for: context.provider) ?? "not detected"
+        let versionText = context.store.versionDisplayText(for: context.provider)
         return "\(context.metadata.cliName) \(versionText)"
     }
 }

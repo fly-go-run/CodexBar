@@ -711,6 +711,7 @@
 "Unavailable" = "Tidak tersedia";
 "Weekly" = "Mingguan";
 "not detected" = "tidak terdeteksi";
+"installed (version not detected)" = "terpasang (versi tidak terdeteksi)";
 "Estimated from local Codex logs for the selected account." = "Diperkirakan dari log Codex lokal untuk akun yang dipilih.";
 
 /* Additional provider settings and alerts */

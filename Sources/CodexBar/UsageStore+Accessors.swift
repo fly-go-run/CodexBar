@@ -19,6 +19,19 @@ extension UsageStore {
         self.versions[provider.instanceID]
     }
 
+    /// Version text for display. A resolved Claude binary whose gated version probe has not run yet reads as
+    /// installed rather than missing.
+    func versionDisplayText(for provider: UsageProvider) -> String {
+        if let version = self.version(for: provider) {
+            return version
+        }
+        // Provider-specific by design: only Claude's version probe is background-gated.
+        if provider == .claude, self.claudeBinaryResolvedWithoutVersion {
+            return L("installed (version not detected)")
+        }
+        return L("not detected")
+    }
+
     var codexSnapshot: UsageSnapshot? {
         // Provider-specific by design: dedicated Codex consumers require the reconciled primary-account snapshot.
         self.snapshots[.codex]

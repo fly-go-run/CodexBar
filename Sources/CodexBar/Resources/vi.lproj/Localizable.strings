@@ -701,6 +701,7 @@
 "Unavailable" = "Không có sẵn";
 "Weekly" = "Hàng tuần";
 "not detected" = "Không phát hiện được";
+"installed (version not detected)" = "Đã cài đặt (không phát hiện được phiên bản)";
 "Estimated from local Codex logs for the selected account." = "Được ước tính từ nhật ký Codex cục bộ cho tài khoản đã chọn.";
 
 /* Additional provider settings and alerts */

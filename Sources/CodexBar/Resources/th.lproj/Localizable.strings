@@ -709,6 +709,7 @@
 "Unavailable" = "ไม่พร้อมใช้งาน";
 "Weekly" = "รายสัปดาห์";
 "not detected" = "ตรวจไม่พบ";
+"installed (version not detected)" = "ติดตั้งแล้ว (ตรวจไม่พบเวอร์ชัน)";
 "Estimated from local Codex logs for the selected account." = "ประมาณการจากบันทึก Codex ท้องถิ่นสําหรับบัญชีที่เลือก";
 
 /* Additional provider settings and alerts */

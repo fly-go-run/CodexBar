@@ -709,6 +709,7 @@
 "Unavailable" = "غير متوفر";
 "Weekly" = "الأسبوعي";
 "not detected" = "لم يتم اكتشافه";
+"installed (version not detected)" = "مثبّت (لم يتم اكتشاف الإصدار)";
 "Estimated from local Codex logs for the selected account." = "تم التقدير من سجلات Codex المحلية للحساب المختار.";
 
 /* Additional provider settings and alerts */

@@ -8,8 +8,11 @@ struct ClaudeProviderImplementation: ProviderImplementation {
     @MainActor
     func presentation(context _: ProviderPresentationContext) -> ProviderPresentation {
         ProviderPresentation { context in
-            var versionText = context.store.version(for: context.provider) ?? "not detected"
-            if let parenRange = versionText.range(of: "(") {
+            var versionText = context.store.versionDisplayText(for: context.provider)
+            // Only a real version string carries the "(Claude Code)" suffix worth trimming.
+            if context.store.version(for: context.provider) != nil,
+               let parenRange = versionText.range(of: "(")
+            {
                 versionText = versionText[..<parenRange.lowerBound].trimmingCharacters(in: .whitespaces)
             }
             return "\(context.metadata.cliName) \(versionText)"

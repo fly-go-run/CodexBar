@@ -192,6 +192,7 @@
 "Weekly" = "每周";
 "Weekly usage unavailable for this account." = "此账户的每周用量不可用。";
 "not detected" = "未检测到";
+"installed (version not detected)" = "已安装（未检测到版本）";
 "built_format" = "构建于 %@";
 "cost_status_error" = "%1$@：%2$@";
 "cost_status_fetching" = "%1$@：获取中… %2$@";

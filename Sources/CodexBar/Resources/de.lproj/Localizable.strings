@@ -704,6 +704,7 @@
 "Unavailable" = "Nicht verfügbar";
 "Weekly" = "Wöchentlich";
 "not detected" = "nicht erkannt";
+"installed (version not detected)" = "installiert (Version nicht erkannt)";
 "Estimated from local Codex logs for the selected account." = "Geschätzt aus lokalen Codex-Protokollen für das ausgewählte Konto.";
 
 /* Additional provider settings and alerts */
