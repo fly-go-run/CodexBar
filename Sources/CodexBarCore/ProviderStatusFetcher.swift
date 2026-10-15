@@ -1,37 +1,11 @@
 import Foundation
 
-/// Shared, lock-guarded ISO8601 formatters for status feeds. Allocating a fresh
-/// `ISO8601DateFormatter` per decoded date field is a measurable share of decoding the
-/// status feeds (#1399).
-private final class StatusISO8601FormatterBox: @unchecked Sendable {
-    let lock = NSLock()
-    let withFractional: ISO8601DateFormatter = {
-        let fmt = ISO8601DateFormatter()
-        fmt.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return fmt
-    }()
-
-    let plain: ISO8601DateFormatter = {
-        let fmt = ISO8601DateFormatter()
-        fmt.formatOptions = [.withInternetDateTime]
-        return fmt
-    }()
-}
-
 private enum StatusFeedDateParser {
-    static let box = StatusISO8601FormatterBox()
-
-    static func parse(_ text: String) -> Date? {
-        self.box.lock.lock()
-        defer { self.box.lock.unlock() }
-        return self.box.withFractional.date(from: text) ?? self.box.plain.date(from: text)
-    }
-
     static func decodingStrategy() -> JSONDecoder.DateDecodingStrategy {
         .custom { decoder in
             let container = try decoder.singleValueContainer()
             let raw = try container.decode(String.self)
-            guard let date = StatusFeedDateParser.parse(raw) else {
+            guard let date = ISO8601DateParser.parse(raw) else {
                 throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid ISO8601 date")
             }
             return date

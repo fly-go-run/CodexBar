@@ -1284,8 +1284,6 @@ private struct CostUsageAnyCodingKey: CodingKey {
 }
 
 enum CostUsageDateParser {
-    private static let isoWithFractionalSecondsKey = "CostUsageDateParser.isoWithFractionalSeconds"
-    private static let isoInternetDateTimeKey = "CostUsageDateParser.isoInternetDateTime"
     private static let dayFormatterKey = "CostUsageDateParser.dayFormatter"
     private static let monthDayYearFormatterKey = "CostUsageDateParser.monthDayYearFormatter"
 
@@ -1293,16 +1291,7 @@ enum CostUsageDateParser {
         guard let text, !text.isEmpty else { return nil }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if let d = self.isoFormatter(
-            key: self.isoWithFractionalSecondsKey,
-            options: [.withInternetDateTime, .withFractionalSeconds])
-            .date(from: trimmed)
-        {
-            return d
-        }
-        if let d = self.isoFormatter(key: self.isoInternetDateTimeKey, options: [.withInternetDateTime])
-            .date(from: trimmed)
-        {
+        if let d = ISO8601DateParser.parse(trimmed) {
             return d
         }
         if let d = self.dateFormatter(key: self.dayFormatterKey, format: "yyyy-MM-dd").date(from: trimmed) {
@@ -1315,20 +1304,6 @@ enum CostUsageDateParser {
         }
 
         return nil
-    }
-
-    private static func isoFormatter(
-        key: String,
-        options: ISO8601DateFormatter.Options) -> ISO8601DateFormatter
-    {
-        let threadDict = Thread.current.threadDictionary
-        if let cached = threadDict[key] as? ISO8601DateFormatter {
-            return cached
-        }
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = options
-        threadDict[key] = formatter
-        return formatter
     }
 
     private static func dateFormatter(key: String, format: String) -> DateFormatter {
