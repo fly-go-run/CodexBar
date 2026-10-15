@@ -738,8 +738,6 @@
 "CodexBar found another managed account that already uses the current system account. Resolve the duplicate account before switching." = "CodexBar обнаружил другой управляемый аккаунт, который уже использует текущий системный аккаунт. Устраните дублирующий аккаунт перед переключением.";
 "CodexBar will ask macOS Keychain for “%@” so it can decrypt browser cookies and authenticate your account. Click OK to continue." = "CodexBar запросит у macOS Keychain «%@», чтобы расшифровать cookie браузера и авторизовать ваш аккаунт. Нажмите OK, чтобы продолжить.";
 "CodexBar will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue." = "CodexBar запросит у macOS Keychain OAuth-токен Claude Code, чтобы получить данные об использовании Claude. Нажмите OK, чтобы продолжить.";
-"CodexBar will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "CodexBar запросит у macOS Keychain Cookie-заголовок Claude, чтобы получить данные об использовании Claude Web. Нажмите OK, чтобы продолжить.";
-"CodexBar will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "CodexBar запросит у macOS Keychain Cookie-заголовок OpenAI, чтобы получить дополнительные данные дашборда Codex. Нажмите OK, чтобы продолжить.";
 "Credits used" = "Использовано кредитов";
 "Day" = "День";
 "Sort providers alphabetically" = "Сортировать провайдеров по алфавиту";

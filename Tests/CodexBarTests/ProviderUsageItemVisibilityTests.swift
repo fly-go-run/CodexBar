@@ -275,8 +275,6 @@ struct ProviderUsageItemVisibilityTests {
         SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            codexCookieStore: InMemoryCookieHeaderStore(),
-            claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore(),
             keychainAccessPolicy: .init(setDisabled: { _ in }, isExplicitlyDisabled: { false }),
             performInitialProviderDetection: false)

@@ -547,8 +547,6 @@ struct SettingsStoreCoverageTests {
         SettingsStore(
             userDefaults: userDefaults,
             configStore: configStore,
-            codexCookieStore: InMemoryCookieHeaderStore(),
-            claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
     }
 }

@@ -3,10 +3,6 @@ import CodexBarCore
 import SweetCookieKit
 
 private enum KeychainPromptMessage {
-    static let providerCookie =
-        "CodexBar will ask macOS Keychain for your %@ cookie header " +
-        "so it can fetch usage. Click OK to continue."
-
     static let browserCookie =
         "CodexBar will ask macOS Keychain for “%@” so it can decrypt browser cookies " +
         "and authenticate your account. Click OK to continue."
@@ -14,12 +10,6 @@ private enum KeychainPromptMessage {
     static let claudeOAuth =
         "CodexBar will ask macOS Keychain for the Claude Code OAuth token " +
         "so it can fetch your Claude usage. Click OK to continue."
-    static let codexCookie =
-        "CodexBar will ask macOS Keychain for your OpenAI cookie header " +
-        "so it can fetch Codex dashboard extras. Click OK to continue."
-    static let claudeCookie =
-        "CodexBar will ask macOS Keychain for your Claude cookie header " +
-        "so it can fetch Claude web usage. Click OK to continue."
 }
 
 struct KeychainPromptAlertModel: Equatable {
@@ -103,10 +93,6 @@ enum KeychainPromptCoordinator {
         let purpose = switch context.kind {
         case .claudeOAuth:
             L(KeychainPromptMessage.claudeOAuth)
-        case .codexCookie:
-            L(KeychainPromptMessage.codexCookie)
-        case .claudeCookie:
-            L(KeychainPromptMessage.claudeCookie)
         }
         return self.alertModel(purpose: purpose)
     }

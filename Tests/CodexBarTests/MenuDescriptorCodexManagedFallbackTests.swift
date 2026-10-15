@@ -15,8 +15,6 @@ struct MenuDescriptorCodexManagedFallbackTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite),
-            codexCookieStore: InMemoryCookieHeaderStore(),
-            claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
         settings.statusChecksEnabled = false
 
@@ -80,8 +78,6 @@ struct MenuDescriptorCodexManagedFallbackTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite),
-            codexCookieStore: InMemoryCookieHeaderStore(),
-            claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
         settings.statusChecksEnabled = false
 

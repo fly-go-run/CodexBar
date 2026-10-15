@@ -103,7 +103,7 @@ struct KeychainStringStoreTests {
     private func store(_ backend: Backend) -> KeychainStringStore {
         KeychainStringStore(
             account: "synthetic-test-account",
-            promptKind: .claudeCookie,
+            promptKind: .claudeOAuth,
             logCategory: "keychain-string-store-tests",
             operations: backend.operations)
     }

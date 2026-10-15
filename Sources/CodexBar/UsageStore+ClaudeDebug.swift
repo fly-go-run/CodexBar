@@ -76,7 +76,8 @@ extension UsageStore {
                 webExtrasEnabled: configuration.webExtrasEnabled,
                 hasWebSession: hasKey,
                 hasCLI: hasClaudeBinary,
-                hasOAuthCredentials: hasOAuthCredentials)
+                hasOAuthCredentials: hasOAuthCredentials,
+                keychainAccessDisabled: KeychainAccessGate.isExplicitlyDisabled)
             let plan = ClaudeSourcePlanner.resolve(input: planningInput)
             let strategy = plan.compatibilityStrategy
 

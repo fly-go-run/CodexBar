@@ -305,6 +305,8 @@ public enum ClaudeProviderDescriptor {
         let planningInput = Self.makePlanningInput(context: context)
         let plan = ClaudeSourcePlanner.resolve(input: planningInput)
         let webEnrichmentAccess = Self.webEnrichmentAccess(context: context)
+        // Web-first ordering puts OAuth (not web) after the CLI step.
+        let webPrecedesCLI = plan.orderedSteps.first?.inclusionReason == .appAutoKeychainDisabledPreferredWeb
 
         return plan.orderedSteps.map { step in
             let strategy: any ProviderFetchStrategy = switch step.dataSource {
@@ -324,7 +326,7 @@ public enum ClaudeProviderDescriptor {
                         && webEnrichmentAccess.isAvailable,
                     manualCookieHeader: webEnrichmentAccess.manualCookieHeader,
                     browserDetection: context.browserDetection,
-                    hasWebFallback: planningInput.hasWebSession)
+                    hasWebFallback: webPrecedesCLI ? true : planningInput.hasWebSession)
             case .auto:
                 fatalError("Planner must not emit .auto as an executable step.")
             }
@@ -371,7 +373,8 @@ public enum ClaudeProviderDescriptor {
             hasCLI: ClaudeCLIResolver.isAvailable(environment: context.env),
             // App Auto and explicit OAuth perform one real, noninteractive OAuth attempt. Do not preflight here:
             // a preflight can mutate cache state and make the real fetch misclassify a typed error.
-            hasOAuthCredentials: shouldAttemptOAuth)
+            hasOAuthCredentials: shouldAttemptOAuth,
+            keychainAccessDisabled: KeychainAccessGate.isExplicitlyDisabled)
     }
 
     private static func hasPlausibleWebSession(context: ProviderFetchContext) -> Bool {
@@ -488,7 +491,7 @@ public enum ClaudeOAuthPlanningAvailability {
     }
 }
 
-private struct ClaudePlannedFetchStrategy: ProviderFetchStrategy {
+struct ClaudePlannedFetchStrategy: ProviderFetchStrategy {
     let base: any ProviderFetchStrategy
     let plannedStep: ClaudeFetchPlanStep
 
@@ -524,7 +527,14 @@ private struct ClaudePlannedFetchStrategy: ProviderFetchStrategy {
     }
 
     func shouldFallback(on error: Error, context: ProviderFetchContext) -> Bool {
-        self.base.shouldFallback(on: error, context: context)
+        // Web is terminal in the default app-auto order; when it leads (Keychain disabled) a missing or
+        // rejected browser session must hand off to the CLI instead of ending the fetch.
+        if self.plannedStep.inclusionReason == .appAutoKeychainDisabledPreferredWeb {
+            return !Task.isCancelled
+                && !(error is CancellationError)
+                && (error as? URLError)?.code != .cancelled
+        }
+        return self.base.shouldFallback(on: error, context: context)
     }
 }
 

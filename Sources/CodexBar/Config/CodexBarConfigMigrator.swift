@@ -3,8 +3,6 @@ import Foundation
 
 struct CodexBarConfigMigrator {
     struct LegacyStores {
-        let codexCookieStore: any CookieHeaderStoring
-        let claudeCookieStore: any CookieHeaderStoring
         let tokenAccountStore: any ProviderTokenAccountStoring
     }
 
@@ -12,7 +10,6 @@ struct CodexBarConfigMigrator {
 
     private struct MigrationState {
         var didUpdate = false
-        var sawLegacySecrets = false
         var sawLegacyAccounts = false
         var legacyLoadFailures: [String] = []
     }
@@ -20,7 +17,6 @@ struct CodexBarConfigMigrator {
     static func loadOrMigrate(
         configStore: CodexBarConfigStore,
         userDefaults: UserDefaults,
-        keychainAccessDisabled: Bool,
         stores: LegacyStores) -> CodexBarConfig
     {
         let log = CodexBarLog.logger(LogCategories.configMigration)
@@ -36,17 +32,14 @@ struct CodexBarConfigMigrator {
 
         let migrationCompleted = userDefaults.bool(forKey: Self.legacyMigrationCompletedKey)
         if !migrationCompleted {
-            // Run once: migrate Keychain/file secrets then clear them. Using a completion flag rather
+            // Run once: migrate the legacy token-account file then clear it. Using a completion flag rather
             // than `existing == nil` ensures a crash between config-save and clearLegacyStores can
             // finish cleanup on the next launch without re-doing the (already-saved) data migration.
+            // Pre-config Keychain cookie stores are no longer read: that one-shot import ran long ago and
+            // reading them could raise a Keychain prompt whenever the completion flag was not visible.
             if existing == nil {
                 self.applyLegacyOrderAndToggles(userDefaults: userDefaults, config: &config, state: &state)
             }
-            self.migrateLegacySecrets(
-                stores: stores,
-                config: &config,
-                state: &state,
-                log: log)
             self.migrateLegacyAccounts(stores: stores, config: &config, state: &state, log: log)
         }
 
@@ -64,12 +57,6 @@ struct CodexBarConfigMigrator {
             return config.normalized()
         }
 
-        // A disabled Keychain read looks empty to legacy stores, not successfully migrated.
-        // Keep permitted file/default imports, but preserve cleanup and completion for a later retry.
-        guard !keychainAccessDisabled else {
-            return config.normalized()
-        }
-
         guard state.legacyLoadFailures.isEmpty else {
             log.error(
                 "Legacy migration deferred because one or more sources were unreadable",
@@ -77,11 +64,9 @@ struct CodexBarConfigMigrator {
             return config.normalized()
         }
 
-        if state.sawLegacySecrets || state.sawLegacyAccounts {
-            let cleared = self.clearLegacyStores(stores: stores, sawAccounts: state.sawLegacyAccounts, log: log)
-            if cleared {
-                userDefaults.set(true, forKey: Self.legacyMigrationCompletedKey)
-            }
+        if state.sawLegacyAccounts {
+            self.clearLegacyAccountFile()
+            userDefaults.set(true, forKey: Self.legacyMigrationCompletedKey)
         } else if !migrationCompleted {
             userDefaults.set(true, forKey: Self.legacyMigrationCompletedKey)
         }
@@ -142,23 +127,6 @@ struct CodexBarConfigMigrator {
         }
     }
 
-    private static func migrateLegacySecrets(
-        stores: LegacyStores,
-        config: inout CodexBarConfig,
-        state: inout MigrationState,
-        log: CodexBarLogger)
-    {
-        // Provider-specific by design: this one-shot migration names the retired per-provider cookie stores.
-        self.migrateCookieProviders(
-            [
-                (.codex, "codex-cookie", stores.codexCookieStore.loadCookieHeader),
-                (.claude, "claude-cookie", stores.claudeCookieStore.loadCookieHeader),
-            ],
-            config: &config,
-            state: &state,
-            log: log)
-    }
-
     private static func applyLegacyCookieSources(
         userDefaults: UserDefaults,
         config: inout CodexBarConfig,
@@ -191,28 +159,6 @@ struct CodexBarConfigMigrator {
         }
     }
 
-    private static func migrateCookieProviders(
-        _ providers: [(UsageProvider, String, () throws -> String?)],
-        config: inout CodexBarConfig,
-        state: inout MigrationState,
-        log: CodexBarLogger)
-    {
-        for (provider, store, loader) in providers {
-            let header = self.loadLegacyString(
-                provider: provider,
-                store: store,
-                state: &state,
-                log: log,
-                loader: loader)
-            if header != nil {
-                state.sawLegacySecrets = true
-            }
-            self.updateProvider(provider, config: &config, state: &state) { entry in
-                self.setIfEmpty(&entry.cookieHeader, header)
-            }
-        }
-    }
-
     private static func migrateLegacyAccounts(
         stores: LegacyStores,
         config: inout CodexBarConfig,
@@ -239,26 +185,6 @@ struct CodexBarConfigMigrator {
                 entry.tokenAccounts = data
                 return true
             }
-        }
-    }
-
-    private static func loadLegacyString(
-        provider: UsageProvider,
-        store: String,
-        state: inout MigrationState,
-        log: CodexBarLogger,
-        loader: () throws -> String?) -> String?
-    {
-        do {
-            return try loader()
-        } catch {
-            self.recordLegacyLoadFailure(
-                provider: provider,
-                store: store,
-                error: error,
-                state: &state,
-                log: log)
-            return nil
         }
     }
 
@@ -304,29 +230,11 @@ struct CodexBarConfigMigrator {
         return false
     }
 
-    @discardableResult
-    private static func clearLegacyStores(
-        stores: LegacyStores,
-        sawAccounts: Bool,
-        log: CodexBarLogger) -> Bool
-    {
-        var success = true
-        do {
-            try stores.codexCookieStore.storeCookieHeader(nil)
-            try stores.claudeCookieStore.storeCookieHeader(nil)
-        } catch {
-            log.error("Failed to clear legacy secrets: \(error)")
-            success = false
+    private static func clearLegacyAccountFile() {
+        let legacyURL = FileTokenAccountStore.defaultURL()
+        if FileManager.default.fileExists(atPath: legacyURL.path) {
+            try? FileManager.default.removeItem(at: legacyURL)
         }
-
-        if sawAccounts {
-            let legacyURL = FileTokenAccountStore.defaultURL()
-            if FileManager.default.fileExists(atPath: legacyURL.path) {
-                try? FileManager.default.removeItem(at: legacyURL)
-            }
-        }
-
-        return success
     }
 
     private static func applyProviderOrder(_ raw: [String], config: CodexBarConfig) -> CodexBarConfig {

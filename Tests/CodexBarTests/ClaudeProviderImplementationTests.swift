@@ -92,8 +92,6 @@ struct ClaudeProviderImplementationTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite),
-            codexCookieStore: InMemoryCookieHeaderStore(),
-            claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
         settings.showOptionalCreditsAndExtraUsage = showOptionalUsage
         let store = UsageStore(

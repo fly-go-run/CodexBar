@@ -42,8 +42,6 @@ func testSettingsStore(
     return SettingsStore(
         userDefaults: defaults,
         configStore: configStore,
-        codexCookieStore: InMemoryCookieHeaderStore(),
-        claudeCookieStore: InMemoryCookieHeaderStore(),
         tokenAccountStore: tokenAccountStore,
         keychainAccessPolicy: keychainAccessPolicy)
 }
@@ -138,20 +136,4 @@ func testPlanUtilizationHistoryStore(suiteName: String, reset: Bool = true) -> P
         try? FileManager.default.removeItem(at: url)
     }
     return PlanUtilizationHistoryStore(directoryURL: url)
-}
-
-final class InMemoryCookieHeaderStore: CookieHeaderStoring, @unchecked Sendable {
-    var value: String?
-
-    init(value: String? = nil) {
-        self.value = value
-    }
-
-    func loadCookieHeader() throws -> String? {
-        self.value
-    }
-
-    func storeCookieHeader(_ header: String?) throws {
-        self.value = header
-    }
 }

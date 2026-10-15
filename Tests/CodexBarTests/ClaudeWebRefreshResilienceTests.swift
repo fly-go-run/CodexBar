@@ -220,8 +220,6 @@ struct ClaudeWebRefreshResilienceTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite),
-            codexCookieStore: InMemoryCookieHeaderStore(),
-            claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
         settings.providerDetectionCompleted = true
         return settings

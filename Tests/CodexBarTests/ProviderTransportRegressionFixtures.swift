@@ -137,8 +137,6 @@ enum ProviderTransportRegressionSupport {
         let settings = SettingsStore(
             userDefaults: InMemoryUserDefaults(),
             configStore: configStore,
-            codexCookieStore: InMemoryCookieHeaderStore(),
-            claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore(fileURL: root.appendingPathComponent("accounts.json")),
             keychainAccessPolicy: SettingsStoreKeychainAccessPolicy(
                 setDisabled: { _ in }, isExplicitlyDisabled: { false }),

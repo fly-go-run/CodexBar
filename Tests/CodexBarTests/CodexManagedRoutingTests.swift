@@ -773,8 +773,6 @@ struct CodexManagedRoutingTests {
         return SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            codexCookieStore: InMemoryCookieHeaderStore(),
-            claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
     }
 

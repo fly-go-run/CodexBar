@@ -265,12 +265,6 @@ final class SettingsStore {
     init(
         userDefaults: UserDefaults = .standard,
         configStore: CodexBarConfigStore = CodexBarConfigStore(),
-        codexCookieStore: any CookieHeaderStoring = KeychainCookieHeaderStore(
-            account: "codex-cookie",
-            promptKind: .codexCookie),
-        claudeCookieStore: any CookieHeaderStoring = KeychainCookieHeaderStore(
-            account: "claude-cookie",
-            promptKind: .claudeCookie),
         tokenAccountStore: any ProviderTokenAccountStoring = FileTokenAccountStore(),
         keychainAccessPolicy: SettingsStoreKeychainAccessPolicy = .live,
         performInitialProviderDetection: Bool = !SettingsStore.isRunningTests)
@@ -302,14 +296,10 @@ final class SettingsStore {
         {
             userDefaults.set(legacyOpenAIWebAccess, forKey: "openAIWebAccessEnabled")
         }
-        let legacyStores = CodexBarConfigMigrator.LegacyStores(
-            codexCookieStore: codexCookieStore,
-            claudeCookieStore: claudeCookieStore,
-            tokenAccountStore: tokenAccountStore)
+        let legacyStores = CodexBarConfigMigrator.LegacyStores(tokenAccountStore: tokenAccountStore)
         let config = CodexBarConfigMigrator.loadOrMigrate(
             configStore: configStore,
             userDefaults: userDefaults,
-            keychainAccessDisabled: keychainAccessPolicy.isExplicitlyDisabled(),
             stores: legacyStores)
         _ = Self.initializeOpenAIWebAccessPreference(
             userDefaults: userDefaults, config: config, hadExistingConfig: hadExistingConfig)

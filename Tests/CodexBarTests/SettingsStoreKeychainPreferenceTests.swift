@@ -61,8 +61,9 @@ struct SettingsStoreKeychainPreferenceTests {
             #expect(local.object(forKey: "widgetSelectedProvider") == nil)
             #expect(store.debugDisableKeychainAccess == disabled)
             #expect(store.refreshFrequency == .adaptive)
-            // Config/secret migration remains independent of app-group migration.
-            #expect(local.bool(forKey: "codexbar.legacySecretsMigrationCompleted") == !disabled)
+            // Config migration remains independent of app-group migration, and no longer reads Keychain,
+            // so it completes whether or not Keychain access is disabled.
+            #expect(local.bool(forKey: "codexbar.legacySecretsMigrationCompleted"))
 
             store.debugDisableKeychainAccess = !disabled
             #expect(local.bool(forKey: "debugDisableKeychainAccess") == !disabled)
@@ -181,8 +182,6 @@ struct SettingsStoreKeychainPreferenceTests {
         let store = SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            codexCookieStore: InMemoryCookieHeaderStore(),
-            claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore(fileURL: root.appendingPathComponent("accounts.json")),
             keychainAccessPolicy: keychainAccessPolicy,
             performInitialProviderDetection: false)

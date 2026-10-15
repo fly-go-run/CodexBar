@@ -186,8 +186,6 @@ struct ClaudeSwapMenuBarSnapshotTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: testConfigStore(suiteName: suite),
-            codexCookieStore: InMemoryCookieHeaderStore(),
-            claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
         settings.providerDetectionCompleted = true
         settings.refreshFrequency = .manual

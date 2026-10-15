@@ -689,8 +689,6 @@ extension TokenAccountEnvironmentPrecedenceTests {
         return SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            codexCookieStore: InMemoryCookieHeaderStore(),
-            claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
     }
 

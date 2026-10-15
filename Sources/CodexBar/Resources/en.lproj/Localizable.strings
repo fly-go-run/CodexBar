@@ -724,8 +724,6 @@
 "CodexBar found another managed account that already uses the current system account. Resolve the duplicate account before switching." = "CodexBar found another managed account that already uses the current system account. Resolve the duplicate account before switching.";
 "CodexBar will ask macOS Keychain for “%@” so it can decrypt browser cookies and authenticate your account. Click OK to continue." = "CodexBar will ask macOS Keychain for “%@” so it can decrypt browser cookies and authenticate your account. Click OK to continue.";
 "CodexBar will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue." = "CodexBar will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue.";
-"CodexBar will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "CodexBar will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue.";
-"CodexBar will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "CodexBar will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue.";
 "Credits used" = "Credits used";
 "Day" = "Day";
 "Sort providers alphabetically" = "Sort providers alphabetically";

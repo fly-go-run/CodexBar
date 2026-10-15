@@ -173,8 +173,6 @@ struct MenuBarPercentWindowPreferenceTests {
         SettingsStore(
             userDefaults: defaults,
             configStore: config,
-            codexCookieStore: InMemoryCookieHeaderStore(),
-            claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore(),
             keychainAccessPolicy: .init(setDisabled: { _ in }, isExplicitlyDisabled: { false }),
             performInitialProviderDetection: false)

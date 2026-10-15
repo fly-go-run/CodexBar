@@ -23,8 +23,6 @@ struct ClaudeWebRecoveryMenuTests {
         SettingsStore(
             userDefaults: InMemoryUserDefaults(),
             configStore: CodexBarConfigStore(fileURL: root.appendingPathComponent("config.json")),
-            codexCookieStore: InMemoryCookieHeaderStore(),
-            claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore(fileURL: root.appendingPathComponent("accounts.json")),
             keychainAccessPolicy: SettingsStoreKeychainAccessPolicy(
                 setDisabled: { _ in }, isExplicitlyDisabled: { false }),

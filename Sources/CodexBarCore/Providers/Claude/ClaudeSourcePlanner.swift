@@ -7,6 +7,8 @@ public struct ClaudeSourcePlanningInput: Equatable, Sendable {
     public let hasWebSession: Bool
     public let hasCLI: Bool
     public let hasOAuthCredentials: Bool
+    /// The user turned Keychain access off. App Auto then prefers the prompt-free browser session (Safari).
+    public let keychainAccessDisabled: Bool
 
     public init(
         runtime: ProviderRuntime,
@@ -14,7 +16,8 @@ public struct ClaudeSourcePlanningInput: Equatable, Sendable {
         webExtrasEnabled: Bool,
         hasWebSession: Bool,
         hasCLI: Bool,
-        hasOAuthCredentials: Bool)
+        hasOAuthCredentials: Bool,
+        keychainAccessDisabled: Bool = false)
     {
         self.runtime = runtime
         self.selectedDataSource = selectedDataSource
@@ -22,6 +25,7 @@ public struct ClaudeSourcePlanningInput: Equatable, Sendable {
         self.hasWebSession = hasWebSession
         self.hasCLI = hasCLI
         self.hasOAuthCredentials = hasOAuthCredentials
+        self.keychainAccessDisabled = keychainAccessDisabled
     }
 }
 
@@ -31,6 +35,9 @@ public enum ClaudeSourcePlanReason: String, Equatable, Sendable {
     case appAutoPreferredOAuth = "app-auto-preferred-oauth"
     case appAutoFallbackCLI = "app-auto-fallback-cli"
     case appAutoFallbackWeb = "app-auto-fallback-web"
+    case appAutoKeychainDisabledPreferredWeb = "app-auto-keychain-disabled-preferred-web"
+    case appAutoKeychainDisabledFallbackCLI = "app-auto-keychain-disabled-fallback-cli"
+    case appAutoKeychainDisabledFallbackOAuth = "app-auto-keychain-disabled-fallback-oauth"
     case cliAutoPreferredWeb = "cli-auto-preferred-web"
     case cliAutoFallbackCLI = "cli-auto-fallback-cli"
 }
@@ -175,6 +182,14 @@ public enum ClaudeSourcePlanner {
         switch input.selectedDataSource {
         case .auto:
             switch input.runtime {
+            case .app where input.keychainAccessDisabled:
+                // With Keychain off, the web step only reads Keychain-free browsers (Safari), so trying it
+                // first never prompts; the owner CLI and the credentials-file OAuth path remain fallbacks.
+                [
+                    self.step(.web, reason: .appAutoKeychainDisabledPreferredWeb, input: input),
+                    self.step(.cli, reason: .appAutoKeychainDisabledFallbackCLI, input: input),
+                    self.step(.oauth, reason: .appAutoKeychainDisabledFallbackOAuth, input: input),
+                ]
             case .app:
                 [
                     self.step(.oauth, reason: .appAutoPreferredOAuth, input: input),

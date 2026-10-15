@@ -440,8 +440,6 @@ extension UsageStoreCoverageTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            codexCookieStore: InMemoryCookieHeaderStore(),
-            claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
         settings.providerDetectionCompleted = true
         return settings

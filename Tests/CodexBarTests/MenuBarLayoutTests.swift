@@ -814,8 +814,6 @@ struct MenuBarLayoutTests {
         SettingsStore(
             userDefaults: settings.userDefaults,
             configStore: settings.configStore,
-            codexCookieStore: InMemoryCookieHeaderStore(),
-            claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
     }
 }

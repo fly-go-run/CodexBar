@@ -734,8 +734,6 @@
 "CodexBar found another managed account that already uses the current system account. Resolve the duplicate account before switching." = "CodexBar hat ein anderes verwaltetes Konto gefunden, das bereits das aktuelle Systemkonto verwendet. Lösen Sie das doppelte Konto auf, bevor Sie wechseln.";
 "CodexBar will ask macOS Keychain for “%@” so it can decrypt browser cookies and authenticate your account. Click OK to continue." = "CodexBar fragt den macOS-Schlüsselbund nach \"%@\", damit es Browser-Cookies entschlüsseln und Ihr Konto authentifizieren kann. Klicken Sie auf OK, um fortzufahren.";
 "CodexBar will ask macOS Keychain for the Claude Code OAuth token so it can fetch your Claude usage. Click OK to continue." = "CodexBar fragt den macOS-Schlüsselbund nach dem Claude Code OAuth-Token, damit es Ihre Claude-Nutzung abrufen kann. Klicken Sie auf OK, um fortzufahren.";
-"CodexBar will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "CodexBar fragt den macOS-Schlüsselbund nach Ihrem Claude-Cookie-Header, damit die Claude-Webnutzung abgerufen werden kann. Klicken Sie auf OK, um fortzufahren.";
-"CodexBar will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "CodexBar fragt den macOS-Schlüsselbund nach Ihrem OpenAI-Cookie-Header, damit Codex-Dashboard-Extras abgerufen werden können. Klicken Sie auf OK, um fortzufahren.";
 "Credits used" = "Verwendete Credits";
 "Day" = "Tag";
 "Sort providers alphabetically" = "Anbieter alphabetisch sortieren";

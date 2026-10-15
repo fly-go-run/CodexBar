@@ -24,6 +24,105 @@ struct ClaudeSourcePlannerTests {
     }
 
     @Test
+    func `app auto with Keychain disabled prefers web then CLI then OAuth`() {
+        let plan = ClaudeSourcePlanner.resolve(input: ClaudeSourcePlanningInput(
+            runtime: .app,
+            selectedDataSource: .auto,
+            webExtrasEnabled: false,
+            hasWebSession: true,
+            hasCLI: true,
+            hasOAuthCredentials: true,
+            keychainAccessDisabled: true))
+
+        #expect(plan.orderedSteps.map(\.dataSource) == [.web, .cli, .oauth])
+        #expect(plan.orderedSteps.map(\.inclusionReason) == [
+            .appAutoKeychainDisabledPreferredWeb,
+            .appAutoKeychainDisabledFallbackCLI,
+            .appAutoKeychainDisabledFallbackOAuth,
+        ])
+        #expect(plan.preferredStep?.dataSource == .web)
+    }
+
+    @Test
+    func `Keychain disabled does not reorder CLI runtime or explicit sources`() {
+        let cliPlan = ClaudeSourcePlanner.resolve(input: ClaudeSourcePlanningInput(
+            runtime: .cli,
+            selectedDataSource: .auto,
+            webExtrasEnabled: false,
+            hasWebSession: true,
+            hasCLI: true,
+            hasOAuthCredentials: false,
+            keychainAccessDisabled: true))
+        #expect(cliPlan.orderedSteps.map(\.dataSource) == [.web, .cli])
+
+        let explicitPlan = ClaudeSourcePlanner.resolve(input: ClaudeSourcePlanningInput(
+            runtime: .app,
+            selectedDataSource: .cli,
+            webExtrasEnabled: false,
+            hasWebSession: true,
+            hasCLI: true,
+            hasOAuthCredentials: true,
+            keychainAccessDisabled: true))
+        #expect(explicitPlan.orderedSteps.map(\.dataSource) == [.cli])
+    }
+
+    @Test
+    func `leading web step falls back to the CLI when Keychain is disabled`() {
+        let context = Self.makeAppAutoContext()
+        let leadingWeb = ClaudePlannedFetchStrategy(
+            base: ClaudeWebFetchStrategy(browserDetection: BrowserDetection(cacheTTL: 0)),
+            plannedStep: ClaudeFetchPlanStep(
+                dataSource: .web,
+                inclusionReason: .appAutoKeychainDisabledPreferredWeb,
+                isPlausiblyAvailable: true))
+        #expect(leadingWeb.shouldFallback(
+            on: ClaudeWebAPIFetcher.FetchError.noSessionKeyFound,
+            context: context))
+        #expect(!leadingWeb.shouldFallback(on: CancellationError(), context: context))
+
+        // The default app-auto order keeps web terminal so its concrete error surfaces.
+        let trailingWeb = ClaudePlannedFetchStrategy(
+            base: ClaudeWebFetchStrategy(browserDetection: BrowserDetection(cacheTTL: 0)),
+            plannedStep: ClaudeFetchPlanStep(
+                dataSource: .web,
+                inclusionReason: .appAutoFallbackWeb,
+                isPlausiblyAvailable: true))
+        #expect(!trailingWeb.shouldFallback(
+            on: ClaudeWebAPIFetcher.FetchError.noSessionKeyFound,
+            context: context))
+    }
+
+    private struct StubClaudeFetcher: ClaudeUsageFetching {
+        func loadLatestUsage(model _: String) async throws -> ClaudeUsageSnapshot {
+            throw ClaudeUsageError.parseFailed("stub")
+        }
+
+        func debugRawProbe(model _: String) async -> String {
+            "stub"
+        }
+
+        func detectVersion() -> String? {
+            nil
+        }
+    }
+
+    private static func makeAppAutoContext() -> ProviderFetchContext {
+        ProviderFetchContext(
+            runtime: .app,
+            sourceMode: .auto,
+            includeCredits: false,
+            includeOptionalUsage: false,
+            webTimeout: 1,
+            webDebugDumpHTML: false,
+            verbose: false,
+            env: [:],
+            settings: nil,
+            fetcher: UsageFetcher(environment: [:]),
+            claudeFetcher: StubClaudeFetcher(),
+            browserDetection: BrowserDetection(cacheTTL: 0))
+    }
+
+    @Test
     func `CLI auto plan preserves ordered steps and reasons`() {
         let plan = ClaudeSourcePlanner.resolve(input: ClaudeSourcePlanningInput(
             runtime: .cli,

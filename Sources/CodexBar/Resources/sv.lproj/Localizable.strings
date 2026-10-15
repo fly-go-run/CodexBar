@@ -691,7 +691,6 @@
 "Your spend" = "Din utgift";
 "No system account" = "Inget systemkonto";
 "Stored in ~/.codexbar/config.json. Requires an Anthropic Admin API key." = "Sparas i ~/.codexbar/config.json. Kräver en Anthropic Admin API-nyckel.";
-"CodexBar will ask macOS Keychain for your Claude cookie header so it can fetch Claude web usage. Click OK to continue." = "CodexBar kommer att be macOS Nyckelring om din Claude-cookie-header så att Claude-webbanvändning kan hämtas. Klicka på OK för att fortsätta.";
 "of %@" = "av %@";
 "Verbosity" = "Detaljnivå";
 "%d days of usage data across %d services" = "%d dagar med användningsdata för %d tjänster";
@@ -739,7 +738,6 @@
 "%d utilization samples" = "%d användningsmätningar";
 "Cap start" = "Gränsstart";
 "Credits used" = "Använda krediter";
-"CodexBar will ask macOS Keychain for your OpenAI cookie header so it can fetch Codex dashboard extras. Click OK to continue." = "CodexBar kommer att be macOS Nyckelring om din OpenAI-cookie-header så att extra Codex-översiktsdata kan hämtas. Klicka på OK för att fortsätta.";
 "Re-auth" = "Autentisera igen";
 "Re-login at claude.ai" = "Logga in igen på claude.ai";
 "Day" = "Dag";
