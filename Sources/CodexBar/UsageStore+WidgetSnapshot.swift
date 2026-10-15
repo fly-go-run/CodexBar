@@ -39,9 +39,18 @@ extension UsageStore {
         let snapshot = self.makeWidgetSnapshot(previousSnapshot: previousSnapshot)
         self.lastQueuedWidgetSnapshot = snapshot
         self.invalidatedQueuedWidgetProviders = self.widgetUsagePreservationBlockedProviders
-        NotificationCenter.default.post(
-            name: .codexbarUsageSnapshotsDidChange,
-            object: UsageSnapshotsDidChangeEvent(snapshots: self.cloudSyncAccountSnapshots()))
+        self.postUsageSnapshotsDidChangeIfNeeded()
+        // One refresh tick persists several times; only a real content change is worth a file write,
+        // a WidgetKit reload and the work they trigger.
+        let fingerprint = Self.widgetSnapshotFingerprint(snapshot)
+        guard !Self.canSkipWidgetSnapshotWrite(
+            fingerprint: fingerprint,
+            previous: self.lastQueuedWidgetSnapshotFingerprint,
+            now: snapshot.generatedAt)
+        else { return }
+        if let fingerprint {
+            self.lastQueuedWidgetSnapshotFingerprint = (fingerprint, snapshot.generatedAt)
+        }
         let previousTask = self.widgetSnapshotPersistTask
         self.widgetSnapshotPersistTask = Task { @MainActor in
             _ = await previousTask?.result
@@ -57,6 +66,47 @@ extension UsageStore {
                 isRunningTests: SettingsStore.isRunningTests,
                 reloadTimelines: self.widgetTimelineReloader)
         }
+    }
+
+    /// Even an unchanged snapshot is rewritten this often so the file's `generatedAt` never goes stale.
+    static let widgetSnapshotMaximumSkipAge: TimeInterval = 5 * 60
+
+    /// Everything the widget renders except `generatedAt`, which changes on every build.
+    static func widgetSnapshotFingerprint(_ snapshot: WidgetSnapshot) -> Data? {
+        let normalized = WidgetSnapshot(
+            entries: snapshot.entries,
+            accounts: snapshot.accounts,
+            accountOverflowCounts: snapshot.accountOverflowCounts,
+            enabledProviders: snapshot.enabledProviders,
+            usageBarsShowUsed: snapshot.usageBarsShowUsed,
+            generatedAt: .distantPast)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        return try? encoder.encode(normalized)
+    }
+
+    static func canSkipWidgetSnapshotWrite(
+        fingerprint: Data?,
+        previous: (fingerprint: Data, queuedAt: Date)?,
+        now: Date) -> Bool
+    {
+        guard let fingerprint, let previous, previous.fingerprint == fingerprint else { return false }
+        let age = now.timeIntervalSince(previous.queuedAt)
+        return age >= 0 && age < Self.widgetSnapshotMaximumSkipAge
+    }
+
+    /// Cloud sync only cares about the account payloads; skip the post (and the CloudKit work behind it)
+    /// when they are identical to the last ones posted.
+    private func postUsageSnapshotsDidChangeIfNeeded() {
+        let payloads = self.cloudSyncAccountSnapshots()
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        let fingerprint = try? encoder.encode(payloads)
+        if let fingerprint, fingerprint == self.lastPostedCloudSyncFingerprint { return }
+        self.lastPostedCloudSyncFingerprint = fingerprint
+        NotificationCenter.default.post(
+            name: .codexbarUsageSnapshotsDidChange,
+            object: UsageSnapshotsDidChangeEvent(snapshots: payloads))
     }
 
     static func saveWidgetSnapshot(
