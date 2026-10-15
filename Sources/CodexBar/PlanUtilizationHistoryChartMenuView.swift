@@ -186,14 +186,11 @@ struct PlanUtilizationHistoryChartMenuView: View {
         snapshot: UsageSnapshot?) -> [VisibleSeries]
     {
         let metadata = ProviderDescriptorRegistry.metadata[provider]
-        // Provider-specific by design: Antigravity pool observations have no session/weekly cadence.
-        let usesObservations = provider == .antigravity && UsageStore.antigravityHistoryUsesObservations(
-            snapshot: snapshot, histories: histories)
-        let allowedNames = usesObservations ? nil : self.visibleSeriesNames(provider: provider, snapshot: snapshot)
+        let allowedNames = self.visibleSeriesNames(provider: provider, snapshot: snapshot)
         var historiesBySelection: [SeriesSelection: PlanUtilizationSeriesHistory] = [:]
         for history in histories {
             guard !history.entries.isEmpty else { continue }
-            guard history.hasSupportedCadence, history.name.isQuotaObservation == usesObservations else { continue }
+            guard history.hasSupportedCadence else { continue }
             let effectiveName = Self.effectiveSeriesName(provider: provider, history: history)
             guard allowedNames?.contains(effectiveName) ?? true else { continue }
 
@@ -242,7 +239,6 @@ struct PlanUtilizationHistoryChartMenuView: View {
         provider: UsageProvider,
         history: PlanUtilizationSeriesHistory) -> PlanUtilizationSeriesName
     {
-        if history.name.isQuotaObservation { return history.name }
         let presentation = ProviderDescriptorRegistry.descriptor(for: provider).presentation
         let normalized = presentation.normalizePlanUtilizationSeries(
             self.providerSeries(history.name),
@@ -332,14 +328,6 @@ struct PlanUtilizationHistoryChartMenuView: View {
         history: PlanUtilizationSeriesHistory,
         referenceDate: Date) -> [Point]
     {
-        if history.windowMinutes == 0, history.name.isQuotaObservation {
-            // These are actual capture times, not inferred reset cycles. Never manufacture gaps.
-            let entries = Dictionary(grouping: history.entries, by: \.capturedAt)
-            return entries.keys.sorted().compactMap { date in
-                guard let entry = entries[date]?.last else { return nil }
-                return Point(id: date, index: 0, date: date, usedPercent: entry.usedPercent, isObserved: true)
-            }
-        }
         guard history.windowMinutes > 0 else { return [] }
         let windowInterval = Double(history.windowMinutes) * 60
         let resetBoundaryLattice = self.resetBoundaryLattice(
@@ -621,10 +609,6 @@ struct PlanUtilizationHistoryChartMenuView: View {
         windowMinutes: Int) -> String
     {
         switch name {
-        case .antigravityGemini:
-            metadata?.sessionLabel ?? "Gemini"
-        case .antigravityClaudeGPT:
-            metadata?.weeklyLabel ?? "Claude + GPT"
         case .session:
             localizedSessionQuotaLabel(metadata?.sessionLabel ?? "Session", windowMinutes: windowMinutes)
         case .weekly:
@@ -647,9 +631,9 @@ struct PlanUtilizationHistoryChartMenuView: View {
 
     private nonisolated static func seriesSortOrder(_ name: PlanUtilizationSeriesName) -> Int {
         switch name {
-        case .session, .antigravityGemini:
+        case .session:
             0
-        case .weekly, .antigravityClaudeGPT:
+        case .weekly:
             1
         case .monthly:
             2

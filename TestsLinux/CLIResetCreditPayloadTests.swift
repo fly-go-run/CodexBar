@@ -35,7 +35,7 @@ struct CLIResetCreditPayloadTests {
             updatedAt: .distantPast)
         let payload = ProviderPayload(
             provider: .codex, account: nil, version: nil, source: "fixture", status: nil,
-            usage: usage, credits: nil, antigravityPlanInfo: nil, openaiDashboard: nil, error: nil)
+            usage: usage, credits: nil, openaiDashboard: nil, error: nil)
         let object = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(payload)) as? [String: Any])
         return try #require(object["resetCredits"] as? [String: Any])
     }

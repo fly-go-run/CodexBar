@@ -28,7 +28,7 @@ pending. For the exact current-state parity contract, see
 [docs/refactor/claude-current-baseline.md](refactor/claude-current-baseline.md).
 
 When an Anthropic Admin API key is configured, Claude can also show organization-level spend/messages/tokens in the
-same inline dashboard pattern used by the OpenAI API provider.
+same inline dashboard pattern as the Codex cost dashboard.
 
 Incomplete proxy records with an explicit null `stop_reason`, positive input, zero output, and no cache counters are excluded from token and cost totals until a completed record arrives. Their day and model stay visible with an **Incomplete** marker and an excluded-request count. Known usage remains a partial subtotal; an incomplete-only period stays unavailable rather than becoming zero. Older caches are rebuilt once to apply this distinction. Missing `stop_reason` alone retains compatibility with older complete logs.
 
@@ -534,14 +534,10 @@ Model-scoped weekly-window proof (synthetic data, no real accounts or credential
         - `~/Library/Application Support/Claude/claude-code-sessions/**/.claude/projects`
     - Current Claude Desktop metadata under `claude-code-sessions` points to shared CLI session JSONL by
       `cliSessionId`; metadata-only directories are not treated as usage sources.
-  - Supported pi-compatible sessions:
-    - `~/.pi/agent/sessions/**/*.jsonl`
-    - `~/.omp/agent/sessions/**/*.jsonl`
-- Files: `**/*.jsonl` under the native project roots, discovered Claude Desktop project roots,
-  plus supported pi-compatible session files.
+- Files: `**/*.jsonl` under the native project roots and discovered Claude Desktop project roots.
 - Parsing:
   - Native Claude logs parse lines with `type: "assistant"` and `message.usage`.
-  - Claude/Vertex filtering checks raw lines for possible metadata markers before walking decoded metadata. IDs and model names are checked in their decoded fields, so `@` and `_vrtx_` in tool content do not trigger that walk. Vertex-only scans skip decoding lines without any possible marker; escaped markers retain the full classifier and existing attribution rules.
+  - Claude filtering checks raw lines for possible metadata markers before walking decoded metadata. IDs and model names are checked in their decoded fields, so `@` and `_vrtx_` in tool content do not trigger that walk. Vertex-only scans skip decoding lines without any possible marker; escaped markers retain the full classifier and existing attribution rules.
   - Uses per-model token counts (input, cache read/create, output).
   - Oversized local token or cost values cannot crash history scanning. An overflowing token total stays unavailable while independent counts and finite dollar estimates remain visible; raw rows are retained for later repricing.
   - Deduplicates cumulative streaming chunks by `message.id + requestId`. When `requestId` is absent,
@@ -549,9 +545,6 @@ Model-scoped weekly-window proof (synthetic data, no real accounts or credential
     IDs and distinct fallback sessions remain separate. Rows without sufficient identity are counted individually.
     Within a file, the final complete cumulative chunk wins, including later appends. Copied records retain the
     existing preference for parent and non-sidechain records.
-  - pi and OMP sessions attribute `anthropic` assistant usage to Claude and bucket it by assistant-turn timestamp, so a
-    single pi-compatible session can contribute to multiple models/days.
-  - Matching assistant entry IDs within the same session are counted once across roots; distinct turns are retained. If a Pi/OMP mirror scan is incomplete, established native spend remains usable as a marked partial estimate. The combined history is still incomplete, and native-only reports keep their own coverage.
   - Claude-swap history contributes to the combined Claude total, including when an explicit `$CLAUDE_CONFIG_DIR` is set. Shared-history symlinks are scanned once, copied responses use the same deduplication as native logs, and missing profile directories do not prevent other homes from contributing. Local cost records do not establish per-account attribution.
 - Quota-week menu cards reuse the immutable snapshot’s day projection, warmed in the background. New snapshots and changed bucket time zones rebuild it; reset observations and the current time remain live on every card build.
 - Cache:
@@ -561,14 +554,13 @@ Model-scoped weekly-window proof (synthetic data, no real accounts or credential
   - A pricing catalog replacement during a refresh preserves certification of the parsed transcript window. The next refresh applies the replacement prices to cached rows without reparsing unchanged transcripts, including after a restart. Externally replaced transcript caches still require window certification again.
   - Unchanged sources reuse the memo even when a menu refresh bypasses the scan debounce. Explicit rescans still reparse transcripts, but identical cache and report-memo content is not rewritten; an unchanged rebuild retains its previous scan timestamp. Existing artifacts may be rewritten once to establish deterministic key ordering. Changed transcripts or report metadata still replace the corresponding complete JSON artifacts.
   - Persistence keeps at most eight lightweight artifact identities independently of the decoded-row cache. An unchanged cache identity plus matching device/inode, size, and nanosecond mtime skips encoding; otherwise sorted JSON fingerprints avoid full-file read-back while preserving identical rebuilds. External replacement invalidates reuse, and changed files still use temporary-file rename. Evicted identities are re-established on load or the next save.
-  - On clone-capable macOS volumes, changed Claude/Vertex cache and report-memo artifacts clone the previous file into a private temporary sibling and write only different blocks before atomic replacement. Linux and unsupported volumes use full writes. JSON schemas and filenames stay unchanged; serialized length changes can still rewrite large suffixes. See the [synthetic write-amplification proof](research/cost-history-write-amplification-2026-10-09.md).
+  - On clone-capable macOS volumes, changed Claude cache and report-memo artifacts clone the previous file into a private temporary sibling and write only different blocks before atomic replacement. Linux and unsupported volumes use full writes. JSON schemas and filenames stay unchanged; serialized length changes can still rewrite large suffixes. See the [synthetic write-amplification proof](research/cost-history-write-amplification-2026-10-09.md).
   - Decoded cache artifacts can be reused in memory while their canonical path, file identity, size, and nanosecond modification time match. Schema and time-zone checks still run on every load; report-level source, window, filter, and pricing checks still run separately. Atomic replacements invalidate this reuse, and explicit rescans still reparse source transcripts.
   - Successful cache saves retain the just-written decoded value, avoiding another full row decode on the next changed refresh. Unmodified loaded values skip encoding and writing while the artifact stamp still matches; external replacements, deleted files, and failed or cancelled saves cannot establish this reuse. Changed content still replaces the complete JSON artifact. Compact row field names reduce its size; schema 3 artifacts rebuild from transcripts once when the rows are next needed. Report memos and user-facing JSON retain their existing formats.
   - The app's Usage & Spend refresh uses `claude-history-v6.json` and its own report memo. The two app refreshes do not replace each other's retained rows or restart each other's transcript scans. Once both have established their windows, same-day append refreshes read changed tails once per cache.
   - App memos record whether every file's rows were selected for their scan window. Older or externally replaced caches without that proof rebuild once, even if their stored bounds already match; app window changes also rebuild to preserve cold-scan duplicate selection. The regular cache filename and row schema remain compatible, and standalone CLI range behavior is unchanged.
-  - The Claude/Vertex cache artifact retains source file identities independently of the shared Codex parser fingerprint. Replacing a transcript rebuilds its rows rather than merging an old prefix into a new suffix; genuine appends still use the saved parse offset. Older entries without identity are rebuilt once before reuse, including during the normal refresh debounce.
-  - Older Claude/Vertex native caches and report memos are rebuilt once from unchanged transcripts to apply the corrected response deduplication. Corrected reports remain eligible for memo reuse across launches.
-  - pi-compatible session cache: `~/Library/Caches/CodexBar/cost-usage/pi-sessions-v9.json`. Version 8 rebuilds once from transcripts to establish source scope and completeness. Enabling the standalone [Pi provider](pi.md) keeps Claude history native-only in combined views.
+  - The Claude cache artifact retains source file identities independently of the shared Codex parser fingerprint. Replacing a transcript rebuilds its rows rather than merging an old prefix into a new suffix; genuine appends still use the saved parse offset. Older entries without identity are rebuilt once before reuse, including during the normal refresh debounce.
+  - Older Claude native caches and report memos are rebuilt once from unchanged transcripts to apply the corrected response deduplication. Corrected reports remain eligible for memo reuse across launches.
 
 ## Key files
 - OAuth: `Sources/CodexBarCore/Providers/Claude/ClaudeOAuth/*`
@@ -576,8 +568,6 @@ Model-scoped weekly-window proof (synthetic data, no real accounts or credential
 - CLI PTY: `Sources/CodexBarCore/Providers/Claude/ClaudeStatusProbe.swift`,
   `Sources/CodexBarCore/Providers/Claude/ClaudeCLISession.swift`
 - Cost usage: `Sources/CodexBarCore/CostUsageFetcher.swift`,
-  `Sources/CodexBarCore/PiSessionCostScanner.swift`,
-  `Sources/CodexBarCore/PiSessionCostCache.swift`,
   `Sources/CodexBarCore/Vendored/CostUsage/*`
 
 ### Displaying resets and billing details

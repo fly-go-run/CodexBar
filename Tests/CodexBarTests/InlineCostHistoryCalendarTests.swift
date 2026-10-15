@@ -372,7 +372,6 @@ enum InlineCostCalendarFixture {
             now: now,
             historyDays: historyDays,
             allowPricingRefresh: false,
-            includePiSessions: false,
             scannerOptions: options)
         try write(day: 24, model: "openai/gpt-5.4")
         options.maxCodexSessionFileBytes = 1
@@ -383,7 +382,6 @@ enum InlineCostCalendarFixture {
             now: now.addingTimeInterval(1),
             historyDays: historyDays,
             allowPricingRefresh: false,
-            includePiSessions: false,
             scannerOptions: options)
         options.maxCodexSessionFileBytes = 0
         options.maxCodexScanBytesPerRefresh = 0
@@ -393,7 +391,6 @@ enum InlineCostCalendarFixture {
             now: now.addingTimeInterval(2),
             historyDays: historyDays,
             allowPricingRefresh: false,
-            includePiSessions: false,
             scannerOptions: options)
         return (partial, covered)
     }

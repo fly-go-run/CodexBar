@@ -77,15 +77,6 @@ struct DashboardClaudeSwapCollectionTests {
         #expect(await operations.snapshot().operationCount == 0)
     }
 
-    @Test
-    func `adapter preference does not suppress other providers or disabled adapter configurations`() {
-        let configured = self.config(adapterEnabled: true)
-        #expect(!CodexBarCLI.serveIncludesConfiguredAccounts(provider: .claude, config: configured, allAccounts: true))
-        #expect(CodexBarCLI.serveIncludesConfiguredAccounts(provider: .ibmbob, config: configured, allAccounts: true))
-        var disabled = configured
-        disabled.providers[0].enabled = false
-        #expect(CodexBarCLI.serveIncludesConfiguredAccounts(provider: .claude, config: disabled, allAccounts: true))
-    }
 
     private var accounts: [ProviderTokenAccount] {
         (0..<2).map { index in
@@ -103,7 +94,7 @@ struct DashboardClaudeSwapCollectionTests {
         var claude = ProviderConfig(id: .claude, enabled: true, tokenAccounts: data)
         claude.source = .oauth
         claude.claudeSwapEnabled = adapterEnabled
-        return CodexBarConfig(providers: [claude, ProviderConfig(id: .ibmbob, enabled: true, tokenAccounts: data)])
+        return CodexBarConfig(providers: [claude])
     }
 }
 

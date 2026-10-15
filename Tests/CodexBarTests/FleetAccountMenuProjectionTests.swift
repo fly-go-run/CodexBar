@@ -133,40 +133,6 @@ struct FleetAccountMenuProjectionTests {
     }
 
     @Test
-    func `identity less local snapshot owns the legacy default account`() {
-        let settings = testSettingsStore(suiteName: "FleetAccountMenuProjectionTests-legacy-default")
-        let store = UsageStore(
-            fetcher: UsageFetcher(environment: [:]),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            settings: settings,
-            startupBehavior: .testing,
-            environmentBase: [:])
-        store.snapshots[.openrouter] = UsageSnapshot(
-            primary: RateWindow(
-                usedPercent: 25,
-                windowMinutes: 300,
-                resetsAt: nil,
-                resetDescription: nil),
-            secondary: nil,
-            updatedAt: Date(timeIntervalSince1970: 100))
-        let remote = Self.snapshot(
-            provider: .openrouter,
-            accountKey: AccountSnapshotSyncPayload.accountKey(for: nil),
-            fetchedAt: Date(timeIntervalSince1970: 200))
-
-        let projection = FleetAccountMenuPlanner.projection(
-            provider: .openrouter,
-            snapshots: [remote],
-            currentDeviceID: settings.iCloudSyncDeviceID,
-            localAccountKeys: store.cloudSyncLocalAccountKeys(for: .openrouter),
-            hasLocalUsage: true)
-
-        #expect(store.cloudSyncLocalAccountKeys(for: .openrouter) == ["default"])
-        #expect(projection.fallback == nil)
-        #expect(projection.additionalAccounts.isEmpty)
-    }
-
-    @Test
     func `identity less local snapshot also owns the provider email alias`() {
         let settings = testSettingsStore(suiteName: "FleetAccountMenuProjectionTests-default-email-alias")
         let store = UsageStore(

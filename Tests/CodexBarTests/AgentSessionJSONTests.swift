@@ -52,78 +52,20 @@ struct AgentSessionJSONTests {
         #expect(decoded.map(\.provider) == [.codex, .claude])
     }
 
-    @Test
-    func `versioned JSON flags preserve legacy compatibility and expose Pi-family sessions only in v2`() throws {
-        let sessions = self.makeProtocolFixture()
-        let parser = CommandParser(signature: CommandSignature.describe(SessionsOptions()))
-        let expectations = [
-            (flag: "--json", version: 1, includesPiFamily: false),
-            (flag: "--json-v2", version: 2, includesPiFamily: true),
-        ]
-
-        for expectation in expectations {
-            let parsed = try parser.parse(arguments: [expectation.flag])
-            let protocolVersion = CodexBarCLI.sessionsJSONProtocolVersion(from: parsed)
-            #expect(protocolVersion == expectation.version)
-
-            let currentSessions = CodexBarCLI.sessionsForJSON(
-                sessions,
-                includePiFamily: protocolVersion == 2)
-            let currentData = try self.encode(currentSessions)
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
-            let decoded = try decoder.decode([AgentSession].self, from: currentData)
-
-            #expect(decoded == (expectation.includesPiFamily ? sessions : sessions.filter { $0.provider != .pi }))
-            #expect(decoded.contains { $0.provider == .pi } == expectation.includesPiFamily)
-        }
-    }
-
-    @Test
-    func `mixed-version clients decode the repaired protocol in both upgrade directions`() throws {
-        let sessions = self.makeProtocolFixture()
-        let parser = CommandParser(signature: CommandSignature.describe(SessionsOptions()))
-        let newHostLegacyFlag = try parser.parse(arguments: ["--json"])
-        #expect(CodexBarCLI.sessionsJSONProtocolVersion(from: newHostLegacyFlag) == 1)
-
-        // A new host answering an old client keeps Pi-family rows out of the legacy payload.
-        let newHostLegacySessions = CodexBarCLI.sessionsForJSON(sessions, includePiFamily: false)
-        let newHostLegacyData = try self.encode(newHostLegacySessions)
-        let oldClientSessions = try JSONDecoder().decode([LegacyAgentSession].self, from: newHostLegacyData)
-        #expect(oldClientSessions.map(\.provider) == [.codex, .claude])
-
-        // A new client falling back to an old host can decode that same v1 payload.
-        let oldHostLegacyData = try self.encode(sessions.filter { $0.provider != .pi })
-        let newClientDecoder = JSONDecoder()
-        newClientDecoder.dateDecodingStrategy = .iso8601
-        let newClientSessions = try newClientDecoder.decode([AgentSession].self, from: oldHostLegacyData)
-        #expect(newClientSessions == newHostLegacySessions)
-    }
-
-    @Test
-    func `human-readable sessions table includes Pi-family dialect tags`() {
-        let table = CodexBarCLI.renderSessionsTable(self.makeProtocolFixture())
-        #expect(table.contains("DIALECT"))
-        #expect(table.contains("omp"))
-    }
-
     private func makeProtocolFixture() -> [AgentSession] {
         [
             self.makeSession(id: "codex-session", provider: .codex),
             self.makeSession(id: "claude-session", provider: .claude),
-            self.makeSession(id: "omp-session", provider: .pi, dialect: .omp),
         ]
     }
 
     private func makeSession(
         id: String,
-        provider: AgentSession.Provider,
-        dialect: AgentSession.Dialect? = nil) -> AgentSession
+        provider: AgentSession.Provider) -> AgentSession
     {
         AgentSession(
             id: id,
             provider: provider,
-            dialect: dialect,
             source: .cli,
             state: .active,
             pid: 42,

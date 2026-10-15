@@ -1,34 +1,12 @@
 extension UsageSnapshot {
-    public func switcherWeeklyWindow(for provider: UsageProvider, showUsed: Bool) -> RateWindow? {
+    public func switcherWeeklyWindow(for provider: UsageProvider, showUsed _: Bool) -> RateWindow? {
         // This surface is labelled "Weekly progress", so prefer a real 7-day lane when one is
         // available. Some providers publish model-specific weekly lanes in extraRateWindows.
         if let weekly = self.mostConstrainedSwitcherWeeklyWindow(for: provider) {
             return weekly
         }
 
-        // Keep the existing provider-specific fallback for providers without a weekly allowance.
-        switch provider {
-        case .factory:
-            // Factory prefers secondary window
-            return self.secondary ?? self.primary
-        case .perplexity:
-            return self.automaticPerplexityWindow()
-        case .cursor:
-            // Cursor: fall back to on-demand budget when the included plan is exhausted (only in
-            // "show remaining" mode). The secondary/tertiary lanes are Total/Auto/API breakdowns,
-            // not extra capacity, so they should not replace the remaining paid quota indicator.
-            if !showUsed,
-               let primary = self.primary,
-               primary.remainingPercent <= 0,
-               let providerCost = self.providerCost,
-               providerCost.limit > 0
-            {
-                return providerCost.spendLimitWindow
-            }
-            return self.primary ?? self.secondary
-        default:
-            return self.primary ?? self.secondary
-        }
+        return self.primary ?? self.secondary
     }
 
     private func mostConstrainedSwitcherWeeklyWindow(for provider: UsageProvider) -> RateWindow? {

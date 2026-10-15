@@ -267,19 +267,8 @@ final class MenuBarResetWindowNativeProofTests: XCTestCase {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: config,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore(),
             codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
-            cursorCookieStore: InMemoryCookieHeaderStore(),
-            opencodeCookieStore: InMemoryCookieHeaderStore(),
-            factoryCookieStore: InMemoryCookieHeaderStore(),
-            minimaxCookieStore: InMemoryMiniMaxCookieStore(),
-            minimaxAPITokenStore: InMemoryMiniMaxAPITokenStore(),
-            kimiTokenStore: InMemoryKimiTokenStore(),
-            augmentCookieStore: InMemoryCookieHeaderStore(),
-            ampCookieStore: InMemoryCookieHeaderStore(),
-            copilotTokenStore: InMemoryCopilotTokenStore(),
             tokenAccountStore: InMemoryTokenAccountStore(),
             performInitialProviderDetection: false)
         settings.statusChecksEnabled = false

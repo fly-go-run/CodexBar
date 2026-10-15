@@ -42,15 +42,12 @@ public struct ProviderFetchContext: Sendable {
     public let browserDetection: BrowserDetection
     public let selectedTokenAccountID: UUID?
     public let tokenAccountTokenUpdater: TokenAccountTokenUpdater?
-    public typealias SettingsWriter = @Sendable (UsageProvider, [String: String]) async -> ProviderSettingsSaveOutcome
-    public let settingsWriter: SettingsWriter?
     public let providerManualTokenUpdater: ProviderManualTokenUpdater?
     public let costUsageHistoryDays: Int
     /// Restricts a Claude retry to the credential-owning CLI after an ambient account mismatch rejects OAuth.
     /// The original source mode remains intact so background interaction gates still apply.
     public let claudeOwnerCLIRecoveryOnly: Bool
-    /// Whether warm CLI helper sessions (such as the managed Antigravity `agy`
-    /// process) may outlive a single fetch. True for long-lived hosts (the app,
+    /// Whether warm CLI helper sessions may outlive a single fetch. True for long-lived hosts (the app,
     /// `codexbar serve`); false for one-shot CLI invocations that should reset
     /// the session after each fetch.
     public let persistsCLISessions: Bool
@@ -80,7 +77,6 @@ public struct ProviderFetchContext: Sendable {
         selectedTokenAccountID: UUID? = nil,
         tokenAccountTokenUpdater: TokenAccountTokenUpdater? = nil,
         providerManualTokenUpdater: ProviderManualTokenUpdater? = nil,
-        settingsWriter: SettingsWriter? = nil,
         costUsageHistoryDays: Int = 30,
         claudeOwnerCLIRecoveryOnly: Bool = false,
         persistsCLISessions: Bool = false,
@@ -104,18 +100,11 @@ public struct ProviderFetchContext: Sendable {
         self.selectedTokenAccountID = selectedTokenAccountID
         self.tokenAccountTokenUpdater = tokenAccountTokenUpdater
         self.providerManualTokenUpdater = providerManualTokenUpdater
-        self.settingsWriter = settingsWriter
         self.costUsageHistoryDays = max(1, min(365, costUsageHistoryDays))
         self.claudeOwnerCLIRecoveryOnly = claudeOwnerCLIRecoveryOnly
         self.persistsCLISessions = persistsCLISessions
         self.persistentCLISessionIdleWindow = persistentCLISessionIdleWindow
         self.resolvedCLIVersion = resolvedCLIVersion
-    }
-}
-
-public enum ProviderCLISessionLifecycle {
-    public static func shutdownPersistentSessions() async {
-        await AntigravityCLISession.shared.reset()
     }
 }
 
@@ -126,8 +115,6 @@ public struct ProviderFetchResult: Sendable {
     public let sourceLabel: String
     public let strategyID: String
     public let strategyKind: ProviderFetchKind
-    /// Optional provider data that may complete after the primary usage result is published.
-    public let supplementalUsageTask: Task<ProviderSupplementalUsageUpdate, Never>?
     /// True when the Codex OAuth strategy already attempted reset-credit enrichment with its
     /// winning in-memory credential snapshot. Generic enrichment must not reload auth.json after
     /// that attempt fails, or it could attach another account's credits to this usage result.
@@ -160,7 +147,6 @@ public struct ProviderFetchResult: Sendable {
         sourceLabel: String,
         strategyID: String,
         strategyKind: ProviderFetchKind,
-        supplementalUsageTask: Task<ProviderSupplementalUsageUpdate, Never>? = nil,
         codexResetCreditsAttempted: Bool = false,
         codexMonthlyLimitEnrichmentFailed: Bool = false,
         diagnostic: String? = nil,
@@ -177,7 +163,6 @@ public struct ProviderFetchResult: Sendable {
         self.sourceLabel = sourceLabel
         self.strategyID = strategyID
         self.strategyKind = strategyKind
-        self.supplementalUsageTask = supplementalUsageTask
         self.codexResetCreditsAttempted = codexResetCreditsAttempted
         self.codexMonthlyLimitEnrichmentFailed = codexMonthlyLimitEnrichmentFailed
         self.diagnostic = diagnostic
@@ -198,7 +183,6 @@ public struct ProviderFetchResult: Sendable {
             sourceLabel: self.sourceLabel,
             strategyID: self.strategyID,
             strategyKind: self.strategyKind,
-            supplementalUsageTask: self.supplementalUsageTask,
             codexResetCreditsAttempted: self.codexResetCreditsAttempted,
             codexMonthlyLimitEnrichmentFailed: true,
             diagnostic: self.diagnostic,
@@ -219,7 +203,6 @@ public struct ProviderFetchResult: Sendable {
             sourceLabel: self.sourceLabel,
             strategyID: self.strategyID,
             strategyKind: self.strategyKind,
-            supplementalUsageTask: self.supplementalUsageTask,
             codexResetCreditsAttempted: self.codexResetCreditsAttempted,
             codexMonthlyLimitEnrichmentFailed: self.codexMonthlyLimitEnrichmentFailed,
             diagnostic: diagnostic,
@@ -230,10 +213,6 @@ public struct ProviderFetchResult: Sendable {
             claudeOAuthKeychainCredentialAbsent: self.claudeOAuthKeychainCredentialAbsent,
             claudeOAuthKeychainCredentialUnavailable: self.claudeOAuthKeychainCredentialUnavailable)
     }
-}
-
-public enum ProviderSupplementalUsageUpdate: Sendable {
-    case grokResetCredits(GrokRateLimitResetCreditsSnapshot?)
 }
 
 public struct ProviderFetchAttempt: Sendable {
@@ -283,10 +262,7 @@ public enum ProviderFetchError: LocalizedError, Sendable {
     public var errorDescription: String? {
         switch self {
         case let .noAvailableStrategy(provider):
-            if provider == .kiro {
-                return "Kiro usage requires the Kiro CLI. Install it from https://kiro.dev/docs/cli/ and run 'kiro-cli login' first."
-            }
-            return "No available fetch strategy for \(provider.rawValue)."
+            "No available fetch strategy for \(provider.rawValue)."
         }
     }
 }
@@ -354,7 +330,6 @@ extension ProviderFetchStrategy {
         credits: CreditsSnapshot? = nil,
         dashboard: OpenAIDashboardSnapshot? = nil,
         sourceLabel: String,
-        supplementalUsageTask: Task<ProviderSupplementalUsageUpdate, Never>? = nil,
         diagnostic: String? = nil) -> ProviderFetchResult
     {
         ProviderFetchResult(
@@ -364,7 +339,6 @@ extension ProviderFetchStrategy {
             sourceLabel: sourceLabel,
             strategyID: self.id,
             strategyKind: self.kind,
-            supplementalUsageTask: supplementalUsageTask,
             diagnostic: diagnostic)
     }
 }

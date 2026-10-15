@@ -4,38 +4,6 @@ import Testing
 
 struct AgentSessionParserTests {
     @Test
-    func `ps parser deduplicates desktop wrapper and excludes app server and helpers`() throws {
-        let output = try Self.fixtureString("agent-sessions-ps", extension: "txt")
-        let records = AgentPSOutputParser.parse(output)
-        let agents = AgentPSOutputParser.agentProcesses(from: records)
-
-        #expect(records.count == 18)
-        #expect(agents.map(\ .pid) == [102, 201, 501, 502, 509])
-        #expect(AgentPSOutputParser.provider(for: agents[0]) == .claude)
-        #expect(AgentPSOutputParser.source(for: agents[0]) == .desktopApp)
-        #expect(AgentPSOutputParser.provider(for: agents[1]) == .codex)
-        #expect(agents[1].command.hasSuffix("strange argv here"))
-        #expect(AgentPSOutputParser.hasCodexAppServer(in: records))
-        #expect(AgentPSOutputParser.provider(for: agents[2]) == .pi)
-        #expect(AgentPSOutputParser.piDialect(for: agents[2]) == .omp)
-        #expect(AgentPSOutputParser.source(for: agents[2]) == .cli)
-        #expect(AgentPSOutputParser.provider(for: agents[3]) == .pi)
-        #expect(AgentPSOutputParser.piDialect(for: agents[3]) == .omp)
-        #expect(AgentPSOutputParser.source(for: agents[3]) == .cli)
-        #expect(AgentPSOutputParser.provider(for: agents[4]) == .pi)
-        #expect(AgentPSOutputParser.piDialect(for: agents[4]) == .pi)
-        let unrelatedBun = try #require(records.first { $0.pid == 507 })
-        let unrelatedNpm = try #require(records.first { $0.pid == 508 })
-        #expect(AgentPSOutputParser.provider(for: unrelatedBun) == nil)
-        #expect(AgentPSOutputParser.provider(for: unrelatedNpm) == nil)
-        for helperPID in [503, 504, 505, 506] {
-            let helper = try #require(records.first { $0.pid == helperPID })
-            #expect(AgentPSOutputParser.provider(for: helper) == nil)
-            #expect(AgentPSOutputParser.source(for: helper) == .cli)
-        }
-    }
-
-    @Test
     func `chatgpt bundled codex app server is recognized without becoming a live agent`() {
         let records = AgentPSOutputParser.parse("""
         4234 1 Mon Jul 6 09:03:00 2026 /Applications/ChatGPT.app/Contents/Resources/codex \
@@ -46,16 +14,6 @@ struct AgentSessionParserTests {
         #expect(records.count == 2)
         #expect(AgentPSOutputParser.agentProcesses(from: records).isEmpty)
         #expect(AgentPSOutputParser.hasCodexAppServer(in: records))
-    }
-
-    @Test
-    func `pi dialects use stable Codable raw values`() throws {
-        let provider = try JSONEncoder().encode(AgentSession.Provider.pi)
-        let dialects = try JSONEncoder().encode([AgentSession.Dialect.pi, .omp])
-
-        #expect(String(data: provider, encoding: .utf8) == "\"pi\"")
-        #expect(String(data: dialects, encoding: .utf8) == "[\"pi\",\"omp\"]")
-        #expect(try JSONDecoder().decode(AgentSession.Provider.self, from: provider) == .pi)
     }
 
     @Test

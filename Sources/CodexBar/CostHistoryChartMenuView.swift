@@ -682,7 +682,7 @@ struct CostHistoryChartMenuView: View {
               let day = Int(parts[2]) else { return nil }
 
         let displayCalendar = self.gregorianCalendar(timeZone: sourceCalendar.timeZone)
-        let bucketCalendar = self.bucketCalendar(provider: provider, displayCalendar: displayCalendar)
+        let bucketCalendar = displayCalendar
         guard let date = bucketCalendar.date(from: DateComponents(year: year, month: month, day: day)) else {
             return nil
         }
@@ -741,13 +741,6 @@ struct CostHistoryChartMenuView: View {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
         return calendar
-    }
-
-    private static func bucketCalendar(provider: UsageProvider, displayCalendar: Calendar) -> Calendar {
-        // Provider-specific by design: Mistral uses UTC day buckets; Codex alone defaults to exact local tokens.
-        guard provider == .mistral else { return displayCalendar }
-        // Mistral day keys are UTC buckets; map their boundary into the matching local display day.
-        return self.gregorianCalendar(timeZone: TimeZone(secondsFromGMT: 0) ?? .gmt)
     }
 
     private static func defaultMetric(provider: UsageProvider, daily: [DailyEntry]) -> ChartMetric {

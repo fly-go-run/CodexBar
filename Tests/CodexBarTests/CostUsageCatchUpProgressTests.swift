@@ -180,54 +180,6 @@ struct CostUsageCatchUpProgressTests {
     }
 
     @Test
-    func `progress key includes resumable discovery head offset`() throws {
-        let env = try CostUsageTestEnvironment()
-        defer { env.cleanup() }
-        let day = try env.makeLocalNoon(year: 2026, month: 5, day: 10)
-        let iso = env.isoString(for: day)
-        let body = #"{"type":"session_meta","timestamp":"\#(iso)","payload":{"session_id":"known-session","cwd":""#
-            + String(repeating: "x", count: 512)
-            + #""}}"#
-            + "\n"
-        let fileURL = try env.writeCodexSessionFile(
-            day: day,
-            filename: "budgeted-head.jsonl",
-            contents: body)
-
-        let firstBudget = CostUsageScanner.CodexScanBudget(maxFileBytes: 32, maxBytesPerRefresh: 32)
-        let firstIndex = CostUsageScanner.CodexSessionFileIndex(
-            files: [fileURL],
-            roots: [env.codexSessionsRoot],
-            cachedDiscovery: nil,
-            scanBudget: firstBudget)
-        _ = try firstIndex.lookup(sessionId: "absent-session")
-        let firstDiscovery = firstIndex.persistedState
-
-        let secondBudget = CostUsageScanner.CodexScanBudget(maxFileBytes: 32, maxBytesPerRefresh: 32)
-        let secondIndex = CostUsageScanner.CodexSessionFileIndex(
-            files: [fileURL],
-            roots: [env.codexSessionsRoot],
-            cachedDiscovery: firstDiscovery,
-            scanBudget: secondBudget)
-        _ = try secondIndex.lookup(sessionId: "absent-session")
-        let secondDiscovery = secondIndex.persistedState
-
-        let firstCommittedOffset = try #require(firstDiscovery.headScan?.offset)
-        let secondCommittedOffset = try #require(secondDiscovery.headScan?.offset)
-        let firstResumeOffset = try #require(firstDiscovery.headScan?.resumeState?.offset)
-        let secondResumeOffset = try #require(secondDiscovery.headScan?.resumeState?.offset)
-        var firstCache = CostUsageCache()
-        firstCache.codexSessionDiscovery = firstDiscovery
-        var secondCache = CostUsageCache()
-        secondCache.codexSessionDiscovery = secondDiscovery
-
-        #expect(secondCommittedOffset == firstCommittedOffset)
-        #expect(secondResumeOffset > firstResumeOffset)
-        #expect(CostUsageFetcher.codexScanProgressKey(cache: secondCache, scopedFiles: [:])
-            != CostUsageFetcher.codexScanProgressKey(cache: firstCache, scopedFiles: [:]))
-    }
-
-    @Test
     func `progress key includes active lookback cursor and ignores dictionary insertion order`() {
         var initialCache = CostUsageCache()
         initialCache.codexActiveLookbackState = CostUsageCodexActiveLookbackState(

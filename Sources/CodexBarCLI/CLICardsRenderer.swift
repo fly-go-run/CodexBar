@@ -42,7 +42,6 @@ struct CLICardModel: Sendable, Equatable {
     let infoLines: [String]
     let metrics: [CLICardMetric]
     let extraLines: [String]
-    let historySummary: String?
     let statusLine: String?
 
     init(
@@ -57,7 +56,6 @@ struct CLICardModel: Sendable, Equatable {
         infoLines: [String],
         metrics: [CLICardMetric],
         extraLines: [String],
-        historySummary: String? = nil,
         statusLine: String?)
     {
         self.provider = provider
@@ -71,7 +69,6 @@ struct CLICardModel: Sendable, Equatable {
         self.infoLines = infoLines
         self.metrics = metrics
         self.extraLines = extraLines
-        self.historySummary = historySummary
         self.statusLine = statusLine
     }
 }
@@ -177,7 +174,6 @@ enum CLICardsRenderer {
             infoLines: infoLines,
             metrics: metrics,
             extraLines: extraLines,
-            historySummary: CLIRenderer.liveHistoryLine(snapshot: snapshot, useColor: false),
             statusLine: statusLine)
     }
 
@@ -220,7 +216,6 @@ enum CLICardsRenderer {
                 infoLines: base.infoLines,
                 metrics: base.metrics,
                 extraLines: base.extraLines,
-                historySummary: base.historySummary,
                 statusLine: base.statusLine)
         }
 
@@ -370,15 +365,6 @@ enum CLICardsRenderer {
 
         for extraLine in card.extraLines {
             lines.append(Self.detailLine(extraLine, innerWidth: innerWidth, useColor: useColor, enhanced: enhanced))
-        }
-        if let history = card.historySummary {
-            for historyLine in Self.wrapPlainText(history, width: innerWidth) {
-                lines.append(Self.contentLine(
-                    historyLine,
-                    innerWidth: innerWidth,
-                    useColor: useColor,
-                    enhanced: enhanced))
-            }
         }
 
         if let statusLine = card.statusLine {

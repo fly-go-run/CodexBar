@@ -77,43 +77,6 @@ struct CodexLongContextThresholdTests {
         #expect(keys[0] != keys[1])
     }
 
-    @Test
-    func `persisted requests reprice after the catalog threshold is corrected`() throws {
-        let env = try CostUsageTestEnvironment()
-        defer { env.cleanup() }
-        let day = try env.makeLocalNoon(year: 2026, month: 10, day: 1)
-        let timestamp = env.isoString(for: day)
-        _ = try env.writeCodexSessionFile(day: day, filename: "session.jsonl", contents: env.jsonl([
-            ["type": "turn_context", "timestamp": timestamp, "payload": ["model": "gpt-6.1-sol"]],
-            ["type": "event_msg", "timestamp": timestamp, "payload": [
-                "type": "token_count", "info": ["last_token_usage": [
-                    "input_tokens": 210_000, "cached_input_tokens": 200_000, "output_tokens": 1000,
-                ]],
-            ]],
-        ]))
-        #expect(try ModelsDevCache.save(
-            catalog: Self.catalog(model: "gpt-6.1-sol", explicitTier: true, threshold: 200_000),
-            fetchedAt: day,
-            cacheRoot: env.cacheRoot))
-        let options = CostUsageScanner.Options(
-            codexSessionsRoot: env.codexSessionsRoot,
-            cacheRoot: env.cacheRoot,
-            codexTraceDatabaseURL: env.root.appendingPathComponent("missing-traces.sqlite"))
-        let old = CostUsageScanner.loadDailyReport(
-            provider: .codex, since: day, until: day, now: day, options: options)
-        #expect(abs((old.summary?.totalCostUSD ?? -1) - 0.095) < 1e-12)
-        #expect(try ModelsDevCache.save(
-            catalog: Self.catalog(model: "gpt-6.1-sol", explicitTier: true),
-            fetchedAt: day,
-            cacheRoot: env.cacheRoot))
-        let range = CostUsageScanner.CostUsageDayRange(since: day, until: day)
-        let reopened = CostUsageStoreAccess.read(cacheRoot: env.cacheRoot, calendar: range.calendar)
-        let corrected = CostUsageScanner.buildCodexReportFromCache(
-            cache: reopened, range: range, modelsDevCacheRoot: env.cacheRoot)
-        #expect(abs((corrected.summary?.totalCostUSD ?? -1) - 0.050) < 1e-12)
-        #expect(corrected.summary?.totalTokens == old.summary?.totalTokens)
-    }
-
     private static func catalog(
         model: String,
         explicitTier: Bool,

@@ -68,18 +68,8 @@ extension UsageStore {
             creditsOverride: account?.credits,
             now: now)
         let supportsTokenCost = codexProjection != nil || descriptor.tokenCost.supportsTokenCost
-        let tokenSnapshot: CostUsageTokenSnapshot?
-        if isSettings {
-            tokenSnapshot = isLive && supportsTokenCost ? self.tokenSnapshot(for: provider) : nil
-        } else {
-            let projected = isLive || snapshot != nil
-                ? self.tokenSnapshot(fromProviderSnapshot: snapshot, provider: provider)
-                : nil
-            let stored = isLive && supportsTokenCost && !Self.tokenCostRequiresProviderSnapshot(provider)
-                ? self.tokenSnapshot(for: provider)
-                : nil
-            tokenSnapshot = projected ?? stored
-        }
+        let tokenSnapshot: CostUsageTokenSnapshot? = isLive && supportsTokenCost ? self
+            .tokenSnapshot(for: provider) : nil
         let weeklyWindow = codexProjection?.rateWindow(for: .weekly)
             ?? snapshot.flatMap { descriptor.presentation.semanticWindows(snapshot: $0).weekly }
         let weeklyPace = weeklyWindow.flatMap {
@@ -130,9 +120,7 @@ extension UsageStore {
             accountPrivacyOrdinal: account?.privacyOrdinal,
             planOverride: account?.plan ?? .automatic,
             planEmphasis: account?.planEmphasis ?? .none,
-            lastKnownUsageCapturedAt: account?.lastKnownUsageCapturedAt
-                ?? lastKnownUsageCapturedAt
-                ?? (isLive ? self.browserSessionLastKnownUsageCapturedAt(for: provider, snapshot: snapshot) : nil),
+            lastKnownUsageCapturedAt: account?.lastKnownUsageCapturedAt ?? lastKnownUsageCapturedAt,
             isRefreshing: isSettings ? self.refreshingProviders.contains(provider.instanceID)
                 : self.shouldShowRefreshingMenuCardIndicator(for: provider),
             lastError: lastError,
@@ -149,12 +137,9 @@ extension UsageStore {
                 : descriptor.tokenCost.showsCostMenuSection && self.settings.costSummaryShowsSubmenu(for: provider),
             costComparisonPeriodsEnabled: !isSettings && self.settings.costComparisonPeriodsEnabled,
             showOptionalCreditsAndExtraUsage: optionalUsageOverride ?? self.settings.showOptionalCreditsAndExtraUsage,
-            copilotBudgetExtrasEnabled: self.settings.copilotBudgetExtrasEnabled,
             showsAllUsageLanes: isSettings,
             sourceLabel: account?.sourceLabel ?? (!isSettings && isLive ? self.sourceLabel(for: provider) : nil),
             subtitleOverride: account?.subtitle,
-            // Provider-specific by design: Kilo's menu explains its automatic source fallback.
-            kiloAutoMode: !isSettings && provider == .kilo && self.settings.kiloUsageDataSource == .auto,
             hidePersonalInfo: self.settings.hidePersonalInfo,
             weeklyPace: weeklyPace,
             sessionEquivalentForecast: forecast,

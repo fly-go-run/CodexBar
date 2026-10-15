@@ -320,7 +320,6 @@ struct CodexCurrentWindowFixture {
         await CostUsageFetcher.loadCachedCodexTokenSnapshotResult(
             now: self.base.now,
             historyDays: 1,
-            includePiSessions: false,
             requireCompleteHistory: true,
             scannerOptions: self.base.options)
     }

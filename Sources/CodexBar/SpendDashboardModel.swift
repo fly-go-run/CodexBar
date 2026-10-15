@@ -35,7 +35,6 @@ struct SpendDashboardModel: Equatable, Sendable {
         var snapshot: CostUsageTokenSnapshot
         var retainedDetailSnapshot: CostUsageTokenSnapshot?
         let tokenActivityCache: CostUsageTokenActivityCache?
-        let accounting: PiSnapshotAccounting?
 
         init(
             id: String? = nil,
@@ -44,8 +43,7 @@ struct SpendDashboardModel: Equatable, Sendable {
             modelProviderName: String? = nil,
             snapshot: CostUsageTokenSnapshot,
             tokenActivityCache: CostUsageTokenActivityCache? = nil,
-            sourceKind: SpendDashboardModel.SourceKind = .native,
-            accounting: PiSnapshotAccounting? = nil)
+            sourceKind: SpendDashboardModel.SourceKind = .native)
         {
             self.id = id ?? provider.rawValue
             self.provider = provider
@@ -54,7 +52,6 @@ struct SpendDashboardModel: Equatable, Sendable {
             self.snapshot = snapshot
             self.tokenActivityCache = tokenActivityCache
             self.sourceKind = sourceKind
-            self.accounting = accounting
         }
 
         let sourceKind: SpendDashboardModel.SourceKind
@@ -605,8 +602,7 @@ struct SpendDashboardModel: Equatable, Sendable {
             let summaryModelHistory = Self.modelSummary(summaries: [summary])
             let retainsModelHistory = if summary.totalCost != nil {
                 summaryModelHistory.completeness == .complete || summary.incompleteRequestCount > 0 ||
-                    Self.canRetainPartialCodexModelHistory(summary) ||
-                    Self.canRetainPartialEstimatedModelHistory(summary)
+                    Self.canRetainPartialCodexModelHistory(summary)
             } else {
                 Self.canRetainUnpricedModelHistory(summary) ||
                     (summary.incompleteRequestCount > 0 && summary.entries
@@ -1304,12 +1300,6 @@ struct SpendDashboardModel: Equatable, Sendable {
         CostReportingPeriod.rolling(days: days).bounds(now: now, calendar: calendar)
     }
 
-    private static let utcCalendar: Calendar = {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
-        return calendar
-    }()
-
     private static func gregorianCalendar(timeZone: TimeZone) -> Calendar {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = timeZone
@@ -1360,7 +1350,7 @@ struct SpendDashboardModel: Equatable, Sendable {
         input: ProviderInput,
         displayCalendar: Calendar) -> ClosedRange<Date>
     {
-        let bucketCalendar = Self.bucketCalendar(for: input.provider, displayCalendar: displayCalendar)
+        let bucketCalendar = displayCalendar
         let bucketEnd = bucketCalendar.startOfDay(for: input.snapshot.updatedAt)
         let scanEnd = displayCalendar.startOfDay(for: bucketEnd)
         let scanDays = max(1, input.snapshot.historyDays)
@@ -1403,7 +1393,7 @@ struct SpendDashboardModel: Equatable, Sendable {
               digitIndices.allSatisfy({ (48...57).contains(bytes[$0]) })
         else { return nil }
         let parts = rawValue.split(separator: "-")
-        let bucketCalendar = Self.bucketCalendar(for: provider, displayCalendar: displayCalendar)
+        let bucketCalendar = displayCalendar
         guard parts.count == 3,
               let year = Int(parts[0]),
               let month = Int(parts[1]),
@@ -1416,14 +1406,6 @@ struct SpendDashboardModel: Equatable, Sendable {
             day: day)
         else { return nil }
         return displayCalendar.startOfDay(for: date)
-    }
-
-    private static func bucketCalendar(for provider: UsageProvider, displayCalendar: Calendar) -> Calendar {
-        // Provider-specific by design: mistral openrouter xai display calendar
-        guard provider == .mistral || provider == .openrouter || provider == .xai else { return displayCalendar }
-        // Mistral, OpenRouter, and xAI label daily buckets and snapshot coverage by UTC day. Map each UTC boundary into
-        // the containing local dashboard day instead of reinterpreting the label as a local date.
-        return self.utcCalendar
     }
 
     private static func currencyCode(_ rawValue: String) -> String? {

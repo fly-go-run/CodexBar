@@ -184,14 +184,6 @@ struct LocalizationLanguageCatalogTests {
     }
 
     @Test
-    func `catalan plugin sidebar uses the same terminology as its pane`() {
-        CodexBarLocalizationOverride.$appLanguage.withValue("ca") {
-            #expect(SettingsPane.plugins.title == "Connectors")
-            #expect(L("Provider Plugins") == "Connectors de proveïdor")
-        }
-    }
-
-    @Test
     func `app language catalog includes Ukrainian`() {
         #expect(AppLanguage.allCases.contains(.ukrainian))
         #expect(AppLanguage.ukrainian.rawValue == "uk")

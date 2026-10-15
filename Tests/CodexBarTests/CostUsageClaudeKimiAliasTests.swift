@@ -109,7 +109,6 @@ struct CostUsageClaudeKimiAliasTests {
             environment: [:],
             now: fixture.day,
             refreshPricingInBackground: false,
-            includePiSessions: false,
             scannerOptions: fixture.options,
             modelsDevClient: ModelsDevClient(transport: transport))
 
@@ -252,7 +251,6 @@ private struct AliasFixture {
             now: self.day,
             allowPricingRefresh: false,
             refreshPricingInBackground: false,
-            includePiSessions: false,
             scannerOptions: self.options)
     }
 }

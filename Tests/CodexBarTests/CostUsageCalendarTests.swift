@@ -216,93 +216,6 @@ struct CostUsageCalendarTests {
             expectedDay: "2026-07-23")
     }
 
-    @Test
-    func `claude and pi caches re-bucket unchanged files when the time zone changes`() throws {
-        let env = try CostUsageTestEnvironment()
-        defer { env.cleanup() }
-
-        let utc = try Self.calendar(timeZoneIdentifier: "UTC")
-        let bangkok = try Self.calendar(timeZoneIdentifier: "Asia/Bangkok")
-        let boundary = try Self.date("2026-07-22T18:00:00Z")
-        let windowStart = try Self.date("2026-07-20T12:00:00Z")
-        let windowEnd = try Self.date("2026-07-24T12:00:00Z")
-        _ = try env.writeClaudeProjectFile(
-            relativePath: "calendar/session.jsonl",
-            contents: env.jsonl([
-                [
-                    "type": "assistant",
-                    "timestamp": env.isoString(for: boundary),
-                    "sessionId": "claude-calendar-session",
-                    "requestId": "claude-calendar-request",
-                    "message": [
-                        "id": "claude-calendar-message",
-                        "model": "claude-sonnet-4-20250514",
-                        "usage": [
-                            "input_tokens": 10,
-                            "cache_creation_input_tokens": 0,
-                            "cache_read_input_tokens": 0,
-                            "output_tokens": 2,
-                        ],
-                    ],
-                ],
-            ]))
-        _ = try env.writePiSessionFile(
-            relativePath: "calendar/2026-07-22T18-00-00-000Z_session.jsonl",
-            contents: env.jsonl([
-                [
-                    "type": "message",
-                    "timestamp": env.isoString(for: boundary),
-                    "message": [
-                        "role": "assistant",
-                        "provider": "openai-codex",
-                        "model": "openai/gpt-5.4",
-                        "timestamp": Int(boundary.timeIntervalSince1970 * 1000),
-                        "usage": [
-                            "input": 10,
-                            "output": 2,
-                            "cacheRead": 0,
-                            "cacheWrite": 0,
-                            "totalTokens": 12,
-                        ],
-                    ],
-                ],
-            ]))
-
-        let utcClaude = CostUsageScanner.loadDailyReport(
-            provider: .claude,
-            since: windowStart,
-            until: windowEnd,
-            now: windowEnd,
-            options: Self.claudeOptions(env: env, calendar: utc))
-        let bangkokClaude = CostUsageScanner.loadDailyReport(
-            provider: .claude,
-            since: windowStart,
-            until: windowEnd,
-            now: windowEnd,
-            options: Self.claudeOptions(env: env, calendar: bangkok))
-        #expect(utcClaude.data.map(\.date) == ["2026-07-22"])
-        #expect(bangkokClaude.data.map(\.date) == ["2026-07-23"])
-        #expect(CostUsageClaudeCacheIO.load(
-            provider: .claude,
-            cacheRoot: env.cacheRoot).usage.timeZoneIdentifier == "Asia/Bangkok")
-
-        let utcPi = PiSessionCostScanner.loadDailyReport(
-            provider: .codex,
-            since: windowStart,
-            until: windowEnd,
-            now: windowEnd,
-            options: Self.piOptions(env: env, calendar: utc))
-        let bangkokPi = PiSessionCostScanner.loadDailyReport(
-            provider: .codex,
-            since: windowStart,
-            until: windowEnd,
-            now: windowEnd,
-            options: Self.piOptions(env: env, calendar: bangkok))
-        #expect(utcPi.data.map(\.date) == ["2026-07-22"])
-        #expect(bangkokPi.data.map(\.date) == ["2026-07-23"])
-        #expect(PiSessionCostCacheIO.load(cacheRoot: env.cacheRoot).timeZoneIdentifier == "Asia/Bangkok")
-    }
-
     private static func expectFetcherSnapshot(
         env: CostUsageTestEnvironment,
         now: Date,
@@ -315,7 +228,6 @@ struct CostUsageCalendarTests {
             now: now,
             historyDays: 1,
             allowPricingRefresh: false,
-            includePiSessions: false,
             scannerOptions: options)
         #expect(snapshot.daily.map(\.date) == [expectedDay])
         #expect(snapshot.projects.flatMap(\.daily).map(\.date) == [expectedDay])
@@ -380,17 +292,6 @@ struct CostUsageCalendarTests {
             calendar: calendar)
         options.refreshMinIntervalSeconds = 0
         return options
-    }
-
-    private static func piOptions(
-        env: CostUsageTestEnvironment,
-        calendar: Calendar) -> PiSessionCostScanner.Options
-    {
-        PiSessionCostScanner.Options(
-            piSessionsRoot: env.piSessionsRoot,
-            cacheRoot: env.cacheRoot,
-            calendar: calendar,
-            refreshMinIntervalSeconds: 0)
     }
 
     private static func calendar(timeZoneIdentifier: String) throws -> Calendar {

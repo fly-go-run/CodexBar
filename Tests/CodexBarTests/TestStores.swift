@@ -108,70 +108,6 @@ final class InMemoryCookieHeaderStore: CookieHeaderStoring, @unchecked Sendable 
     }
 }
 
-final class InMemoryMiniMaxCookieStore: MiniMaxCookieStoring, @unchecked Sendable {
-    var value: String?
-
-    init(value: String? = nil) {
-        self.value = value
-    }
-
-    func loadCookieHeader() throws -> String? {
-        self.value
-    }
-
-    func storeCookieHeader(_ header: String?) throws {
-        self.value = header
-    }
-}
-
-final class InMemoryMiniMaxAPITokenStore: MiniMaxAPITokenStoring, @unchecked Sendable {
-    var value: String?
-
-    init(value: String? = nil) {
-        self.value = value
-    }
-
-    func loadToken() throws -> String? {
-        self.value
-    }
-
-    func storeToken(_ token: String?) throws {
-        self.value = token
-    }
-}
-
-final class InMemoryKimiTokenStore: KimiTokenStoring, @unchecked Sendable {
-    var value: String?
-
-    init(value: String? = nil) {
-        self.value = value
-    }
-
-    func loadToken() throws -> String? {
-        self.value
-    }
-
-    func storeToken(_ token: String?) throws {
-        self.value = token
-    }
-}
-
-final class InMemoryCopilotTokenStore: CopilotTokenStoring, @unchecked Sendable {
-    var value: String?
-
-    init(value: String? = nil) {
-        self.value = value
-    }
-
-    func loadToken() throws -> String? {
-        self.value
-    }
-
-    func storeToken(_ token: String?) throws {
-        self.value = token
-    }
-}
-
 final class InMemoryTokenAccountStore: ProviderTokenAccountStoring, @unchecked Sendable {
     var accounts: [UsageProvider: ProviderTokenAccountData] = [:]
     private let fileURL: URL
@@ -248,19 +184,8 @@ func testSettingsStore(
     return SettingsStore(
         userDefaults: defaults,
         configStore: configStore,
-        zaiTokenStore: NoopZaiTokenStore(),
-        syntheticTokenStore: NoopSyntheticTokenStore(),
         codexCookieStore: InMemoryCookieHeaderStore(),
         claudeCookieStore: InMemoryCookieHeaderStore(),
-        cursorCookieStore: InMemoryCookieHeaderStore(),
-        opencodeCookieStore: InMemoryCookieHeaderStore(),
-        factoryCookieStore: InMemoryCookieHeaderStore(),
-        minimaxCookieStore: InMemoryMiniMaxCookieStore(),
-        minimaxAPITokenStore: InMemoryMiniMaxAPITokenStore(),
-        kimiTokenStore: InMemoryKimiTokenStore(),
-        augmentCookieStore: InMemoryCookieHeaderStore(),
-        ampCookieStore: InMemoryCookieHeaderStore(),
-        copilotTokenStore: InMemoryCopilotTokenStore(),
         tokenAccountStore: tokenAccountStore,
         keychainAccessPolicy: keychainAccessPolicy)
 }

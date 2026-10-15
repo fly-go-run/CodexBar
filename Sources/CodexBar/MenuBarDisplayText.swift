@@ -21,20 +21,6 @@ enum MenuBarDisplayText {
         return value.isEmpty ? nil : value
     }
 
-    static func deepSeekBalanceText(snapshot: UsageSnapshot?) -> String? {
-        guard
-            let rawValue = snapshot?.primary?.resetDescription?
-                .trimmingCharacters(in: .whitespacesAndNewlines),
-                !rawValue.isEmpty,
-                rawValue.hasPrefix("$") || rawValue.hasPrefix("¥")
-        else {
-            return nil
-        }
-
-        let balance = rawValue.split(separator: " ", maxSplits: 1).first
-        return balance.map(String.init)
-    }
-
     static func percentText(window: RateWindow?, showUsed: Bool, estimated: Bool = false) -> String? {
         guard let window else { return nil }
         let percent = showUsed ? window.usedPercent : window.remainingPercent

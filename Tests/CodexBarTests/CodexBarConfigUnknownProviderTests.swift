@@ -88,20 +88,6 @@ struct CodexBarConfigUnknownProviderTests {
         #expect(records.compactMap { $0["id"] as? String } == expected)
     }
 
-    @MainActor
-    @Test
-    func `app config persistence preserves unavailable plugin records`() throws {
-        let settings = testSettingsStore(
-            suiteName: #function,
-            userDefaults: InMemoryUserDefaults(),
-            keychainAccessPolicy: .init(setDisabled: { _ in }, isExplicitlyDisabled: { true }))
-        defer { try? settings.configStore.deleteIfPresent() }
-        try settings.configStore.saveEncodedData(Self.fixture)
-        settings.reloadConfig(reason: "fixture")
-        settings.updateProviderConfig(provider: .grok) { $0.enabled = true }
-        try Self.expectRetainedRecords(in: Data(contentsOf: settings.configStore.fileURL))
-    }
-
     static let fixture = Data(#"""
     {"version":1,"providers":[
       {"id":"fixture-unavailable","enabled":true,"pluginSettings":{"scope":"fixture"},

@@ -8,24 +8,6 @@ struct WidgetProviderChoiceTests {
     private static let literalTitles: [String: String] = [
         "codex": "Codex",
         "claude": "Claude",
-        "gemini": "Gemini",
-        "alibaba": "Alibaba",
-        "alibabatokenplan": "Alibaba Token Plan",
-        "qwencloud": "Qwen Cloud",
-        "antigravity": "Antigravity",
-        "cursor": "Cursor",
-        "zai": "z.ai / GLM",
-        "copilot": "Copilot",
-        "devin": "Devin",
-        "minimax": "MiniMax",
-        "kilo": "Kilo",
-        "opencode": "OpenCode",
-        "opencodego": "OpenCode Go",
-        "mistral": "Mistral",
-        "kimi": "Kimi Code",
-        "deepseek": "DeepSeek",
-        "openrouter": "OpenRouter",
-        "pi": "Pi",
     ]
 
     @Test

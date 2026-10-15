@@ -21,21 +21,12 @@ ensure_oxfmt() {
   "${ROOT_DIR}/Scripts/install_lint_tools.sh" oxfmt
 }
 
-ensure_typescript() {
-  "${ROOT_DIR}/Scripts/install_lint_tools.sh" typescript
-}
-
 check_codex_parser_hash() {
   "${ROOT_DIR}/Scripts/regenerate-codex-parser-hash.sh" --check
 }
 
 check_provider_manifests() {
   "${ROOT_DIR}/Scripts/regenerate-provider-manifests.sh" --check
-  node "${ROOT_DIR}/Scripts/regenerate-provider-docs.mjs" --check
-}
-
-check_plugin_javascript() {
-  "${ROOT_DIR}/Scripts/regenerate-plugin-js.sh" --check
 }
 
 check_package_resolved() {
@@ -85,10 +76,6 @@ check_sparkle_signing_paths() {
 
 check_swift_static_sdk_installer() {
   python3 "${ROOT_DIR}/Scripts/test_install_swift_static_sdk.py"
-}
-
-check_mimo_usage_script() {
-  python3 "${ROOT_DIR}/Scripts/test_mimo_usage.py"
 }
 
 check_swift_test_sharding() {
@@ -152,7 +139,6 @@ run_portable_checks() {
   check_package_resolved
   check_codex_parser_hash
   check_provider_manifests
-  check_plugin_javascript
   check_package_product_paths
   check_package_strip
   check_package_signing
@@ -163,7 +149,6 @@ run_portable_checks() {
   check_release_assets
   check_sparkle_signing_paths
   check_swift_static_sdk_installer
-  check_mimo_usage_script
   check_swift_test_sharding
   check_ci_path_gate
   check_ci_build_cache
@@ -188,13 +173,8 @@ run_swiftlint() {
 collect_javascript_files() {
   JAVASCRIPT_FILES=("${ROOT_DIR}/docs/site.js")
   local file
-  for file in "${ROOT_DIR}"/Scripts/*.mjs "${ROOT_DIR}"/Sources/CodexBarCore/Resources/Plugins/*.js \
-    "${ROOT_DIR}"/Sources/CodexBarCore/Resources/Plugins/*.ts
-  do
+  for file in "${ROOT_DIR}"/Scripts/*.mjs; do
     [[ -f "$file" ]] || continue
-    case "$(basename "$file")" in
-      sucrase-*.min.js) continue ;;
-    esac
     JAVASCRIPT_FILES+=("$file")
   done
 }
@@ -215,15 +195,9 @@ run_oxlint() {
     "${JAVASCRIPT_FILES[@]}"
 }
 
-run_typescript_check() {
-  ensure_typescript
-  node "${ROOT_DIR}/.build/lint-tools/typescript/bin/tsc" --project "${ROOT_DIR}/tsconfig.plugins.json"
-}
-
 run_javascript_checks() {
   run_oxfmt_check
   run_oxlint
-  run_typescript_check
 }
 
 cmd="${1:-lint}"
@@ -254,7 +228,6 @@ case "$cmd" in
     ensure_oxfmt
     collect_javascript_files
     "${BIN_DIR}/oxfmt" --config "${ROOT_DIR}/.oxfmtrc.json" --write "${JAVASCRIPT_FILES[@]}"
-    "${ROOT_DIR}/Scripts/regenerate-plugin-js.sh" --write
     ;;
   *)
     printf 'Usage: %s [lint|lint-linux|lint-macos|format]\n' "$(basename "$0")" >&2

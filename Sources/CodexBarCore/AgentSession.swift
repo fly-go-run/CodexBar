@@ -4,12 +4,6 @@ public struct AgentSession: Codable, Equatable, Sendable, Identifiable {
     public enum Provider: String, Codable, Sendable {
         case codex
         case claude
-        case pi
-    }
-
-    public enum Dialect: String, Codable, Sendable {
-        case pi
-        case omp
     }
 
     public enum Source: String, Codable, Sendable {
@@ -26,7 +20,6 @@ public struct AgentSession: Codable, Equatable, Sendable, Identifiable {
 
     public var id: String
     public var provider: Provider
-    public var dialect: Dialect?
     public var source: Source
     public var state: State
     public var pid: Int32?
@@ -41,7 +34,6 @@ public struct AgentSession: Codable, Equatable, Sendable, Identifiable {
     public init(
         id: String,
         provider: Provider,
-        dialect: Dialect? = nil,
         source: Source,
         state: State,
         pid: Int32?,
@@ -55,7 +47,6 @@ public struct AgentSession: Codable, Equatable, Sendable, Identifiable {
     {
         self.id = id
         self.provider = provider
-        self.dialect = dialect
         self.source = source
         self.state = state
         self.pid = pid
@@ -226,29 +217,19 @@ public struct AgentProcessRecord: Equatable, Sendable {
     public let command: String
     /// Original argv when the platform exposes it. `command` remains the portable fallback.
     public let arguments: [String]?
-    /// Only Pi root selectors; nil means unavailable and an empty map means a known empty selection.
-    @ProcessEnvironment public private(set) var piSelectorEnvironment: [String: String]?
 
     public init(
         pid: Int32,
         ppid: Int32,
         startedAt: Date?,
         command: String,
-        arguments: [String]? = nil,
-        piSelectorEnvironment: [String: String]? = nil)
+        arguments: [String]? = nil)
     {
         self.pid = pid
         self.ppid = ppid
         self.startedAt = startedAt
         self.command = command
         self.arguments = arguments
-        self.piSelectorEnvironment = PiProcessEnvironment.filtered(piSelectorEnvironment)
-    }
-
-    func withPiSelectorEnvironment(_ environment: [String: String]?) -> Self {
-        var record = self
-        record.piSelectorEnvironment = PiProcessEnvironment.filtered(environment)
-        return record
     }
 
     public var executableBasename: String {
@@ -289,9 +270,6 @@ public enum AgentPSOutputParser {
         // because an unquoted executable path can contain spaces, such as "Codex Computer Use.app".
         let candidates = records.filter { record in
             let basename = record.executableBasename.lowercased()
-            if self.piDialect(for: record) != nil {
-                return !self.isObviousPiFamilyHelper(record.command)
-            }
             let executable = record.arguments?.first ?? record.command
             if basename == AgentSession.Provider.codex.rawValue {
                 let arguments = self.arguments(record)
@@ -319,43 +297,13 @@ public enum AgentPSOutputParser {
 
     public static func provider(for record: AgentProcessRecord) -> AgentSession.Provider? {
         let basename = record.executableBasename.lowercased()
-        if let provider = AgentSession.Provider(rawValue: basename), provider != .pi {
+        if let provider = AgentSession.Provider(rawValue: basename) {
             return provider
         }
         if basename == "disclaimer" {
             return .claude
         }
-        if self.piDialect(for: record) != nil, !self.isObviousPiFamilyHelper(record.command) {
-            return .pi
-        }
         return nil
-    }
-
-    public static func piDialect(for record: AgentProcessRecord) -> AgentSession.Dialect? {
-        self.piDialect(executableBasename: record.executableBasename, arguments: self.arguments(record))
-    }
-
-    static func piDialect(arguments: [String]) -> AgentSession.Dialect? {
-        self.piDialect(
-            executableBasename: AgentProcessPath.basename(arguments.first ?? ""),
-            arguments: Array(arguments.dropFirst()))
-    }
-
-    static func piDialect(
-        executableBasename: String,
-        arguments: @autoclosure () -> [String]) -> AgentSession.Dialect?
-    {
-        let firstBasename = AgentProcessPath.basename(executableBasename).lowercased()
-        if firstBasename == AgentSession.Provider.pi.rawValue {
-            return .pi
-        }
-        if firstBasename == "omp" {
-            return .omp
-        }
-        guard firstBasename == "bun" else { return nil }
-        return arguments().contains {
-            AgentProcessPath.basename($0).lowercased() == "omp"
-        } ? .omp : nil
     }
 
     public static func source(for record: AgentProcessRecord) -> AgentSession.Source {
@@ -419,14 +367,6 @@ public enum AgentPSOutputParser {
     private static func isClaudeAgentExecutable(_ command: String) -> Bool {
         let lowercased = command.lowercased()
         return !lowercased.contains(".app/") || lowercased.contains("application support/claude/claude-code/claude")
-    }
-
-    private static func isObviousPiFamilyHelper(_ command: String) -> Bool {
-        let lowercased = command.lowercased()
-        return lowercased.contains("--help") ||
-            lowercased.contains("--version") ||
-            lowercased.contains("--smoke-test") ||
-            lowercased.contains("__omp_worker_")
     }
 }
 

@@ -45,8 +45,7 @@ extension CodexBarCLI {
                         provider: .codex,
                         forceRefresh: force,
                         historyDays: days,
-                        refreshPricingInBackground: false,
-                        includePiSessions: false)
+                        refreshPricingInBackground: false)
                     return CodexCostSummary(snapshot: snapshot, calendar: calendar)
                 },
                 fetchRemote: { host in

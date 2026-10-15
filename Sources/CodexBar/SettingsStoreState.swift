@@ -42,7 +42,6 @@ struct SettingsDefaultsState {
     var menuBarHighContrastOnInactiveDisplays: Bool
     var menuBarDisplayModeRaw: String?
     var menuBarShowsResetTimeWhenExhausted: Bool
-    var kiroMenuBarDisplayModeRaw: String?
     var historicalTrackingEnabled: Bool
     var multiAccountMenuLayoutRaw: String
     var accountWidgetsEnabled: Bool
@@ -53,9 +52,6 @@ struct SettingsDefaultsState {
     var menuBarLayoutSizeRaw: String
     var menuBarLayoutGapRaw: String
     var menuBarLayoutVerticalAdjustment: Int
-    var copilotBudgetExtrasEnabled: Bool
-    var copilotIconSecondaryWindowIDRaw: String
-    var copilotSeatCreditEntitlementRaw: String
     var costUsageEnabled: Bool
     var codexLocalSessionCostLedgerEnabled: Bool
     var costReportingPeriod: CostReportingPeriod
@@ -84,7 +80,6 @@ struct SettingsDefaultsState {
     var openAIWebBatterySaverEnabled: Bool
     var backgroundWorkLowPowerModePreference: LowPowerModePreference
     var providerStorageFootprintsEnabled: Bool
-    var jetbrainsIDEBasePath: String
     var mergeIcons: Bool
     var mergedOverviewLayoutRaw: String
     var switcherShowsIcons: Bool

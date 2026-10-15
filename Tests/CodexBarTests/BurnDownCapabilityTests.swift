@@ -18,38 +18,6 @@ struct BurnDownCapabilityTests {
     }
 
     @Test
-    func `provider eligibility preserves supported catalog entries`() {
-        for provider in UsageProvider.allCases {
-            let expected: [UsageProvider] = [.langdock, .xapi, .tinyapi, .exa].contains(provider) ? [] : [provider]
-            for minutes in [90, 300, 1440, 10080, 43200] {
-                let snapshot = Self.snapshot(provider: provider, primary: Self.window(minutes: minutes))
-                #expect(BurnProviderOptions.choices(in: snapshot).map(\.provider) == expected)
-                #expect(BurnProviderOptions.choices(in: snapshot, combined: true).map(\.provider) == expected)
-            }
-        }
-        #expect(BurnProviderOptions.choices(in: nil).isEmpty)
-        let enabled = Self.snapshot(provider: .devin, primary: Self.window(minutes: 1440))
-        let disabled = WidgetSnapshot(entries: enabled.entries, enabledProviders: [], generatedAt: enabled.generatedAt)
-        #expect(BurnProviderOptions.choices(in: disabled).isEmpty)
-        #expect(BurnProviderOptions.choices(in: WidgetPreviewData.emptySnapshot()).isEmpty)
-    }
-
-    @Test
-    func `Langdock included usage does not enable widgets`() {
-        let metadata = LangdockProviderDescriptor.descriptor.metadata
-        #expect(!metadata.widgetSelectable)
-        #expect(!metadata.burnDownWidgetSelectable)
-        let snapshot = Self.snapshot(
-            provider: .langdock,
-            primary: Self.window(minutes: 300),
-            secondary: Self.window(minutes: 10080))
-
-        #expect(BurnProviderOptions.choices(in: snapshot).isEmpty)
-        #expect(BurnProviderOptions.choices(in: snapshot, combined: true).isEmpty)
-        #expect(BurnDownState(snapshot: snapshot, provider: .langdock, selection: .primary) == nil)
-    }
-
-    @Test
     func `legacy intent aliases stay exact when new provider window shapes become available`() throws {
         for provider in [UsageProvider.codex, .claude] {
             let snapshot = Self.snapshot(provider: provider, primary: Self.window(minutes: 1440))
@@ -72,111 +40,6 @@ struct BurnDownCapabilityTests {
             #expect(capped.blankPrimaryChart)
             #expect(capped.selectedResetOverride == capped.secondaryWindow?.resetsAt)
         }
-    }
-
-    @Test
-    func `capability filter rejects incomplete nonfinite and placeholder quotas`() {
-        let date = Date(timeIntervalSince1970: 1_800_000_000)
-        let invalid: [RateWindow?] = [
-            nil,
-            Self.window(minutes: nil), Self.window(minutes: 0), Self.window(minutes: -1),
-            Self.window(minutes: 1440, used: .nan), Self.window(minutes: 1440, used: .infinity),
-            RateWindow(usedPercent: 10, windowMinutes: 1440, resetsAt: nil, resetDescription: nil),
-            RateWindow(
-                usedPercent: 10,
-                windowMinutes: 1440,
-                resetsAt: Date(timeIntervalSince1970: .infinity),
-                resetDescription: nil),
-            RateWindow(
-                usedPercent: 0,
-                windowMinutes: 300,
-                resetsAt: date,
-                resetDescription: nil,
-                isSyntheticPlaceholder: true),
-        ]
-        for window in invalid {
-            #expect(!BurnDownState.isCompatible(window))
-            #expect(BurnProviderOptions.choices(in: Self.snapshot(provider: .devin, primary: window)).isEmpty)
-        }
-        // Real zero usage, over-quota usage, and expired but still dated measurements remain valid.
-        #expect(BurnDownState.isCompatible(Self.window(minutes: 1440, used: 0)))
-        #expect(BurnDownState.isCompatible(Self.window(minutes: 1440, used: 125)))
-        #expect(BurnDownState.isCompatible(RateWindow(
-            usedPercent: 10, windowMinutes: 1440, resetsAt: .distantPast, resetDescription: nil)))
-    }
-
-    @Test
-    func `Devin daily and weekly keep their duration titles and lane identities`() throws {
-        let daily = Self.window(minutes: 1440)
-        let weekly = Self.window(minutes: 10080)
-        let snapshot = Self.snapshot(provider: .devin, primary: daily, secondary: weekly)
-        let state = try #require(BurnDownState(snapshot: snapshot, provider: .devin, selection: .primary))
-        #expect(state.availableSelections == [.primary, .secondary])
-        #expect(state.selectedTitle == "Daily")
-        #expect(state.selectedWindow == daily)
-        #expect(state.title(for: .secondary) == "Weekly")
-        #expect(state.window(for: .secondary) == weekly)
-        #expect(state.combinedSelections == [.primary, .secondary])
-        #expect(burnCompactWindowLabel(1440, fallback: "") == "24H")
-        #expect(burnCompactWindowLabel(10080, fallback: "") == "7D")
-        #expect(!state.blankPrimaryChart)
-
-        let missing = try #require(BurnDownState(
-            snapshot: Self.snapshot(provider: .devin, primary: nil, secondary: weekly),
-            provider: .devin,
-            selection: .primary))
-        #expect(missing.selectedWindow == nil)
-        #expect(missing.combinedSelections == state.combinedSelections)
-        #expect(missing.title(for: .primary) == "Daily")
-        #expect(missing.window(for: .secondary) == weekly)
-    }
-
-    @Test
-    func `Cursor cycle timing names and independent subquotas use the snapshot`() throws {
-        let total = Self.window(minutes: 43200, used: 25)
-        let cursor = Self.window(minutes: 43200, used: 100)
-        let thirdParty = Self.window(minutes: 43200, used: 10)
-        let snapshot = Self.snapshot(provider: .cursor, primary: total, secondary: cursor, tertiary: thirdParty)
-        let state = try #require(BurnDownState(snapshot: snapshot, provider: .cursor, selection: .primary))
-        #expect(state.availableSelections == [.primary, .secondary, .tertiary])
-        #expect(state.combinedSelections.map { state.title(for: $0) } == ["Total", "Cursor"])
-        #expect(state.title(for: .tertiary) == "Third Party")
-        #expect(state.selectedWindow == total)
-        #expect(state.window(for: .secondary) == cursor)
-        #expect(state.window(for: .tertiary) == thirdParty)
-        #expect(state.window(for: .session) == nil)
-        #expect(state.window(for: .weekly) == nil)
-        #expect(!state.blankPrimaryChart)
-        #expect(burnWindowLabel(43200) == "30-day limit")
-        let reset = try #require(total.resetsAt)
-        let axis = burnAxisDateRange(effectiveResetAt: reset, windowMinutes: 43200, now: reset)
-        #expect(axis.reset.timeIntervalSince(axis.start) == 43200 * 60)
-
-        let renamed = try #require(BurnDownState(
-            snapshot: Self.snapshot(provider: .cursor, primary: total, rows: [
-                .init(id: "primary", title: "Requests", percentLeft: 75),
-            ]),
-            provider: .cursor,
-            selection: .primary))
-        #expect(renamed.selectedTitle == "Requests")
-    }
-
-    @Test
-    func `same duration quotas never resolve by duration for new slot choices`() throws {
-        let state = try #require(BurnDownState(
-            snapshot: Self.snapshot(
-                provider: .gemini,
-                primary: Self.window(minutes: 1440, used: 20),
-                secondary: Self.window(minutes: 1440, used: 90)),
-            provider: .gemini,
-            selection: .secondary))
-        #expect(state.selectedWindow?.usedPercent == 90)
-        #expect(state.window(for: .primary)?.usedPercent == 20)
-        let missing = try #require(BurnDownState(
-            snapshot: Self.snapshot(provider: .gemini, primary: Self.window(minutes: 1440), secondary: nil),
-            provider: .gemini,
-            selection: .secondary))
-        #expect(missing.selectedWindow == nil)
     }
 
     @Test
@@ -230,25 +93,6 @@ struct BurnDownCapabilityTests {
             #expect(state.selectedResetOverride == nil)
             #expect(state.window(for: .weekly) == nil)
         }
-    }
-
-    @Test
-    func `third quota is selectable without borrowing a combined lane and schedules its reset`() throws {
-        let now = Date(timeIntervalSince1970: 1_800_000_000)
-        let third = RateWindow(
-            usedPercent: 10,
-            windowMinutes: 43200,
-            resetsAt: now.addingTimeInterval(600),
-            resetDescription: nil)
-        let snapshot = Self.snapshot(provider: .cursor, primary: nil, tertiary: third)
-        let state = try #require(BurnDownState(snapshot: snapshot, provider: .cursor, selection: .tertiary))
-        #expect(state.selectedWindow == third)
-        #expect(state.window(for: .primary) == nil)
-        #expect(state.window(for: .secondary) == nil)
-        #expect(BurnProviderOptions.choices(in: snapshot) == [.cursor])
-        #expect(BurnProviderOptions.choices(in: snapshot, combined: true).isEmpty)
-        #expect(BurnDownRefreshSchedule.nextRefresh(snapshot: snapshot, provider: .cursor, now: now)
-            == now.addingTimeInterval(601))
     }
 
     @Test

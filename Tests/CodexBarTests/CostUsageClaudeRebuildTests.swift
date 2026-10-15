@@ -4,33 +4,6 @@ import Testing
 @testable import CodexBarCore
 
 struct CostUsageClaudeRebuildTests {
-    /// Captured from the original ordered reconciliation and packed-day rebuild.
-    @Test
-    func `seeded cache preserves exact row day and report output`() throws {
-        let env = try CostUsageTestEnvironment()
-        defer { env.cleanup() }
-        var cache = Self.cache(fileCount: 64, rowsPerFile: 50, includeOverflow: true)
-        let rows = CostUsageScanner.reconciledClaudeRows(cache: cache)
-        CostUsageScanner.rebuildClaudeDays(cache: &cache, rows: rows)
-        let report = CostUsageScanner.buildClaudeReportFromCache(
-            cache: cache, range: Self.range, now: Self.now, modelsDevCacheRoot: env.cacheRoot)
-        let digests = try [
-            Self.digest(rows), Self.digest(cache.days), Self.digest(report),
-            Self.digest(report.hourly.map(CostUsageCodexPreviousReport.HourlyEntry.init)),
-            Self.digest(report.quotaSlices.map(CostUsageCodexPreviousReport.QuotaSlice.init)),
-        ]
-        #expect(digests == [
-            "6260cd7640a6e48831af1d67ca2d78ecbe606db0374f5a1f31d8bda3b509a6f5",
-            "900db7be9b3420d62fccdea6d1ab359528f1b736c95bb332c1eb98a2b8aa4544",
-            "b502508338e96fc6552b09f546aafbfdfadf4dd4e7f4f3c226d0570d1b01cd9c",
-            "7e9f76fc6fd41c9755399563e10bfaad51708e0e5e9676abba785af3553133d4",
-            "ff44af15a44b217acedff8e0d76241c8d32152c36c5d671e2157b9fd557a2093",
-        ])
-        #expect(cache.days["2026-09-01"]?["fixture/overflow"] == nil)
-        #expect(rows.contains { $0.isIncomplete == true })
-        #expect(rows.contains { $0.messageId == nil })
-    }
-
     static let now = Date(timeIntervalSince1970: 1_790_769_600) // 2026-09-30 12:00 UTC
     static var range: CostUsageScanner.CostUsageDayRange {
         var calendar = Calendar(identifier: .gregorian)

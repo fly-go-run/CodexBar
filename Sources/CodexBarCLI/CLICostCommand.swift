@@ -40,7 +40,6 @@ extension CodexBarCLI {
         let format = output.format
         let forceRefresh = values.flags.contains("refresh")
         let includeBreakdown = values.flags.contains("breakdown")
-        let includePiSessions = Self.decodeCostIncludePiSessions(from: values)
         let useColor = Self.shouldUseColor(noColor: values.flags.contains("noColor"), format: format)
         let now = Date()
         let bucketCalendar = CostUsageBucketTimeZone.calendar(
@@ -56,75 +55,24 @@ extension CodexBarCLI {
                 output: output)
             return
         }
-        // Cursor cost reuses the same cookie-source policy as usage fetches: reject the fetch when the
-        // user set Cursor cookies to Off, and forward the Manual header so the dashboard request uses
-        // the configured session instead of auto-resolving a different one.
-        let cursorCookieSettings: ProviderSettingsSnapshot.CursorProviderSettings?
-        let cursorCookieSettingsError: Error?
-        do {
-            cursorCookieSettings = try Self.cursorCookieSettings(config: config, providers: providers)
-            cursorCookieSettingsError = nil
-        } catch {
-            cursorCookieSettings = nil
-            cursorCookieSettingsError = error
-        }
         let groupBy = Self.decodeCostGroupBy(from: values)
         Self.warnSkippedGroupingProviders(groupBy: groupBy, providers: providers, jsonOnly: output.jsonOnly)
-        // Provider-specific by design: this warning applies only when Codex is among the requested providers.
-        if providers.contains(.codex),
-           !output.jsonOnly,
-           let warning = Self.sessionGroupingPiOmissionWarning(
-               provider: .codex,
-               groupBy: groupBy,
-               format: format,
-               includePiSessions: includePiSessions)
-        {
-            Self.writeStderr("Warning: \(warning)\n")
-        }
 
         let fetcher = CostUsageFetcher(calendar: bucketCalendar)
         let outputProviders = Self.costProviders(providers, groupBy: groupBy, format: format)
-        let piSessionProcessContexts = await Self.piSessionProcessContextsForCost(
-            providers: outputProviders,
-            includePiSessions: includePiSessions)
         var sections: [String] = []
         var payload: [CostPayload] = []
         var exitCode: ExitCode = .success
 
         // Provider-specific by design: project/session grouping is available only for Codex local session data.
         for provider in outputProviders {
-            if let error = Self.cursorCostAvailabilityError(
-                provider,
-                settings: cursorCookieSettings,
-                resolutionError: cursorCookieSettingsError)
-            {
-                exitCode = Self.mapError(error)
-                if format == .json {
-                    payload.append(Self.makeCostPayload(provider: provider, snapshot: nil, error: error))
-                } else if !output.jsonOnly {
-                    Self.writeStderr("Error: \(error.localizedDescription)\n")
-                }
-                continue
-            }
             do {
-                // Claude/Codex cost comes from local logs; Cursor cost is fetched from its
-                // cookie-authenticated dashboard API via the shared session resolution.
                 let snapshot = try await fetcher.loadTokenSnapshot(
                     provider: provider,
-                    antigravityAdditionalProfileHomes:
-                    config.providerConfig(for: provider.instanceID)?.antigravityAdditionalProfileHomes ?? [],
                     now: now,
                     forceRefresh: forceRefresh,
                     historyDays: historyDays,
-                    cursorCookieHeaderOverride: Self.cursorCostHeaderOverride(provider, settings: cursorCookieSettings),
-                    refreshPricingInBackground: false,
-                    includePiSessions: Self.costIncludePiSessions(
-                        provider: provider,
-                        selectedProviders: outputProviders,
-                        groupBy: groupBy,
-                        format: format,
-                        includePiSessions: includePiSessions),
-                    piSessionProcessContexts: piSessionProcessContexts).reporting(period)
+                    refreshPricingInBackground: false).reporting(period)
                 switch format {
                 case .text:
                     sections.append(Self.renderCostText(
@@ -198,12 +146,7 @@ extension CodexBarCLI {
     {
         let descriptor = ProviderDescriptorRegistry.descriptor(for: provider)
         let name = descriptor.metadata.displayName
-        // Provider-specific by design: Antigravity is the one cost provider whose local models can
-        // all be absent from the pricing catalog, so it falls back to the token-only rendering.
-        // Other providers keep the cost shape and render their unknown values as dashes.
-        let costIsEntirelyUnknown = provider == .antigravity
-            && (snapshot.last30DaysCostUSD == nil || (snapshot.daily.isEmpty && snapshot.last30DaysCostUSD == 0))
-        if descriptor.tokenCost.presentation == .tokensOnly || costIsEntirelyUnknown {
+        if descriptor.tokenCost.presentation == .tokensOnly {
             return Self.renderLocalTokenHistoryText(name: name, snapshot: snapshot, useColor: useColor)
         }
         // Provider-specific by design: Codex cost is explicitly an API-equivalent local-session estimate.
@@ -237,18 +180,10 @@ extension CodexBarCLI {
             "\(historyLabel): \(monthCost) · \($0) tokens"
         } ?? "\(historyLabel): \(monthCost)"
 
-        // Plan-metered spend over the same window (what Cursor actually deducts), shown
-        // alongside the API-rate estimate. Only providers like Cursor report it.
-        let meteredLine: String? = snapshot.meteredCostUSD.map {
-            let amount = UsageFormatter.currencyString($0, currencyCode: snapshot.currencyCode)
-            return "Cursor-metered: \(amount) (\(historyLabel.lowercased()))"
-        }
-
         var lines: [String?] = [
             header,
             todayLine + (todayIncomplete > 0 ? " · Incomplete" : ""),
             monthLine + (incomplete > 0 ? " · Incomplete" : ""),
-            meteredLine,
         ]
         if incomplete > 0 {
             lines
@@ -586,18 +521,6 @@ extension CodexBarCLI {
         selection.asList.filter { Self.costSupportedProviders.contains($0) }
     }
 
-    /// Provider-specific by design: historical Pi/OMP cost roots must include the working directories and
-    /// selectors of live Pi-family processes, even when the CLI itself runs from another directory.
-    static func piSessionProcessContextsForCost(
-        providers: [UsageProvider],
-        includePiSessions: Bool) async -> [PiSessionProcessContext]
-    {
-        let hasPiConsumer = providers.contains(.pi) ||
-            (includePiSessions && providers.contains { $0 == .claude || $0 == .codex })
-        guard hasPiConsumer else { return [] }
-        return await LocalAgentSessionScanner().piSessionProcessContexts()
-    }
-
     /// Providers participating in a cost run: text-mode project/session grouping is Codex-only,
     /// while JSON output always keeps every requested provider.
     static func costProviders(
@@ -607,40 +530,6 @@ extension CodexBarCLI {
     {
         // Provider-specific by design: text grouping relies on Codex local indexes while JSON preserves all providers.
         providers.filter { !groupBy.requiresCodexLocalSessions || $0 == .codex || format == .json }
-    }
-
-    /// Session text reports need native Codex rows, so keep Pi/OMP aggregate merging out of that path.
-    static func costIncludePiSessions(
-        provider: UsageProvider,
-        selectedProviders: [UsageProvider] = [],
-        groupBy: CostGroupBy,
-        format: OutputFormat,
-        includePiSessions: Bool) -> Bool
-    {
-        // Provider-specific by design: Pi owns its rows when it is selected alongside native
-        // local providers, so the two provider snapshots cannot publish the same usage twice.
-        if provider == .claude || provider == .codex, selectedProviders.contains(.pi) {
-            return false
-        }
-        // Provider-specific by design: only Codex local session text bypasses Pi/OMP merging.
-        guard provider == .codex, groupBy == .session, format == .text else { return includePiSessions }
-        return false
-    }
-
-    static func sessionGroupingPiOmissionWarning(
-        provider: UsageProvider,
-        groupBy: CostGroupBy,
-        format: OutputFormat,
-        includePiSessions: Bool) -> String?
-    {
-        // Provider-specific by design: only Codex local session text warns about omitted mirrors.
-        guard provider == .codex,
-              groupBy == .session,
-              format == .text,
-              includePiSessions
-        else { return nil }
-        return "Session grouping shows native Codex conversations only; Pi/OMP usage is omitted from this view. "
-            + "Use the default cost view for merged totals."
     }
 
     /// Provider-specific by design: only Codex JSONL sessions carry the local project/session indexes,
@@ -699,8 +588,7 @@ extension CodexBarCLI {
 
         return CostPayload(
             provider: provider.rawValue,
-            // Provider-specific by design: Cursor cost comes from its authenticated dashboard, not local logs.
-            source: provider == .cursor ? "web" : "local",
+            source: "local",
             updatedAt: snapshot?.updatedAt ?? (error == nil ? nil : Date()),
             currencyCode: snapshot?.currencyCode,
             sessionTokens: snapshot?.sessionTokens,
@@ -862,10 +750,6 @@ extension CodexBarCLI {
         return period
     }
 
-    static func decodeCostIncludePiSessions(from values: ParsedValues) -> Bool {
-        !values.flags.contains("providerNativeOnly")
-    }
-
     static func decodeCostGroupBy(from values: ParsedValues) -> CostGroupBy {
         guard let raw = values.options["groupBy"]?.last?.trimmingCharacters(in: .whitespacesAndNewlines),
               !raw.isEmpty
@@ -879,65 +763,6 @@ extension CodexBarCLI {
             .map { ProviderDescriptorRegistry.descriptor(for: $0).metadata.displayName }
             .sorted()
             .joined(separator: ", ")
-    }
-
-    /// Resolve the configured Cursor cookie settings (source + manual header) the same way the CLI
-    /// usage path does, so Cursor cost honors Off/Manual instead of always auto-resolving a session.
-    /// Shared by `cost`, the serve `/cost` route, and dashboard snapshot collection.
-    static func cursorCookieSettings(
-        config: CodexBarConfig,
-        providers: [UsageProvider]) throws -> ProviderSettingsSnapshot.CursorProviderSettings?
-    {
-        // Provider-specific by design: Cursor cost fetches must resolve its selected dashboard-cookie account.
-        guard providers.contains(.cursor) else { return nil }
-        let selection = TokenAccountCLISelection(label: nil, index: nil, allAccounts: false)
-        let context = try TokenAccountCLIContext(selection: selection, config: config, verbose: false)
-        let account = try context.resolvedAccounts(for: .cursor).first
-        return context.settingsSnapshot(for: .cursor, account: account)?.cursor
-    }
-
-    /// Return the actionable error for a Cursor cost fetch disabled by cookie-source policy.
-    static func cursorCostAvailabilityError(
-        _ provider: UsageProvider,
-        settings: ProviderSettingsSnapshot.CursorProviderSettings?,
-        resolutionError: Error? = nil) -> Error?
-    {
-        guard provider == .cursor else { return nil }
-        if let resolutionError {
-            return resolutionError
-        }
-        guard let settings else { return nil }
-        switch settings.cookieSource {
-        case .off:
-            return CursorCostAvailabilityError.cookieSourceOff
-        case .manual where CookieHeaderNormalizer.normalize(settings.manualCookieHeader) == nil:
-            return CursorCostAvailabilityError.manualCookieMissing
-        default:
-            return nil
-        }
-    }
-
-    /// Manual cookie header to forward for a Cursor cost fetch, or nil for auto/non-cursor sources.
-    static func cursorCostHeaderOverride(
-        _ provider: UsageProvider,
-        settings: ProviderSettingsSnapshot.CursorProviderSettings?) -> String?
-    {
-        guard provider == .cursor, settings?.cookieSource == .manual else { return nil }
-        return CookieHeaderNormalizer.normalize(settings?.manualCookieHeader)
-    }
-}
-
-enum CursorCostAvailabilityError: LocalizedError {
-    case cookieSourceOff
-    case manualCookieMissing
-
-    var errorDescription: String? {
-        switch self {
-        case .cookieSourceOff:
-            "Cursor cost is unavailable because the Cursor cookie source is set to Off."
-        case .manualCookieMissing:
-            "Cursor cost requires a non-empty Manual cookie header."
-        }
     }
 }
 
@@ -959,9 +784,8 @@ struct CostOptions: CommanderParsable {
     @Flag(name: .long("breakdown"), help: "Show daily and model breakdowns in Claude text output")
     var breakdown: Bool = false
 
-    @Flag(
-        name: .long("provider-native-only"),
-        help: "Experimental: exclude pi and OMP session mirrors from Claude/Codex cost history")
+    /// Accepted as a no-op: remote hosts running older builds are queried with this flag.
+    @Flag(name: .long("provider-native-only"), help: "Deprecated: native-only cost history is always used")
     var providerNativeOnly: Bool = false
 
     @Option(name: .long("period"), help: "Cost period: month-to-date or all; --days overrides this selection")

@@ -39,23 +39,11 @@ extension UsageStore {
     }
 
     nonisolated static func underlyingProviderTransportError(_ error: Error) -> Error {
-        if let error = error as? ProviderBrowserSessionFailure {
-            return error.underlyingError
-        }
-        if let error = error as? DeepSeekPlatformTransportError {
-            return error.underlyingError
-        }
         // These owned OAuth error cases preserve transport identity inside their public wrappers.
         if case let .networkError(underlyingError) = error as? CodexOAuthFetchError {
             return underlyingError
         }
         if case let .networkError(underlyingError) = error as? CodexTokenRefresher.RefreshError {
-            return underlyingError
-        }
-        if case let .networkError(underlyingError) = error as? VertexAIFetchError {
-            return underlyingError
-        }
-        if case let .networkError(underlyingError) = error as? VertexAITokenRefresher.RefreshError {
             return underlyingError
         }
         return error
@@ -69,7 +57,6 @@ extension UsageStore {
         if let urlError = transportError as? URLError, urlError.code == .cancelled {
             return true
         }
-        if error is ProviderBrowserSessionFailure { return false }
         let message = transportError.localizedDescription
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
@@ -77,24 +64,11 @@ extension UsageStore {
             || message.contains("cancelled")
     }
 
-    nonisolated static func hasMatchingDeepSeekBalanceOwner(
-        after error: Error,
-        priorSnapshot: UsageSnapshot?) -> Bool
-    {
-        guard let error = error as? DeepSeekPlatformTransportError else { return true }
-        // A validated Chrome profile does not prove that it supplied the previously published balance.
-        guard let owner = error.owner else { return false }
-        return priorSnapshot?.deepseekPlatformBalanceOwner == owner
-    }
-
     nonisolated static func shouldSuppressProviderCancellation(
         _ error: Error,
         priorSnapshot: UsageSnapshot?) -> Bool
     {
-        guard self.hasMatchingDeepSeekBalanceOwner(after: error, priorSnapshot: priorSnapshot) else { return false }
-        guard BrowserSessionFailurePolicy.hasMatchingOwner(after: error, priorSnapshot: priorSnapshot)
-        else { return false }
-        return self.errorIsCancellation(error)
+        self.errorIsCancellation(error)
     }
 
     nonisolated static func shouldPreservePriorSnapshot(
@@ -103,16 +77,12 @@ extension UsageStore {
         priorSnapshot: UsageSnapshot? = nil) -> Bool
     {
         guard hadPriorData else { return false }
-        guard self.hasMatchingDeepSeekBalanceOwner(after: error, priorSnapshot: priorSnapshot) else { return false }
-        guard BrowserSessionFailurePolicy.hasMatchingOwner(after: error, priorSnapshot: priorSnapshot)
-        else { return false }
         if self.underlyingProviderTransportError(error) is CancellationError {
             return true
         }
-        if self.isPreservableNetworkTransportError(error) || BrowserSessionFailurePolicy.isTransient(error) {
+        if self.isPreservableNetworkTransportError(error) {
             return true
         }
-        if error is ProviderBrowserSessionFailure { return false }
 
         let message = error.localizedDescription.lowercased()
         return message.contains("timed out") ||

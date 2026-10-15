@@ -389,7 +389,7 @@ struct ClaudeCredentialQuotaWarningTests {
         let otherAccount = UsageStore.QuotaWarningStateKey(
             provider: .claude, window: .session, accountDiscriminator: "other-account", windowID: nil)
         let otherProvider = UsageStore.QuotaWarningStateKey(
-            provider: .deepseek, window: .session, accountDiscriminator: nil, windowID: nil)
+            provider: .codex, window: .session, accountDiscriminator: nil, windowID: nil)
         for key in [otherAccount, otherProvider] {
             store.quotaWarningState[key] = UsageStore.QuotaWarningState(lastRemaining: 40, firedThresholds: [50])
         }
@@ -451,22 +451,9 @@ struct ClaudeCredentialQuotaWarningTests {
         let settings = SettingsStore(
             userDefaults: defaults,
             configStore: config,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore(),
             codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
-            cursorCookieStore: InMemoryCookieHeaderStore(),
-            opencodeCookieStore: InMemoryCookieHeaderStore(),
-            factoryCookieStore: InMemoryCookieHeaderStore(),
-            minimaxCookieStore: InMemoryMiniMaxCookieStore(),
-            minimaxAPITokenStore: InMemoryMiniMaxAPITokenStore(),
-            kimiTokenStore: InMemoryKimiTokenStore(),
-            augmentCookieStore: InMemoryCookieHeaderStore(),
-            ampCookieStore: InMemoryCookieHeaderStore(),
-            copilotTokenStore: InMemoryCopilotTokenStore(),
             tokenAccountStore: InMemoryTokenAccountStore(fileURL: root.appendingPathComponent("accounts.json")),
-            antigravityOAuthCredentialsStore: AntigravityOAuthCredentialsStore(
-                fileURL: root.appendingPathComponent("antigravity.json")),
             keychainAccessPolicy: SettingsStoreKeychainAccessPolicy(
                 setDisabled: { _ in }, isExplicitlyDisabled: { false }),
             performInitialProviderDetection: false)

@@ -42,7 +42,6 @@ struct CostUsageStoreReadWorkTests {
             let complete = await CostUsageFetcher.loadCachedCodexTokenSnapshotResult(
                 now: fixture.now,
                 historyDays: 1,
-                includePiSessions: false,
                 requireCompleteHistory: true,
                 scannerOptions: fixture.options)
             #expect((complete == nil) == pending)
@@ -54,7 +53,6 @@ struct CostUsageStoreReadWorkTests {
                 now: fixture.now,
                 historyDays: 1,
                 allowPricingRefresh: false,
-                includePiSessions: false,
                 scannerOptions: fixture.options)
             let work = recorder.snapshot()
             #expect(snapshot == Self.expectedRetainedReadSnapshot(
@@ -851,13 +849,11 @@ struct ReadWorkFixture {
             return await CostUsageFetcher.loadCachedCodexTokenSnapshotResult(
                 now: self.now,
                 historyDays: historyDays,
-                includePiSessions: false,
                 scannerOptions: options ?? self.options)
         }
         return await CostUsageFetcher.loadCachedCodexTokenSnapshotResult(
             now: self.now,
             historyDays: historyDays,
-            includePiSessions: false,
             includeProjectAndSessionBreakdowns: false,
             scannerOptions: options ?? self.options)
     }

@@ -32,65 +32,6 @@ struct AppGroupSupportTests {
     }
 
     @Test
-    func `legacy migration copies snapshot once`() throws {
-        let fixture = try MigrationFixture()
-        defer { fixture.cleanUp() }
-        fixture.legacyDefaults.set(true, forKey: "debugDisableKeychainAccess")
-        fixture.legacyDefaults.set(UsageProvider.cursor.rawValue, forKey: "widgetSelectedProvider")
-        try fixture.writeSnapshot("legacy-snapshot", to: fixture.legacySnapshotURL)
-
-        let result = fixture.migrate()
-
-        #expect(result.status == .migrated)
-        #expect(result.copiedSnapshot)
-        #expect(result.copiedDefaults == 2)
-        #expect(fixture.currentDefaults.bool(forKey: "debugDisableKeychainAccess"))
-        #expect(fixture.currentDefaults.string(forKey: "widgetSelectedProvider") == UsageProvider.cursor.rawValue)
-        #expect(try Data(contentsOf: fixture.currentSnapshotURL) == Data("legacy-snapshot".utf8))
-        #expect(
-            fixture.standardDefaults.integer(forKey: AppGroupSupport.migrationVersionKey)
-                == AppGroupSupport.migrationVersion)
-        #expect(fixture.fileManager.operations == [
-            .exists(fixture.currentSnapshotURL.path),
-            .exists(fixture.legacySnapshotURL.path),
-            .createDirectory(fixture.currentSnapshotURL.deletingLastPathComponent()),
-            .copy(fixture.legacySnapshotURL, fixture.currentSnapshotURL),
-        ])
-
-        try fixture.writeSnapshot("changed-legacy-snapshot", to: fixture.legacySnapshotURL)
-        fixture.fileManager.operations.removeAll()
-        let secondResult = fixture.migrate()
-        #expect(secondResult.status == .alreadyCompleted)
-        #expect(!secondResult.copiedSnapshot)
-        #expect(secondResult.copiedDefaults == 0)
-        #expect(fixture.fileManager.operations.isEmpty)
-        #expect(try Data(contentsOf: fixture.currentSnapshotURL) == Data("legacy-snapshot".utf8))
-    }
-
-    @Test
-    func `legacy migration preserves existing target shared defaults`() throws {
-        let fixture = try MigrationFixture()
-        defer { fixture.cleanUp() }
-        fixture.currentDefaults.set(false, forKey: "debugDisableKeychainAccess")
-        fixture.currentDefaults.set(UsageProvider.codex.rawValue, forKey: "widgetSelectedProvider")
-        fixture.legacyDefaults.set(true, forKey: "debugDisableKeychainAccess")
-        fixture.legacyDefaults.set(UsageProvider.cursor.rawValue, forKey: "widgetSelectedProvider")
-
-        let result = fixture.migrate()
-
-        #expect(result.status == .noChangesNeeded)
-        #expect(!result.copiedSnapshot)
-        #expect(result.copiedDefaults == 0)
-        #expect(!fixture.currentDefaults.bool(forKey: "debugDisableKeychainAccess"))
-        #expect(fixture.currentDefaults.string(forKey: "widgetSelectedProvider") == UsageProvider.codex.rawValue)
-        #expect(!FileManager.default.fileExists(atPath: fixture.currentSnapshotURL.path))
-        #expect(fixture.fileManager.operations == [
-            .exists(fixture.currentSnapshotURL.path),
-            .exists(fixture.legacySnapshotURL.path),
-        ])
-    }
-
-    @Test
     func `legacy migration preserves existing target snapshot bytes`() throws {
         let fixture = try MigrationFixture()
         defer { fixture.cleanUp() }

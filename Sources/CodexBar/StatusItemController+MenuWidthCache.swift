@@ -141,8 +141,6 @@ extension StatusItemController {
             "checkForUpdates"
         case .refresh:
             "refresh"
-        case .refreshAugmentSession:
-            "refreshAugmentSession"
         case .dashboard:
             "dashboard"
         case .statusPage:
@@ -161,7 +159,7 @@ extension StatusItemController {
             "openTerminal:\(command)"
         case let .loginToProvider(url):
             "loginToProvider:\(url)"
-        case .openCodexWorkspaces, .openOpenAILiveUsage:
+        case .openCodexWorkspaces:
             self.windowMenuAction(for: action).1
         case .settings:
             "settings"

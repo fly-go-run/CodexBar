@@ -2,7 +2,7 @@
 summary: "Bundled open-source notices and how to refresh their pinned sources."
 read_when:
   - Auditing bundled third-party resources and their licenses
-  - Updating SwiftPM dependencies or vendored JavaScript
+  - Updating SwiftPM dependencies
 ---
 
 # Third-party notices
@@ -26,17 +26,9 @@ python3 Scripts/acknowledgements.py --verify-upstream
 
 The generator reads immutable revisions from both lockfiles, retrieves exact LICENSE and NOTICE files,
 and keeps their text and SHA-256 hashes. It includes Sparkle's external notices and ed25519 license,
-Swift Crypto's BoringSSL/Fiat and XKCP notices for Linux, and every distinct copyright/permission header
-in vendored QuickJS, including the Unicode tables. QuickJS is quickjs-ng 0.17.0; see
-`Sources/CQuickJS/README.md` for its source archive and checksum.
+Swift Crypto's BoringSSL/Fiat and XKCP notices for Linux.
 
-Sucrase 3.35.1 bundles seven npm packages: Sucrase, `@jridgewell/gen-mapping`,
-`@jridgewell/resolve-uri`, `@jridgewell/sourcemap-codec`, `@jridgewell/trace-mapping`,
-`lines-and-columns`, and `ts-interface-checker`. Their exact versions are pinned in both the notice
-generator and `Scripts/regenerate-sucrase-bundle.sh`. The resulting bundle must retain SHA-256
-`4d997e15b72cbc9ccf6e743c30c6eb48bf4533f6709852367b40766be5eba70b`.
-
-`make check` checks both lockfiles, required vendored notices, source-text hashes and the Sucrase bundle
+`make check` checks both lockfiles, required vendored notices and source-text hashes
 without network access. Adding a SwiftPM dependency requires adding its license source to the generator.
 `--verify-upstream` additionally regenerates and compares all text against upstream sources.
 

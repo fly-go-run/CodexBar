@@ -18,8 +18,6 @@ extension ProviderConfig {
         case accentColor
         case hiddenUsageItemIDs
         case modelRateLimits
-        case pluginSettings
-        case pluginSecrets
     }
 
     public init(from decoder: any Decoder) throws {
@@ -52,12 +50,6 @@ extension ProviderConfig {
         self.modelRateLimits = try container.decodeIfPresent(
             [ProviderModelRateLimit].self,
             forKey: .init(CodingKeys.modelRateLimits.rawValue)).map(ProviderModelRateLimit.validated)
-        self.pluginSettings = try container.decodeIfPresent(
-            [String: String].self,
-            forKey: .init(CodingKeys.pluginSettings.rawValue))
-        self.pluginSecrets = try container.decodeIfPresent(
-            [String: String].self,
-            forKey: .init(CodingKeys.pluginSecrets.rawValue))
 
         let genericKeys = Set(CodingKeys.allCases.map(\.rawValue))
         self.extensionValues = try container.allKeys.reduce(into: [:]) { values, key in
@@ -88,8 +80,6 @@ extension ProviderConfig {
         if let limits = self.modelRateLimits, !limits.isEmpty {
             try container.encode(limits, forKey: .init(CodingKeys.modelRateLimits.rawValue))
         }
-        try container.encodeIfPresent(self.pluginSettings, forKey: .init(CodingKeys.pluginSettings.rawValue))
-        try container.encodeIfPresent(self.pluginSecrets, forKey: .init(CodingKeys.pluginSecrets.rawValue))
         for (key, value) in self.extensionValues {
             try container.encode(value, forKey: .init(key))
         }

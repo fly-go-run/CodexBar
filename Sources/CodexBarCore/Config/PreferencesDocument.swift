@@ -150,8 +150,10 @@ public struct PreferencesDocument: Codable, Sendable {
                             }; return false
                         }
                 } else {
+                    // Unknown provider IDs (for example from a document exported by a build that still
+                    // supported more providers) are accepted here and dropped by the importer.
                     valid = key == "mergedOverviewSelectedProviders" && values.count <= 6 && values.allSatisfy {
-                        if case let .string(raw) = $0 { return UsageProvider(rawValue: raw) != nil }; return false
+                        if case .string = $0 { return true }; return false
                     }
                 }
             case .object:

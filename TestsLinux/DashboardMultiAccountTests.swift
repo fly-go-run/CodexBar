@@ -351,7 +351,6 @@ struct DashboardMultiAccountTests {
                     accountOrganization: nil,
                     loginMethod: "pro")) : nil,
             credits: nil,
-            antigravityPlanInfo: nil,
             openaiDashboard: nil,
             error: error.map { ProviderErrorPayload(code: 1, message: $0, kind: .provider) })
         payload.dashboardAccount = DashboardUsageAccount(id: id, label: email, active: active)

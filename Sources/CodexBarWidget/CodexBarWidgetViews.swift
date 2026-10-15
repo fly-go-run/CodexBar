@@ -142,15 +142,6 @@ enum CompactMetricFormatter {
     static func display(for entry: WidgetSnapshot.ProviderEntry, metric: CompactMetric) -> CompactMetricDisplay {
         switch metric {
         case .credits:
-            if let cost = WidgetBalanceFormatter.extraUsageCost(for: entry) {
-                return CompactMetricDisplay(
-                    value: WidgetFormat.currency(cost.used, code: cost.currencyCode),
-                    label: W("Extra usage balance"),
-                    detail: nil)
-            }
-            if let balance = WidgetBalanceFormatter.providerBalance(for: entry) {
-                return CompactMetricDisplay(value: balance.value, label: balance.title, detail: nil)
-            }
             let value = entry.creditsRemaining.map(WidgetFormat.credits) ?? "—"
             return CompactMetricDisplay(value: value, label: W("Credits left"), detail: nil)
         case .todayCost:
@@ -343,8 +334,6 @@ struct WidgetUsageRow: Identifiable, Equatable {
         applyBindingCap: Bool = true,
         now: Date = Date()) -> [WidgetUsageRow]
     {
-        // Provider-specific by design: DeepSeek exposes no quota denominator, so a 100% bar would be misleading.
-        guard entry.provider != .deepseek else { return [] }
         let rows: [WidgetUsageRow]
         if let usageRows = entry.usageRows {
             let resolvedSnapshots = usageRows.map { row in
@@ -404,35 +393,6 @@ struct WidgetUsageRow: Identifiable, Equatable {
             rows = defaultRows.filter { $0.percentLeft != nil }
         }
         guard let limit else { return rows }
-        // Provider-specific by design: Antigravity medium widgets select one constrained row per model family.
-        if entry.provider == .antigravity,
-           limit >= 2,
-           rows.contains(where: { $0.id.hasPrefix("antigravity-quota-summary-") })
-        {
-            var selected = AntigravityQuotaFamilyVisibility.KnownFamily.allCases.compactMap { family in
-                rows.filter {
-                    AntigravityQuotaFamilyVisibility.knownFamily(windowID: $0.id, title: $0.title) == family
-                }.min(by: self.isMoreConstrained)
-            }
-            let selectedIDs = Set(selected.map(\.id))
-            let fallbackRows = rows.enumerated()
-                .filter { !selectedIDs.contains($0.element.id) }
-                .sorted { lhs, rhs in
-                    switch (lhs.element.percentLeft, rhs.element.percentLeft) {
-                    case let (.some(left), .some(right)):
-                        left == right ? lhs.offset < rhs.offset : left < right
-                    case (.some, .none):
-                        true
-                    case (.none, .some):
-                        false
-                    case (.none, .none):
-                        lhs.offset < rhs.offset
-                    }
-                }
-                .map(\.element)
-            selected.append(contentsOf: fallbackRows.prefix(max(0, limit - selected.count)))
-            return selected
-        }
         return Array(rows.prefix(max(0, limit)))
     }
 
@@ -502,19 +462,6 @@ struct WidgetUsageRow: Identifiable, Equatable {
             return nil
         }
         return entry.tokenUsage
-    }
-
-    private static func isMoreConstrained(_ lhs: WidgetUsageRow, than rhs: WidgetUsageRow) -> Bool {
-        switch (lhs.percentLeft, rhs.percentLeft) {
-        case let (.some(left), .some(right)):
-            left < right
-        case (.some, .none):
-            true
-        case (.none, .some):
-            false
-        case (.none, .none):
-            false
-        }
     }
 }
 
@@ -674,38 +621,6 @@ enum WidgetColors {
         let color = ProviderAccentColors.sharedOverride(for: instanceID)
             ?? ProviderDescriptorRegistry.descriptor(for: provider).branding.widgetColor
         return Color(red: color.red, green: color.green, blue: color.blue)
-    }
-}
-
-struct WidgetBalanceLine: Equatable {
-    let title: String
-    let value: String
-}
-
-enum WidgetBalanceFormatter {
-    static func providerBalance(for entry: WidgetSnapshot.ProviderEntry) -> WidgetBalanceLine? {
-        // Provider-specific by design: these providers publish their widget value through the balance-text field.
-        guard entry.provider == .deepseek || entry.provider == .openrouter,
-              let value = entry.balanceText?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !value.isEmpty
-        else { return nil }
-        return WidgetBalanceLine(title: "Balance", value: value)
-    }
-
-    static func extraUsageCost(for entry: WidgetSnapshot.ProviderEntry) -> ProviderCostSnapshot? {
-        // Provider-specific by design: Devin encodes its extra-usage balance as a named provider-cost period.
-        guard entry.provider == .devin,
-              let cost = entry.providerCost,
-              cost.period == "Extra usage balance"
-        else { return nil }
-        return cost
-    }
-
-    static func extraUsageBalance(for entry: WidgetSnapshot.ProviderEntry) -> WidgetBalanceLine? {
-        guard let cost = self.extraUsageCost(for: entry) else { return nil }
-        return WidgetBalanceLine(
-            title: "Extra usage",
-            value: W("%@: %@", W("Balance"), WidgetFormat.currency(cost.used, code: cost.currencyCode)))
     }
 }
 

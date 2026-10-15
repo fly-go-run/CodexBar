@@ -767,7 +767,6 @@ extension CodexBarCLI {
         await runtime.cache.operations.shutdown()
         await runtime.providerOperations.shutdown()
         await runtime.costOperations.shutdown()
-        await ProviderCLISessionLifecycle.shutdownPersistentSessions()
         TTYCommandRunner.terminateActiveProcessesForAppShutdown()
     }
 
@@ -1464,31 +1463,17 @@ extension CodexBarCLI {
         }
 
         let fetcher = CostUsageFetcher(calendar: context.calendar)
-        let piSessionProcessContexts = await Self.piSessionProcessContextsForCost(
+        let payload = await Self.serveCollectCostPayloads(
             providers: providers,
-            includePiSessions: true)
-        let payload = await Self.collectConfiguredCostPayloads(
-            providers: providers,
-            config: context.config,
             context: context.collection)
-        { provider, cursorCookieHeaderOverride in
+        { provider in
             do {
                 let snapshot = try await fetcher.loadTokenSnapshot(
                     provider: provider,
-                    antigravityAdditionalProfileHomes:
-                    context.config.providerConfig(for: provider.instanceID)?.antigravityAdditionalProfileHomes ?? [],
                     now: context.now,
                     forceRefresh: false,
                     historyDays: context.period.days(now: context.now, calendar: context.calendar),
-                    cursorCookieHeaderOverride: cursorCookieHeaderOverride,
-                    refreshPricingInBackground: Self.serveCostRefreshesPricingInBackground,
-                    includePiSessions: Self.costIncludePiSessions(
-                        provider: provider,
-                        selectedProviders: providers,
-                        groupBy: .none,
-                        format: .json,
-                        includePiSessions: true),
-                    piSessionProcessContexts: piSessionProcessContexts).reporting(context.period)
+                    refreshPricingInBackground: Self.serveCostRefreshesPricingInBackground).reporting(context.period)
                 return Self.makeCostPayload(
                     provider: provider,
                     snapshot: snapshot,
@@ -1502,41 +1487,6 @@ extension CodexBarCLI {
         return Self.serveJSON(payload)
     }
 
-    static func collectConfiguredCostPayloads(
-        providers: [UsageProvider],
-        config: CodexBarConfig,
-        context: ServeCostCollectionContext,
-        fetch: @Sendable @escaping (UsageProvider, String?) async -> CostPayload) async -> [CostPayload]
-    {
-        // Keep every dashboard transport aligned with the configured Cursor credential source.
-        // Policy failures remain row-local so other providers still render.
-        let cursorCookieSettings: ProviderSettingsSnapshot.CursorProviderSettings?
-        let cursorCookieSettingsError: Error?
-        do {
-            cursorCookieSettings = try Self.cursorCookieSettings(config: config, providers: providers)
-            cursorCookieSettingsError = nil
-        } catch {
-            cursorCookieSettings = nil
-            cursorCookieSettingsError = error
-        }
-
-        return await Self.serveCollectCostPayloads(
-            providers: providers,
-            context: context)
-        { provider in
-            if let error = Self.cursorCostAvailabilityError(
-                provider,
-                settings: cursorCookieSettings,
-                resolutionError: cursorCookieSettingsError)
-            {
-                return Self.makeCostPayload(provider: provider, snapshot: nil, error: error)
-            }
-            return await fetch(
-                provider,
-                Self.cursorCostHeaderOverride(provider, settings: cursorCookieSettings))
-        }
-    }
-
     static func serveCollectCostPayloads(
         providers: [UsageProvider],
         context: ServeCostCollectionContext,
@@ -1544,9 +1494,6 @@ extension CodexBarCLI {
     {
         // Preserve the established scan order. The injected fetch decides whether
         // pricing refresh is awaited; provider deadlines still bound each row.
-        // Provider-specific by design: the same provider may be requested once as
-        // an inclusive Claude/Codex row and once as native-only when Pi is emitted
-        // separately. Keep those operations from coalescing under one config key.
         var payload: [CostPayload] = []
         for provider in providers {
             let deadline = Self.serveCostProviderDeadline(
@@ -1557,17 +1504,9 @@ extension CodexBarCLI {
                 provider: provider,
                 snapshot: nil,
                 error: CLIServeCostTimeoutError(provider: provider))
-            let includesPi = Self.costIncludePiSessions(
-                provider: provider,
-                selectedProviders: providers,
-                groupBy: .none,
-                format: .json,
-                includePiSessions: true)
-            let mode = includesPi ? "inclusive" : "native"
-            let operationFingerprint = "\(context.configFingerprint)|piAccounting=\(provider.rawValue):\(mode)"
             let item = await context.providerOperations.value(
                 for: provider.rawValue,
-                fingerprint: operationFingerprint,
+                fingerprint: context.configFingerprint,
                 deadline: deadline,
                 timeoutValue: timeout)
             {

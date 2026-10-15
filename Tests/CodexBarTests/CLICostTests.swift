@@ -17,17 +17,6 @@ struct CLICostTests {
     }
 
     @Test
-    func `provider native only excludes pi and OMP session mirrors`() throws {
-        let parser = CommandParser(signature: CodexBarCLI._costSignatureForTesting())
-
-        let defaultValues = try parser.parse(arguments: [])
-        #expect(CodexBarCLI.decodeCostIncludePiSessions(from: defaultValues))
-
-        let nativeOnlyValues = try parser.parse(arguments: ["--provider-native-only"])
-        #expect(!CodexBarCLI.decodeCostIncludePiSessions(from: nativeOnlyValues))
-    }
-
-    @Test
     func `Claude breakdown is explicit opt in`() throws {
         let parser = CommandParser(signature: CodexBarCLI._costSignatureForTesting())
 
@@ -65,78 +54,6 @@ struct CLICostTests {
             groupBy: .session,
             format: .json)
         #expect(jsonProviders.map(\.rawValue) == ["claude", "codex"])
-    }
-
-    @Test
-    func `session text grouping disables pi merge only for codex`() {
-        #expect(CodexBarCLI.costIncludePiSessions(
-            provider: .codex,
-            groupBy: .session,
-            format: .text,
-            includePiSessions: true) == false)
-        #expect(CodexBarCLI.costIncludePiSessions(
-            provider: .codex,
-            groupBy: .session,
-            format: .json,
-            includePiSessions: true))
-        #expect(CodexBarCLI.costIncludePiSessions(
-            provider: .codex,
-            groupBy: .project,
-            format: .text,
-            includePiSessions: true))
-        #expect(!CodexBarCLI.costIncludePiSessions(
-            provider: .codex,
-            selectedProviders: [.codex, .pi],
-            groupBy: .none,
-            format: .text,
-            includePiSessions: true))
-        #expect(!CodexBarCLI.costIncludePiSessions(
-            provider: .codex,
-            selectedProviders: [.codex, .pi],
-            groupBy: .none,
-            format: .json,
-            includePiSessions: true))
-        #expect(CodexBarCLI.costIncludePiSessions(
-            provider: .claude,
-            groupBy: .session,
-            format: .text,
-            includePiSessions: true))
-        #expect(!CodexBarCLI.costIncludePiSessions(
-            provider: .claude,
-            selectedProviders: [.claude, .pi],
-            groupBy: .none,
-            format: .json,
-            includePiSessions: true))
-        #expect(CodexBarCLI.costIncludePiSessions(
-            provider: .claude,
-            selectedProviders: [.claude],
-            groupBy: .none,
-            format: .json,
-            includePiSessions: true))
-    }
-
-    @Test
-    func `session grouping warns when default pi usage is omitted`() {
-        #expect(CodexBarCLI.sessionGroupingPiOmissionWarning(
-            provider: .codex,
-            groupBy: .session,
-            format: .text,
-            includePiSessions: true)?.contains("Pi/OMP usage is omitted") == true)
-        #expect(CodexBarCLI.sessionGroupingPiOmissionWarning(
-            provider: .codex,
-            groupBy: .session,
-            format: .text,
-            includePiSessions: false) == nil)
-        #expect(CodexBarCLI.sessionGroupingPiOmissionWarning(
-            provider: .codex,
-            groupBy: .session,
-            format: .json,
-            includePiSessions: true) == nil)
-        #expect(CodexBarCLI.sessionGroupingPiOmissionWarning(
-            provider: .claude,
-            groupBy: .session,
-            format: .text,
-            includePiSessions: true) == nil)
     }
 
     @Test
@@ -747,50 +664,6 @@ struct CLICostTests {
         #expect(!hint.isEmpty)
         #expect(hint.contains("Estimated"))
         #expect(UsageFormatter.costEstimateHint(provider: .claude).contains("cache read/write tokens"))
-    }
-
-    @Test
-    func `cursor cookie source off produces a failed JSON payload`() throws {
-        let settings = ProviderSettingsSnapshot.CursorProviderSettings(
-            cookieSource: .off,
-            manualCookieHeader: nil)
-        let error = try #require(CodexBarCLI.cursorCostAvailabilityError(.cursor, settings: settings))
-        let payload = CodexBarCLI.makeCostPayload(provider: .cursor, snapshot: nil, error: error)
-        let json = try #require(CodexBarCLI.encodeJSON([payload], pretty: false))
-
-        #expect(CodexBarCLI.mapError(error) == .failure)
-        #expect(json.contains("\"provider\":\"cursor\""))
-        #expect(json.contains("\"code\":1"))
-        #expect(json.contains("cookie source is set to Off"))
-        #expect(CodexBarCLI.cursorCostAvailabilityError(.cursor, settings: nil) == nil)
-        #expect(CodexBarCLI.cursorCostAvailabilityError(.codex, settings: settings) == nil)
-    }
-
-    @Test
-    func `cursor manual cookie source rejects an empty header`() throws {
-        let settings = ProviderSettingsSnapshot.CursorProviderSettings(
-            cookieSource: .manual,
-            manualCookieHeader: "  ")
-        let error = try #require(CodexBarCLI.cursorCostAvailabilityError(.cursor, settings: settings))
-
-        #expect(CodexBarCLI.mapError(error) == .failure)
-        #expect(error.localizedDescription.contains("non-empty Manual cookie header"))
-        #expect(CodexBarCLI.cursorCostHeaderOverride(.cursor, settings: settings) == nil)
-    }
-
-    @Test
-    func `cursor settings resolution errors fail closed`() throws {
-        let resolutionError = CursorCostSettingsTestError()
-        let error = try #require(CodexBarCLI.cursorCostAvailabilityError(
-            .cursor,
-            settings: nil,
-            resolutionError: resolutionError))
-
-        #expect(error.localizedDescription == resolutionError.localizedDescription)
-        #expect(CodexBarCLI.cursorCostAvailabilityError(
-            .codex,
-            settings: nil,
-            resolutionError: resolutionError) == nil)
     }
 
     @Test

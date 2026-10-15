@@ -17,8 +17,8 @@ extension CostUsageScanner {
         reportContext: CostUsageReportContext?,
         checkCancellation: CancellationCheck?) throws -> CostUsageDailyReport
     {
-        // Provider-specific by design: Claude/Vertex retain window-specific rows in generated JSON caches.
-        guard let reportContext, provider == .claude || provider == .vertexai else {
+        // Provider-specific by design: Claude retains window-specific rows in generated JSON caches.
+        guard let reportContext, provider == .claude else {
             return try self.loadDailyReportCancellable(
                 provider: provider,
                 since: since,
@@ -28,15 +28,11 @@ extension CostUsageScanner {
                 checkCancellation: checkCancellation)
         }
         try checkCancellation?()
-        var filtered = options
-        if provider == .vertexai, filtered.claudeLogProviderFilter == .all {
-            filtered.claudeLogProviderFilter = .vertexAIOnly
-        }
         return try self.loadClaudeDaily(
             provider: provider,
             range: CostUsageDayRange(since: since, until: until, calendar: options.calendar),
             now: now,
-            options: filtered,
+            options: options,
             reportContext: reportContext,
             checkCancellation: checkCancellation)
     }

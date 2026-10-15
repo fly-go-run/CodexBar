@@ -87,7 +87,6 @@ struct CodexCreditVisibilityTests {
             status: nil,
             usage: Self.snapshot,
             credits: Self.credits(balanceReadSucceeded: balanceReadSucceeded),
-            antigravityPlanInfo: nil,
             openaiDashboard: nil,
             error: nil)
         let dashboard = DashboardSnapshotBuilder.makeSnapshot(

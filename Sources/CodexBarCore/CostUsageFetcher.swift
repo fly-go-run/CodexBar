@@ -1,11 +1,8 @@
-// swiftlint:disable file_length
 import Foundation
 
 public enum CostUsageError: LocalizedError, Sendable {
     case unsupportedProvider(UsageProvider)
     case timedOut(seconds: Int)
-    case cursorPaginationIncomplete(expected: Int?, received: Int)
-    case cursorPaginationInconsistent(expected: Int, received: Int)
 
     public var errorDescription: String? {
         switch self {
@@ -16,13 +13,6 @@ public enum CostUsageError: LocalizedError, Sendable {
                 return "Cost refresh timed out after \(seconds / 60)m."
             }
             return "Cost refresh timed out after \(seconds)s."
-        case let .cursorPaginationIncomplete(expected, received):
-            if let expected {
-                return "Cursor cost refresh was incomplete (received \(received) of \(expected) events)."
-            }
-            return "Cursor cost refresh reached its pagination safety limit after \(received) events."
-        case let .cursorPaginationInconsistent(expected, received):
-            return "Cursor cost pagination was inconsistent (expected \(expected), received \(received) events)."
         }
     }
 }
@@ -31,20 +21,8 @@ public enum CostUsageError: LocalizedError, Sendable {
 public struct CostUsageFetcher: Sendable {
     private static let codexAutomaticScanDurationPerRefresh: TimeInterval = 2
 
-    package static func piRootScope(environment: [String: String]) async throws -> String {
-        let contexts = await LocalAgentSessionScanner().piSessionProcessContexts(environment: environment)
-        return try await CostUsageScanExecutor.run { checkCancellation in
-            try checkCancellation()
-            return PiSessionCostScanner.scopeFingerprint(
-                options: PiSessionCostScanner.Options(
-                    environment: environment,
-                    processContexts: contexts))
-        }
-    }
-
     package struct CachedCodexTokenSnapshotResult: Sendable {
         package let snapshot: CostUsageTokenSnapshot
-        package var accounting: PiSnapshotAccounting?
         package let lastRefreshAt: Date?
         package let staleSnapshotUpdatedAt: Date?
     }
@@ -128,7 +106,6 @@ public struct CostUsageFetcher: Sendable {
         now: Date = Date(),
         codexHomePath: String? = nil,
         historyDays: Int = 30,
-        includePiSessions: Bool = true,
         calendar: Calendar? = nil,
         requireCompleteHistory: Bool = false,
         environment: [String: String] = ProcessInfo.processInfo.environment) async -> CachedCodexTokenSnapshotResult?
@@ -138,7 +115,6 @@ public struct CostUsageFetcher: Sendable {
             codexHomePath: codexHomePath,
             historyDays: historyDays,
             allowScopedCodexHome: requireCompleteHistory,
-            includePiSessions: includePiSessions,
             requireCompleteHistory: requireCompleteHistory,
             scannerOptions: self.scannerOptions(calendar: calendar),
             environment: environment)
@@ -148,7 +124,6 @@ public struct CostUsageFetcher: Sendable {
         now: Date = Date(),
         codexHomePath: String,
         historyDays: Int = 30,
-        includePiSessions: Bool = false,
         includeProjectAndSessionBreakdowns: Bool = false,
         calendar: Calendar? = nil) async -> CostUsageTokenSnapshot?
     {
@@ -157,7 +132,6 @@ public struct CostUsageFetcher: Sendable {
             codexHomePath: codexHomePath,
             historyDays: historyDays,
             allowScopedCodexHome: true,
-            includePiSessions: includePiSessions,
             includeProjectAndSessionBreakdowns: includeProjectAndSessionBreakdowns,
             scannerOptions: self.scannerOptions(calendar: calendar))
     }
@@ -201,105 +175,31 @@ public struct CostUsageFetcher: Sendable {
             scannerOptions: self.scannerOptions)
     }
 
-    public func loadTokenSnapshot(
+    package func loadTokenSnapshot(
         provider: UsageProvider,
         environment: [String: String] = ProcessInfo.processInfo.environment,
-        antigravityAdditionalProfileHomes: [String] = [],
         now: Date = Date(),
         forceRefresh: Bool = false,
-        allowVertexClaudeFallback: Bool = false,
         codexHomePath: String? = nil,
         historyDays: Int = 30,
-        cursorCookieHeaderOverride: String? = nil,
         allowPricingRefresh: Bool = true,
         refreshPricingInBackground: Bool = true,
-        includePiSessions: Bool = true,
-        piWorkingDirectories: [URL] = [],
-        piSessionProcessContexts: [PiSessionProcessContext] = [],
         bypassScannerDebounce: Bool = false,
-        calendar: Calendar? = nil) async throws -> CostUsageTokenSnapshot
+        calendar: Calendar? = nil,
+        reportContext: CostUsageReportContext? = nil) async throws -> CostUsageTokenSnapshot
     {
         try await Self.loadTokenSnapshot(
             provider: provider,
             environment: environment,
-            antigravityAdditionalProfileHomes: antigravityAdditionalProfileHomes,
             now: now,
             forceRefresh: forceRefresh,
-            allowVertexClaudeFallback: allowVertexClaudeFallback,
             codexHomePath: codexHomePath,
             historyDays: historyDays,
-            cursorCookieHeaderOverride: cursorCookieHeaderOverride,
             allowPricingRefresh: allowPricingRefresh,
             refreshPricingInBackground: refreshPricingInBackground,
-            includePiSessions: includePiSessions,
             bypassScannerDebounce: bypassScannerDebounce,
-            piWorkingDirectories: piWorkingDirectories,
-            piSessionProcessContexts: piSessionProcessContexts,
-            scannerOptions: self.scannerOptions(calendar: calendar))
-    }
-
-    package func loadTokenResult(
-        provider: UsageProvider,
-        environment: [String: String] = ProcessInfo.processInfo.environment,
-        antigravityAdditionalProfileHomes: [String] = [],
-        now: Date = Date(),
-        forceRefresh: Bool = false,
-        allowVertexClaudeFallback: Bool = false,
-        codexHomePath: String? = nil,
-        historyDays: Int = 30,
-        cursorCookieHeaderOverride: String? = nil,
-        allowPricingRefresh: Bool = true,
-        refreshPricingInBackground: Bool = true,
-        includePiSessions: Bool = true,
-        piWorkingDirectories: [URL] = [],
-        piSessionProcessContexts: [PiSessionProcessContext] = [],
-        bypassScannerDebounce: Bool,
-        calendar: Calendar? = nil,
-        reportContext: CostUsageReportContext = .regular) async throws -> CostUsageTokenResult
-    {
-        try await Self.loadTokenResult(
-            provider: provider,
-            environment: environment,
-            antigravityAdditionalProfileHomes: antigravityAdditionalProfileHomes,
-            now: now,
-            forceRefresh: forceRefresh,
-            allowVertexClaudeFallback: allowVertexClaudeFallback,
-            codexHomePath: codexHomePath,
-            historyDays: historyDays,
-            cursorCookieHeaderOverride: cursorCookieHeaderOverride,
-            allowPricingRefresh: allowPricingRefresh,
-            refreshPricingInBackground: refreshPricingInBackground,
-            includePiSessions: includePiSessions,
-            bypassScannerDebounce: bypassScannerDebounce,
-            piWorkingDirectories: piWorkingDirectories,
-            piSessionProcessContexts: piSessionProcessContexts,
             scannerOptions: self.scannerOptions(calendar: calendar),
             reportContext: reportContext)
-    }
-
-    @available(*, deprecated, message: "Codex token-cost scans are uncapped; this limit is ignored.")
-    public func loadTokenSnapshot(
-        provider: UsageProvider,
-        environment: [String: String] = ProcessInfo.processInfo.environment,
-        now: Date = Date(),
-        forceRefresh: Bool = false,
-        allowVertexClaudeFallback: Bool = false,
-        codexHomePath: String? = nil,
-        historyDays: Int = 30,
-        allowPricingRefresh: Bool = true,
-        refreshPricingInBackground: Bool = true,
-        automaticCodexScanByteLimit _: Int64?) async throws -> CostUsageTokenSnapshot
-    {
-        try await self.loadTokenSnapshot(
-            provider: provider,
-            environment: environment,
-            now: now,
-            forceRefresh: forceRefresh,
-            allowVertexClaudeFallback: allowVertexClaudeFallback,
-            codexHomePath: codexHomePath,
-            historyDays: historyDays,
-            allowPricingRefresh: allowPricingRefresh,
-            refreshPricingInBackground: refreshPricingInBackground)
     }
 
     private func scannerOptions(calendar: Calendar?) -> CostUsageScanner.Options? {
@@ -409,70 +309,17 @@ public struct CostUsageFetcher: Sendable {
     static func loadTokenSnapshot(
         provider: UsageProvider,
         environment: [String: String] = ProcessInfo.processInfo.environment,
-        antigravityAdditionalProfileHomes: [String] = [],
         now: Date = Date(),
         forceRefresh: Bool = false,
-        allowVertexClaudeFallback: Bool = false,
         codexHomePath: String? = nil,
         historyDays: Int = 30,
-        cursorCookieHeaderOverride: String? = nil,
         allowPricingRefresh: Bool = true,
         refreshPricingInBackground: Bool = true,
-        includePiSessions: Bool = true,
         bypassScannerDebounce: Bool = false,
-        piWorkingDirectories: [URL] = [],
-        piSessionProcessContexts: [PiSessionProcessContext] = [],
         scannerOptions overrideScannerOptions: CostUsageScanner.Options? = nil,
-        piScannerOptions overridePiScannerOptions: PiSessionCostScanner
-            .Options? = nil,
-        modelsDevClient: ModelsDevClient = ModelsDevClient(),
-        retryUnknownPricing: Bool = true) async throws -> CostUsageTokenSnapshot
-    {
-        try await self.loadTokenResult(
-            provider: provider,
-            environment: environment,
-            antigravityAdditionalProfileHomes: antigravityAdditionalProfileHomes,
-            now: now,
-            forceRefresh: forceRefresh,
-            allowVertexClaudeFallback: allowVertexClaudeFallback,
-            codexHomePath: codexHomePath,
-            historyDays: historyDays,
-            cursorCookieHeaderOverride: cursorCookieHeaderOverride,
-            allowPricingRefresh: allowPricingRefresh,
-            refreshPricingInBackground: refreshPricingInBackground,
-            includePiSessions: includePiSessions,
-            bypassScannerDebounce: bypassScannerDebounce,
-            piWorkingDirectories: piWorkingDirectories,
-            piSessionProcessContexts: piSessionProcessContexts,
-            scannerOptions: overrideScannerOptions,
-            piScannerOptions: overridePiScannerOptions,
-            modelsDevClient: modelsDevClient,
-            retryUnknownPricing: retryUnknownPricing).snapshot
-    }
-
-    // swiftlint:disable:next function_body_length cyclomatic_complexity
-    static func loadTokenResult(
-        provider: UsageProvider,
-        environment: [String: String] = ProcessInfo.processInfo.environment,
-        antigravityAdditionalProfileHomes: [String] = [],
-        now: Date = Date(),
-        forceRefresh: Bool = false,
-        allowVertexClaudeFallback: Bool = false,
-        codexHomePath: String? = nil,
-        historyDays: Int = 30,
-        cursorCookieHeaderOverride: String? = nil,
-        allowPricingRefresh: Bool = true,
-        refreshPricingInBackground: Bool = true,
-        includePiSessions: Bool = true,
-        bypassScannerDebounce: Bool = false,
-        piWorkingDirectories: [URL] = [],
-        piSessionProcessContexts: [PiSessionProcessContext] = [],
-        scannerOptions overrideScannerOptions: CostUsageScanner.Options? = nil,
-        piScannerOptions overridePiScannerOptions: PiSessionCostScanner
-            .Options? = nil,
         modelsDevClient: ModelsDevClient = ModelsDevClient(),
         retryUnknownPricing: Bool = true,
-        reportContext: CostUsageReportContext? = nil) async throws -> CostUsageTokenResult
+        reportContext: CostUsageReportContext? = nil) async throws -> CostUsageTokenSnapshot
     {
         guard self.supportsTokenSnapshot(provider) else {
             throw CostUsageError.unsupportedProvider(provider)
@@ -480,225 +327,12 @@ public struct CostUsageFetcher: Sendable {
 
         let clampedHistoryDays = max(1, historyDays)
 
-        var remoteSnapshot: CostUsageTokenSnapshot?
-        var remoteError: Error?
-        do {
-            // Provider-specific by design: Bedrock uses AWS billing while Cursor uses its macOS dashboard session.
-            let calendar = overrideScannerOptions?.calendar ?? .current
-            let since = CostReportingPeriod.rolling(days: clampedHistoryDays).bounds(now: now, calendar: calendar)
-                .lowerBound
-            if provider == .bedrock {
-                let daily = try await Self.loadBedrockDailyReport(
-                    environment: environment,
-                    since: since,
-                    until: now)
-                remoteSnapshot = Self.tokenSnapshot(
-                    from: CostUsageDailyReport(
-                        data: CostReportingPeriod.rolling(days: clampedHistoryDays)
-                            .entries(daily.data, now: now, calendar: calendar),
-                        summary: nil),
-                    now: now,
-                    historyDays: clampedHistoryDays,
-                    useCurrentLocalDayForSession: false,
-                    calendar: calendar,
-                    historyCoverageIsEstablished: CostUsageLocalDay.key(from: now, calendar: calendar)
-                        <= CostUsageLocalDay.key(
-                            from: now, calendar: CostUsageBucketTimeZone.calendar(identifier: "UTC")),
-                    costProvenance: .vendorMetered)
-            }
-
-            #if os(macOS)
-            // Provider-specific by design: Cursor retries failed web cost queries against local CSV history.
-            if provider == .cursor {
-                remoteSnapshot = try await self.loadCursorTokenSnapshot(
-                    now: now,
-                    since: since,
-                    historyDays: clampedHistoryDays,
-                    calendar: calendar,
-                    cookieHeaderOverride: cursorCookieHeaderOverride)
-            }
-            #endif
-        } catch {
-            if provider != .cursor {
-                throw error
-            }
-            remoteError = error
-        }
-        if let remoteSnapshot {
-            return CostUsageTokenResult(snapshot: remoteSnapshot)
-        }
-
-        // Provider-specific by design: Cursor and Antigravity local readers backfill providers without remote history.
-        let fallbackOptions = Self.resolvedScannerOptions(
-            overrideScannerOptions,
-            provider: provider,
-            codexHomePath: codexHomePath)
-        let fallbackCalendar = fallbackOptions.calendar
-        if provider == .cursor {
-            if let local = await self.loadCursorLocalSnapshot(
-                now: now, historyDays: clampedHistoryDays, calendar: fallbackCalendar)
-            {
-                return CostUsageTokenResult(snapshot: local)
-            }
-            if let remoteError {
-                throw remoteError
-            }
-            return CostUsageTokenResult(snapshot: Self.unavailableLocalSnapshot(
-                now: now,
-                historyDays: clampedHistoryDays,
-                calendar: fallbackCalendar))
-        }
-        // Provider-specific by design: Antigravity uses recognized local stores without generic pricing or cache scans.
-        if provider == .antigravity {
-            let pricing = AntigravityPricingOptions(
-                cacheRoot: overrideScannerOptions?.cacheRoot,
-                refresh: PricingRefreshOptions(
-                    provider: .antigravity,
-                    isAllowed: allowPricingRefresh,
-                    retryUnknown: retryUnknownPricing,
-                    inBackground: refreshPricingInBackground || !forceRefresh),
-                client: modelsDevClient)
-            if let local = try await self.loadPricedAntigravityLocalSnapshot(
-                context: .init(environment: environment, additionalProfileHomes: antigravityAdditionalProfileHomes),
-                now: now,
-                historyDays: clampedHistoryDays,
-                calendar: fallbackCalendar,
-                pricing: pricing)
-            {
-                return CostUsageTokenResult(snapshot: local)
-            }
-            if let remoteError {
-                throw remoteError
-            }
-            return CostUsageTokenResult(snapshot: Self.unavailableLocalSnapshot(
-                now: now,
-                historyDays: clampedHistoryDays,
-                calendar: fallbackCalendar))
-        }
-        // Provider-specific by design: Muse local history has token evidence but no established dollar rates.
-        if provider == .muse {
-            return try await CostUsageTokenResult(snapshot: Self.loadMuseLocalSnapshot(
-                environment: environment,
-                now: now,
-                historyDays: clampedHistoryDays,
-                options: fallbackOptions))
-        }
-        if let remoteError {
-            throw remoteError
-        }
-
-        // Provider-specific by design: Pi has an independent aggregate token-cost history over its local JSONL logs.
-        if provider == .pi {
-            var piOptionsOnly = overridePiScannerOptions ?? PiSessionCostScanner.Options()
-            if piOptionsOnly.cacheRoot == nil {
-                piOptionsOnly.cacheRoot = overrideScannerOptions?.cacheRoot
-            }
-            if piOptionsOnly.piSessionsRoot == nil, piOptionsOnly.ompSessionsRoot == nil {
-                piOptionsOnly.environment = environment
-            }
-            // Provider-specific by design: Pi scans receive live process project roots for project-level settings.
-            if piOptionsOnly.workingDirectories.isEmpty, !piWorkingDirectories.isEmpty {
-                piOptionsOnly.workingDirectories = piWorkingDirectories
-            }
-            if piOptionsOnly.processContexts.isEmpty, !piSessionProcessContexts.isEmpty {
-                piOptionsOnly.processContexts = piSessionProcessContexts
-            }
-            if overrideScannerOptions != nil {
-                piOptionsOnly.calendar = Self.resolvedScannerOptions(
-                    overrideScannerOptions,
-                    provider: .pi,
-                    codexHomePath: codexHomePath).calendar
-            }
-            if forceRefresh || bypassScannerDebounce {
-                piOptionsOnly.refreshMinIntervalSeconds = 0
-            }
-            piOptionsOnly.forceRescan = piOptionsOnly.forceRescan || forceRefresh
-            let piOptions = piOptionsOnly
-            let piSince = piOptionsOnly.calendar.date(byAdding: .day, value: -(clampedHistoryDays - 1), to: now) ?? now
-            await Self.refreshPricingIfAllowed(
-                options: PricingRefreshOptions(
-                    provider: .claude,
-                    isAllowed: allowPricingRefresh,
-                    retryUnknown: retryUnknownPricing,
-                    inBackground: refreshPricingInBackground),
-                now: now,
-                cacheRoot: piOptionsOnly.cacheRoot,
-                client: modelsDevClient)
-            let piScanResult: PiSessionCostScanner.DailyReportResult = try await CostUsageScanExecutor
-                .run { checkCancellation in
-                    try PiSessionCostScanner.loadDailyReportResultCancellable(
-                        // Provider-specific by design: this call reads Pi's local aggregate session ledger.
-                        provider: .pi,
-                        since: piSince,
-                        until: now,
-                        now: now,
-                        options: piOptions,
-                        checkCancellation: checkCancellation)
-                }
-            let piDaily = piScanResult.report
-            if allowPricingRefresh, retryUnknownPricing {
-                var didRefresh = false
-                // Provider-specific by design: Pi model names reuse the Codex and Claude pricing catalogs.
-                for pricingProvider in [UsageProvider.codex, UsageProvider.claude] {
-                    if let request = Self.unknownPricingRefreshRequest(
-                        provider: pricingProvider,
-                        daily: piDaily,
-                        now: now,
-                        cacheRoot: piOptionsOnly.cacheRoot,
-                        client: modelsDevClient),
-                        await Self.refreshUnknownPricingIfNeeded(request, inBackground: refreshPricingInBackground)
-                    {
-                        didRefresh = true
-                    }
-                }
-                if didRefresh, !refreshPricingInBackground {
-                    return try await self.loadTokenResult(
-                        provider: provider,
-                        environment: environment,
-                        now: now,
-                        forceRefresh: forceRefresh,
-                        allowVertexClaudeFallback: allowVertexClaudeFallback,
-                        codexHomePath: codexHomePath,
-                        historyDays: historyDays,
-                        cursorCookieHeaderOverride: cursorCookieHeaderOverride,
-                        allowPricingRefresh: allowPricingRefresh,
-                        refreshPricingInBackground: false,
-                        includePiSessions: includePiSessions,
-                        piWorkingDirectories: piWorkingDirectories,
-                        piSessionProcessContexts: piSessionProcessContexts,
-                        scannerOptions: overrideScannerOptions,
-                        piScannerOptions: piOptionsOnly,
-                        modelsDevClient: modelsDevClient,
-                        retryUnknownPricing: false,
-                        reportContext: reportContext)
-                }
-            }
-            let snapshot = Self.tokenSnapshot(
-                from: piDaily,
-                now: now,
-                historyDays: clampedHistoryDays,
-                calendar: piOptionsOnly.calendar,
-                historyCoverageIsEstablished: piScanResult.isComplete,
-                costProvenance: .listPriceEstimate,
-                projects: [],
-                sessions: [],
-                // An incomplete Pi scan may be serving a retained cache report. Keep its
-                // original scan time so stale usage is not presented as freshly read.
-                updatedAt: piScanResult.isComplete ? now : piScanResult.lastScanAt ?? now)
-            return CostUsageTokenResult(
-                snapshot: snapshot,
-                accounting: piScanResult.scopeFingerprint.map { .piOnly(scope: $0) })
-        }
-
         var options = Self.resolvedScannerOptions(
             overrideScannerOptions,
             provider: provider,
             codexHomePath: codexHomePath)
         // Rolling window is inclusive, so a 30-day display starts 29 days before `now`.
         let since = options.calendar.date(byAdding: .day, value: -(clampedHistoryDays - 1), to: now) ?? now
-        let scopedCodexHomePath = codexHomePath?.trimmingCharacters(in: .whitespacesAndNewlines)
-        // Provider-specific by design: scoped Codex homes exclude ambient Pi sessions from managed-profile totals.
-        let shouldMergePiUsage = provider != .codex || scopedCodexHomePath?.isEmpty != false
         await Self.refreshPricingIfAllowed(
             options: PricingRefreshOptions(
                 provider: provider,
@@ -712,39 +346,15 @@ public struct CostUsageFetcher: Sendable {
         Self.configureScannerRefresh(
             &options,
             provider: provider,
-            allowVertexClaudeFallback: allowVertexClaudeFallback,
             forceRefresh: forceRefresh,
             bypassScannerDebounce: bypassScannerDebounce)
-        var resolvedPiOptions = overridePiScannerOptions ?? PiSessionCostScanner.Options()
-        if resolvedPiOptions.cacheRoot == nil {
-            resolvedPiOptions.cacheRoot = options.cacheRoot
-        }
-        if resolvedPiOptions.piSessionsRoot == nil, resolvedPiOptions.ompSessionsRoot == nil {
-            resolvedPiOptions.environment = environment
-        }
-        if resolvedPiOptions.workingDirectories.isEmpty, !piWorkingDirectories.isEmpty {
-            resolvedPiOptions.workingDirectories = piWorkingDirectories
-        }
-        if resolvedPiOptions.processContexts.isEmpty, !piSessionProcessContexts.isEmpty {
-            resolvedPiOptions.processContexts = piSessionProcessContexts
-        }
-        resolvedPiOptions.calendar = options.calendar
-        if forceRefresh || bypassScannerDebounce {
-            resolvedPiOptions.refreshMinIntervalSeconds = 0
-        }
-        resolvedPiOptions.forceRescan = resolvedPiOptions.forceRescan || forceRefresh
-        let piOptions = resolvedPiOptions
 
         let scanOptions = options
         let localScanOptions = LocalTokenScanOptions(
-            allowVertexClaudeFallback: allowVertexClaudeFallback,
-            includePiSessions: includePiSessions,
-            shouldMergePiUsage: shouldMergePiUsage,
             scanOptions: scanOptions,
             environment: environment,
-            piOptions: piOptions,
             reportContext: reportContext)
-        let scanResult = try await Self.loadLocalTokenScanResult(
+        let scan = try await Self.loadLocalTokenScanResult(
             provider: provider,
             since: since,
             now: now,
@@ -754,65 +364,38 @@ public struct CostUsageFetcher: Sendable {
            retryUnknownPricing,
            let request = Self.unknownPricingRefreshRequest(
                provider: provider,
-               daily: scanResult.inclusive.daily,
+               daily: scan.daily,
                now: now,
                cacheRoot: options.cacheRoot,
                client: modelsDevClient),
            await Self.refreshUnknownPricingIfNeeded(request, inBackground: refreshPricingInBackground)
         {
-            return try await self.loadTokenResult(
+            return try await self.loadTokenSnapshot(
                 provider: provider,
                 environment: environment,
                 now: now,
                 forceRefresh: forceRefresh,
-                allowVertexClaudeFallback: allowVertexClaudeFallback,
                 codexHomePath: codexHomePath,
                 historyDays: historyDays,
-                cursorCookieHeaderOverride: cursorCookieHeaderOverride,
                 allowPricingRefresh: allowPricingRefresh,
                 refreshPricingInBackground: false,
-                includePiSessions: includePiSessions,
-                piWorkingDirectories: piWorkingDirectories,
-                piSessionProcessContexts: piSessionProcessContexts,
                 scannerOptions: options,
-                piScannerOptions: piOptions,
                 modelsDevClient: modelsDevClient,
                 retryUnknownPricing: false,
                 reportContext: reportContext)
         }
 
-        let snapshot = Self.tokenSnapshot(
-            from: scanResult.inclusive.daily,
+        return Self.tokenSnapshot(
+            from: scan.daily,
             now: now,
             historyDays: clampedHistoryDays,
             calendar: scanOptions.calendar,
-            historyCoverageIsEstablished: scanResult.inclusive.historyCoverageIsEstablished,
-            historyScanIsPartial: scanResult.native.historyCoverageIsEstablished
-                && !scanResult.inclusive.historyCoverageIsEstablished,
+            historyCoverageIsEstablished: scan.historyCoverageIsEstablished,
             costProvenance: .listPriceEstimate,
-            projects: scanResult.inclusive.projects,
-            sessions: scanResult.inclusive.sessions,
-            detailsAreComplete: scanResult.inclusive.detailsAreComplete,
-            updatedAt: scanResult.inclusive.staleSnapshotUpdatedAt)
-        // Provider-specific by design: native projections exist for the two transcript families.
-        let accounting: PiSnapshotAccounting? = if let scope = scanResult.piScope {
-            .includesPi(scope: scope, native: Self.tokenSnapshot(
-                from: scanResult.native.daily,
-                now: now,
-                historyDays: clampedHistoryDays,
-                calendar: scanOptions.calendar,
-                historyCoverageIsEstablished: scanResult.native.historyCoverageIsEstablished,
-                costProvenance: .listPriceEstimate,
-                projects: scanResult.native.projects,
-                sessions: scanResult.native.sessions,
-                detailsAreComplete: scanResult.native.detailsAreComplete,
-                updatedAt: scanResult.native.staleSnapshotUpdatedAt))
-        } else if provider == .codex || provider == .claude {
-            .nativeOnly
-        } else {
-            nil
-        }
-        return CostUsageTokenResult(snapshot: snapshot, accounting: accounting)
+            projects: scan.projects,
+            sessions: scan.sessions,
+            detailsAreComplete: scan.detailsAreComplete,
+            updatedAt: scan.staleSnapshotUpdatedAt)
     }
 
     private struct LocalTokenScanReport: Sendable {
@@ -824,44 +407,21 @@ public struct CostUsageFetcher: Sendable {
         let detailsAreComplete: Bool
     }
 
-    private struct LocalTokenScanResult: Sendable {
-        let inclusive: LocalTokenScanReport
-        let native: LocalTokenScanReport
-        let piScope: String?
-    }
-
     private struct LocalTokenScanOptions: Sendable {
-        let allowVertexClaudeFallback: Bool
-        let includePiSessions: Bool
-        let shouldMergePiUsage: Bool
         let scanOptions: CostUsageScanner.Options
         @ProcessEnvironment private(set) var environment: [String: String]
-        let piOptions: PiSessionCostScanner.Options
         let reportContext: CostUsageReportContext?
-    }
-
-    private static func unavailableLocalSnapshot(
-        now: Date,
-        historyDays: Int,
-        calendar: Calendar) -> CostUsageTokenSnapshot
-    {
-        self.tokenSnapshot(
-            from: CostUsageDailyReport(data: [], summary: nil),
-            now: now,
-            historyDays: historyDays,
-            calendar: calendar,
-            historyCoverageIsEstablished: false)
     }
 
     private static func loadLocalTokenScanResult(
         provider: UsageProvider,
         since: Date,
         now: Date,
-        options: LocalTokenScanOptions) async throws -> LocalTokenScanResult
+        options: LocalTokenScanOptions) async throws -> LocalTokenScanReport
     {
         try Task.checkCancellation()
-        // Provider-specific by design: Codex owns project/session attribution and optional Pi merge state, while
-        // Claude/Vertex share the transcript scanner with mutually exclusive filters.
+        // Provider-specific by design: Codex owns project/session attribution, while Claude uses the
+        // transcript scanner directly.
         // These synchronous scans can run for minutes on large archives. The dedicated queue keeps
         // them off the cooperative pool and bridges task cancellation into scanner-level checks.
         return try await CostUsageScanExecutor.run { checkCancellation in
@@ -875,27 +435,8 @@ public struct CostUsageFetcher: Sendable {
                 checkCancellation: checkCancellation)
             try checkCancellation()
 
-            if provider == .vertexai,
-               !options.allowVertexClaudeFallback,
-               options.scanOptions.claudeLogProviderFilter == .vertexAIOnly,
-               daily.data.isEmpty
-            {
-                var fallback = options.scanOptions
-                fallback.claudeLogProviderFilter = .all
-                daily = try CostUsageScanner.loadDailyReportCancellable(
-                    provider: provider,
-                    since: since,
-                    until: now,
-                    now: now,
-                    options: fallback,
-                    reportContext: options.reportContext,
-                    checkCancellation: checkCancellation)
-                try checkCancellation()
-            }
-
             var projects: [CostUsageProjectBreakdown] = []
             var sessions: [CostUsageSessionBreakdown] = []
-            var piScanIsComplete = true
             var staleSnapshotUpdatedAt: Date?
             var detailsAreComplete = true
             var historyCoverageIsEstablished = provider != .codex
@@ -924,61 +465,15 @@ public struct CostUsageFetcher: Sendable {
                         sessionsRoot: roots.first,
                         environment: options.environment)
                 }
+                projects = Self.mergedProjectBreakdowns(projects)
             }
-            let native = LocalTokenScanReport(
+            return LocalTokenScanReport(
                 daily: daily,
                 projects: projects,
                 sessions: sessions,
                 staleSnapshotUpdatedAt: staleSnapshotUpdatedAt,
                 historyCoverageIsEstablished: historyCoverageIsEstablished,
                 detailsAreComplete: detailsAreComplete)
-            var piScope: String?
-            if options.includePiSessions,
-               provider == .claude || (provider == .codex && options.shouldMergePiUsage)
-            {
-                let piScanResult = try PiSessionCostScanner.loadDailyReportResultCancellable(
-                    provider: provider,
-                    since: since,
-                    until: now,
-                    now: now,
-                    options: options.piOptions,
-                    checkCancellation: checkCancellation)
-                try checkCancellation()
-                piScanIsComplete = piScanResult.isComplete
-                if !piScanResult.isComplete,
-                   let piLastScanAt = piScanResult.lastScanAt
-                {
-                    staleSnapshotUpdatedAt = [staleSnapshotUpdatedAt, piLastScanAt]
-                        .compactMap(\.self)
-                        .min()
-                }
-                // Provider-specific by design: only the Codex local ledger contributes Pi rows to this scan.
-                if provider == .codex {
-                    if let project = Self.unknownProjectBreakdown(from: piScanResult.report) {
-                        projects.append(project)
-                        sessions = []
-                    }
-                }
-                // The scanner can restore a previous cache scope after an incomplete root
-                // transition; carry the scope that the returned report actually represents.
-                piScope = piScanResult.scopeFingerprint
-                daily = CostUsageDailyReport.merged(
-                    [daily, piScanResult.report],
-                    calendar: options.scanOptions.calendar)
-            }
-            if provider == .codex {
-                projects = Self.mergedProjectBreakdowns(projects)
-            }
-            return LocalTokenScanResult(
-                inclusive: LocalTokenScanReport(
-                    daily: daily,
-                    projects: projects,
-                    sessions: sessions,
-                    staleSnapshotUpdatedAt: staleSnapshotUpdatedAt,
-                    historyCoverageIsEstablished: native.historyCoverageIsEstablished && piScanIsComplete,
-                    detailsAreComplete: native.detailsAreComplete && piScanIsComplete && piScope == nil),
-                native: native,
-                piScope: piScope)
         }
     }
 
@@ -1105,12 +600,6 @@ public struct CostUsageFetcher: Sendable {
         let inBackground: Bool
     }
 
-    private struct AntigravityPricingOptions {
-        let cacheRoot: URL?
-        let refresh: PricingRefreshOptions
-        let client: ModelsDevClient
-    }
-
     private static func refreshPricingIfAllowed(
         options: PricingRefreshOptions,
         now: Date,
@@ -1119,7 +608,7 @@ public struct CostUsageFetcher: Sendable {
     {
         guard options.isAllowed,
               options.retryUnknown,
-              options.provider == .codex || options.provider == .claude || options.provider == .antigravity
+              options.provider == .codex || options.provider == .claude
         else { return }
 
         if options.inBackground {
@@ -1129,54 +618,6 @@ public struct CostUsageFetcher: Sendable {
         } else {
             await ModelsDevPricingPipeline.refreshIfNeeded(now: now, cacheRoot: cacheRoot, client: client)
         }
-    }
-
-    private static func loadPricedAntigravityLocalSnapshot(
-        context: AntigravityLocalReader.Context,
-        now: Date,
-        historyDays: Int,
-        calendar: Calendar,
-        pricing: AntigravityPricingOptions) async throws -> CostUsageTokenSnapshot?
-    {
-        let snapshot = try await self.loadAntigravityLocalSnapshot(
-            context: context,
-            now: now,
-            historyDays: historyDays,
-            calendar: calendar,
-            pricingCacheRoot: pricing.cacheRoot)
-        // Provider-specific by design: Antigravity returns before the shared scan path, so it is the
-        // one provider that has to request its own unknown-model pricing refresh; without it a
-        // newly released model stays unpriced forever.
-        guard let snapshot, !snapshot.daily.isEmpty,
-              pricing.refresh.isAllowed,
-              pricing.refresh.retryUnknown
-        else { return snapshot }
-        guard let request = Self.unknownPricingRefreshRequest(
-            provider: .antigravity,
-            daily: CostUsageDailyReport(data: snapshot.daily, summary: nil),
-            now: now,
-            cacheRoot: pricing.cacheRoot,
-            client: pricing.client)
-        else {
-            await self.refreshPricingIfAllowed(
-                options: PricingRefreshOptions(
-                    provider: pricing.refresh.provider, isAllowed: true, retryUnknown: true, inBackground: true),
-                now: now,
-                cacheRoot: pricing.cacheRoot,
-                client: pricing.client)
-            return snapshot
-        }
-        guard await Self.refreshUnknownPricingIfNeeded(request, inBackground: pricing.refresh.inBackground)
-        else { return snapshot }
-        let repriced = try await self.loadAntigravityLocalSnapshot(
-            context: context,
-            now: now,
-            historyDays: historyDays,
-            calendar: calendar,
-            pricingCacheRoot: pricing.cacheRoot)
-        // A pricing download must not replace a complete scan with history truncated in the meantime.
-        guard let repriced, snapshot.historyScanIsPartial || !repriced.historyScanIsPartial else { return snapshot }
-        return repriced
     }
 
     private struct UnknownPricingRefreshRequest: Sendable {
@@ -1193,15 +634,13 @@ public struct CostUsageFetcher: Sendable {
         cacheRoot: URL?,
         client: ModelsDevClient) -> UnknownPricingRefreshRequest?
     {
-        guard provider == .codex || provider == .claude || provider == .antigravity else { return nil }
+        guard provider == .codex || provider == .claude else { return nil }
         var targets = Set<ModelsDevPricingTarget>()
         for entry in daily.data {
             for breakdown in entry.modelBreakdowns ?? [] {
                 guard breakdown.costUSD == nil else { continue }
                 let pricingTargets: [(providerID: String, modelID: String)]
-                if provider == .antigravity {
-                    pricingTargets = AntigravityLocalReader.pricingRefreshTargets(for: breakdown.modelName)
-                } else if provider == .codex {
+                if provider == .codex {
                     guard OpenCodexRouteDispatcher.countsTowardCodexSubscription(modelName: breakdown.modelName)
                     else { continue }
                     guard !CostUsagePricing.isCodexUnattributedModel(breakdown.modelName) else { continue }
@@ -1262,20 +701,16 @@ public struct CostUsageFetcher: Sendable {
         codexHomePath: String? = nil,
         historyDays: Int = 30,
         allowScopedCodexHome: Bool = false,
-        includePiSessions: Bool = true,
         includeProjectAndSessionBreakdowns: Bool = true,
-        scannerOptions overrideScannerOptions: CostUsageScanner.Options? = nil,
-        piScannerOptions: PiSessionCostScanner.Options? = nil) async -> CostUsageTokenSnapshot?
+        scannerOptions overrideScannerOptions: CostUsageScanner.Options? = nil) async -> CostUsageTokenSnapshot?
     {
         await self.loadCachedCodexTokenSnapshotResult(
             now: now,
             codexHomePath: codexHomePath,
             historyDays: historyDays,
             allowScopedCodexHome: allowScopedCodexHome,
-            includePiSessions: includePiSessions,
             includeProjectAndSessionBreakdowns: includeProjectAndSessionBreakdowns,
-            scannerOptions: overrideScannerOptions,
-            piScannerOptions: piScannerOptions)?.snapshot
+            scannerOptions: overrideScannerOptions)?.snapshot
     }
 
     static func loadCachedCodexTokenActivity(
@@ -1348,22 +783,14 @@ public struct CostUsageFetcher: Sendable {
         codexHomePath: String? = nil,
         historyDays: Int = 30,
         allowScopedCodexHome: Bool = false,
-        includePiSessions: Bool = true,
         includeProjectAndSessionBreakdowns: Bool = true,
         requireCompleteHistory: Bool = false,
         scannerOptions overrideScannerOptions: CostUsageScanner.Options? = nil,
-        environment: [String: String] = ProcessInfo.processInfo.environment,
-        piScannerOptions: PiSessionCostScanner.Options? = nil) async
+        environment: [String: String] = ProcessInfo.processInfo.environment) async
         -> CachedCodexTokenSnapshotResult?
     {
         let scopedCodexHomePath = codexHomePath?.trimmingCharacters(in: .whitespacesAndNewlines)
         guard scopedCodexHomePath?.isEmpty != false || allowScopedCodexHome else { return nil }
-        let piHistoryRequested = includePiSessions && scopedCodexHomePath?.isEmpty != false
-        let processContexts: [PiSessionProcessContext] = if piHistoryRequested, piScannerOptions == nil {
-            await LocalAgentSessionScanner().piSessionProcessContexts(environment: environment)
-        } else {
-            []
-        }
 
         // Snapshot assembly can touch many SQLite rows; keep it off the cooperative pool
         // alongside the scans themselves.
@@ -1391,7 +818,6 @@ public struct CostUsageFetcher: Sendable {
             // time, every constituent scan time, and whether a second source joined the merge.
             var nativeScanAt: Date?
             var scanTimes: [Date] = []
-            var piHistoryIsComplete = false
             var staleSnapshotUpdatedAt: Date?
             let nativeHistoryCoverageIsEstablished = cache.historyCoverageIsEstablished(
                 range: range,
@@ -1455,60 +881,14 @@ public struct CostUsageFetcher: Sendable {
 
             let nativeDetailsAreComplete = includeProjectAndSessionBreakdowns && nativeHistoryCoverageIsEstablished
                 && (cache.days.isEmpty || cache.projectMetadataVersion == CostUsageScanner.codexProjectMetadataVersion)
-            let nativeSnapshot: CostUsageTokenSnapshot? = reports.isEmpty ? nil : Self.tokenSnapshot(
-                from: CostUsageDailyReport.merged(reports, calendar: options.calendar),
-                now: now,
-                historyDays: clampedHistoryDays,
-                calendar: options.calendar,
-                historyCoverageIsEstablished: nativeHistoryCoverageIsEstablished
-                    || staleSnapshotUpdatedAt != nil,
-                costProvenance: .listPriceEstimate,
-                projects: Self.mergedProjectBreakdowns(projects),
-                sessions: sessions,
-                detailsAreComplete: nativeDetailsAreComplete,
-                updatedAt: scanTimes.min())
-            var accounting: PiSnapshotAccounting = .nativeOnly
-
-            if piHistoryRequested {
-                let piOptions = piScannerOptions ?? PiSessionCostScanner.Options(
-                    cacheRoot: options.cacheRoot,
-                    calendar: options.calendar,
-                    environment: environment,
-                    processContexts: processContexts)
-                // Provider-specific by design: this optional merge reads Pi's Codex-priced history into the
-                // inclusive Codex cache publication.
-                let piResult = PiSessionCostScanner.loadCachedDailyReportResult(
-                    provider: .codex,
-                    since: since,
-                    until: now,
-                    now: now,
-                    cacheRoot: options.cacheRoot,
-                    calendar: options.calendar,
-                    options: piOptions,
-                    allowEstablishedEmpty: true)
-                // Missing or incompatible mirror history is not zero usage.
-                piHistoryIsComplete = piResult?.isComplete == true && piResult?.scopeFingerprint != nil
-                guard !requireCompleteHistory || piHistoryIsComplete else { return nil }
-                if let piResult, let scope = piResult.scopeFingerprint {
-                    accounting = nativeSnapshot.map { .includesPi(scope: scope, native: $0) } ?? .piOnly(scope: scope)
-                    reports.append(piResult.report)
-                    if let piLastScanAt = piResult.lastScanAt {
-                        scanTimes.append(piLastScanAt)
-                    }
-                    if let piProject = Self.unknownProjectBreakdown(from: piResult.report) {
-                        projects.append(piProject)
-                        sessions = []
-                    }
-                }
-            }
 
             try check()
             guard !reports.isEmpty else { return nil }
             // `previous` is an exact report captured before the current bounded refresh became
             // pending. Its rows remain established even though native catch-up is still active;
             // `staleSnapshotUpdatedAt` keeps refresh scheduling and stale presentation explicit.
-            let displayedHistoryCoverageIsEstablished = (nativeHistoryCoverageIsEstablished
-                || staleSnapshotUpdatedAt != nil) && (!piHistoryRequested || piHistoryIsComplete)
+            let displayedHistoryCoverageIsEstablished = nativeHistoryCoverageIsEstablished
+                || staleSnapshotUpdatedAt != nil
             // updatedAt keeps the caches' real (oldest) scan time; stamping the hydration time
             // would let stale token rows inherit app-start freshness (#1964). lastRefreshAt
             // drives TTL suppression and stays native-only: a merged load must never delay a
@@ -1523,16 +903,14 @@ public struct CostUsageFetcher: Sendable {
                     costProvenance: .listPriceEstimate,
                     projects: Self.mergedProjectBreakdowns(projects),
                     sessions: sessions,
-                    detailsAreComplete: nativeDetailsAreComplete && !piHistoryRequested,
+                    detailsAreComplete: nativeDetailsAreComplete,
                     updatedAt: scanTimes.min()),
-                accounting: accounting,
-                lastRefreshAt: piHistoryRequested || staleSnapshotUpdatedAt != nil ? nil : nativeScanAt,
+                lastRefreshAt: staleSnapshotUpdatedAt != nil ? nil : nativeScanAt,
                 staleSnapshotUpdatedAt: staleSnapshotUpdatedAt)
         }
     }
 
-    /// Providers whose token-cost snapshot `loadTokenSnapshot` can produce. Cursor is
-    /// macOS-only because it reuses the macOS Cursor session resolution.
+    /// Providers whose token-cost snapshot `loadTokenSnapshot` can produce.
     static func supportsTokenSnapshot(_ provider: UsageProvider) -> Bool {
         ProviderDescriptorRegistry.descriptor(for: provider).tokenCost.supportsTokenSnapshot
     }
@@ -1603,124 +981,6 @@ public struct CostUsageFetcher: Sendable {
             provider: .codex, // Provider-specific by design: local history belongs to the selected Codex home.
             codexHomePath: codexHomePath)
         return CodexLocalDataScope.resolve(options: options).applying(to: options)
-    }
-
-    private static func loadBedrockDailyReport(
-        environment: [String: String],
-        since: Date,
-        until: Date) async throws -> CostUsageDailyReport
-    {
-        let resolved = try await BedrockCredentialResolver.resolve(environment: environment)
-        return try await BedrockUsageFetcher.fetchDailyReport(
-            credentials: resolved.credentials,
-            since: since,
-            until: until,
-            environment: environment)
-    }
-
-    #if os(macOS)
-    /// Fetch Cursor's per-day token-cost plus its Cursor-metered total via the cookie-authenticated
-    /// dashboard API, reusing the same session resolution as the Cursor status probe. Like Codex and
-    /// Claude, the report covers the rolling `historyDays` window and the session line is tied to the
-    /// current local day (so a stale latest entry is never labeled as Today).
-    private static func loadCursorTokenSnapshot(
-        now: Date,
-        since: Date?,
-        historyDays: Int,
-        calendar: Calendar,
-        cookieHeaderOverride: String? = nil) async throws -> CostUsageTokenSnapshot
-    {
-        let probe = CursorStatusProbe(browserDetection: BrowserDetection())
-        let report = try await probe.fetchCostReport(
-            since: since,
-            until: now,
-            calendar: calendar,
-            cookieHeaderOverride: cookieHeaderOverride)
-        return Self.tokenSnapshot(
-            from: report.daily,
-            now: now,
-            historyDays: historyDays,
-            useCurrentLocalDayForSession: true,
-            calendar: calendar,
-            meteredCostUSD: report.meteredCostUSD,
-            costProvenance: Self.cursorCostProvenance(
-                meteredCostUSD: report.meteredCostUSD,
-                daily: report.daily.data),
-            credentialScopeFingerprint: report.credentialScopeFingerprint)
-    }
-    #endif
-
-    private static func loadCursorLocalSnapshot(
-        now: Date,
-        historyDays: Int,
-        calendar: Calendar = .current) async -> CostUsageTokenSnapshot?
-    {
-        let allRows = CursorLocalCSVReader.cachedCSVPaths().flatMap { CursorLocalCSVReader.parseFile(at: $0) }
-        guard !allRows.isEmpty else { return nil }
-        let full = CursorLocalCSVReader.makeDailyReport(from: allRows, calendar: calendar, now: now)
-        let daily = Self.windowedDailyReport(full, historyDays: historyDays, now: now, calendar: calendar)
-        guard !daily.data.isEmpty else { return nil }
-        return Self.tokenSnapshot(
-            from: daily,
-            now: now,
-            historyDays: historyDays,
-            useCurrentLocalDayForSession: true,
-            calendar: calendar,
-            costProvenance: .listPriceEstimate)
-    }
-
-    private static func loadAntigravityLocalSnapshot(
-        context: AntigravityLocalReader.Context,
-        now: Date,
-        historyDays: Int,
-        calendar: Calendar = .current,
-        pricingCacheRoot: URL?) async throws -> CostUsageTokenSnapshot?
-    {
-        let reportResult = try await CostUsageScanExecutor.run { checkCancellation in
-            try AntigravityLocalReader.makeDailyReportWithStatus(
-                context: context,
-                calendar: calendar,
-                estimateCost: true,
-                pricingCacheRoot: pricingCacheRoot,
-                checkCancellation: checkCancellation)
-        }
-        // A scan can be partial when an old Antigravity database has a missing WAL sidecar or the
-        // safety budget stops early. Those rows are a trustworthy subset, so keep them as a marked
-        // lower bound. Contradicted evidence is different in kind — the surviving rows may be
-        // wrong, not merely incomplete — and stays unpublishable. The same applies to an
-        // immutable SQLite read whose underlying files changed during the read.
-        guard reportResult.isAvailable
-            || (!reportResult.report.data.isEmpty && !reportResult.evidenceIsContradicted
-                && !reportResult.evidenceIsUnstable)
-        else { return nil }
-        let report = reportResult.report
-        guard !report.data.isEmpty || reportResult.isComplete else { return nil }
-        let daily = Self.windowedDailyReport(report, historyDays: historyDays, now: now, calendar: calendar)
-        return Self.tokenSnapshot(
-            from: daily,
-            now: now,
-            historyDays: historyDays,
-            useCurrentLocalDayForSession: true,
-            calendar: calendar,
-            // A truncated scan must not claim the window: absence of a row is not proof of a zero
-            // day. `historyScanIsPartial` keeps the rows it did read usable as a marked lower
-            // bound, which is what separates "read part of it" from "could not read it".
-            historyCoverageIsEstablished: reportResult.isComplete,
-            historyScanIsPartial: !reportResult.isComplete,
-            costProvenance: daily.summary?.totalCostUSD == nil ? .unknown : .listPriceEstimate)
-    }
-
-    private static func windowedDailyReport(
-        _ report: CostUsageDailyReport, historyDays: Int, now: Date, calendar: Calendar) -> CostUsageDailyReport
-    {
-        let entries = CostReportingPeriod.rolling(days: historyDays).entries(report.data, now: now, calendar: calendar)
-        let costs = entries.compactMap(\.costUSD)
-        let summary: CostUsageDailyReport.Summary? = entries.isEmpty ? nil : .init(
-            totalInputTokens: nil,
-            totalOutputTokens: nil,
-            totalTokens: CheckedSum.integers(entries.compactMap(\.totalTokens)),
-            totalCostUSD: costs.isEmpty ? nil : costs.reduce(0, +))
-        return CostUsageDailyReport(data: entries, summary: summary)
     }
 
     static func tokenSnapshot(
@@ -1804,33 +1064,13 @@ public struct CostUsageFetcher: Sendable {
         return self.codexAutomaticScanDurationPerRefresh
     }
 
-    private static func cursorCostProvenance(
-        meteredCostUSD: Double?,
-        daily: [CostUsageDailyReport.Entry]) -> CostProvenance
-    {
-        let hasDailyCosts = daily.contains { $0.costUSD != nil }
-        if meteredCostUSD != nil, hasDailyCosts {
-            return .mixed
-        }
-        if meteredCostUSD != nil {
-            return .vendorMetered
-        }
-        if hasDailyCosts {
-            return .listPriceEstimate
-        }
-        return .unknown
-    }
-
     private static func configureScannerRefresh(
         _ options: inout CostUsageScanner.Options,
         provider: UsageProvider,
-        allowVertexClaudeFallback: Bool,
         forceRefresh: Bool,
         bypassScannerDebounce: Bool)
     {
-        if provider == .vertexai {
-            options.claudeLogProviderFilter = allowVertexClaudeFallback ? .all : .vertexAIOnly
-        } else if provider == .claude {
+        if provider == .claude {
             options.claudeLogProviderFilter = .excludeVertexAI
         }
         if forceRefresh || bypassScannerDebounce {
@@ -1840,26 +1080,6 @@ public struct CostUsageFetcher: Sendable {
             provider: provider,
             bypassScannerDebounce: bypassScannerDebounce,
             configuredDuration: options.maxCodexScanDurationPerRefresh)
-    }
-
-    private static func unknownProjectBreakdown(from daily: CostUsageDailyReport) -> CostUsageProjectBreakdown? {
-        guard !daily.data.isEmpty else { return nil }
-        return CostUsageProjectBreakdown(
-            name: CostUsageProjectBreakdown.unknownProjectName,
-            path: nil,
-            totalTokens: daily.summary?.totalTokens,
-            totalCostUSD: daily.summary?.totalCostUSD,
-            daily: daily.data,
-            modelBreakdowns: self.projectModelBreakdowns(from: daily.data),
-            sources: [
-                CostUsageProjectSourceBreakdown(
-                    name: CostUsageProjectBreakdown.unknownProjectName,
-                    path: nil,
-                    totalTokens: daily.summary?.totalTokens,
-                    totalCostUSD: daily.summary?.totalCostUSD,
-                    daily: daily.data,
-                    modelBreakdowns: self.projectModelBreakdowns(from: daily.data)),
-            ])
     }
 
     static func mergedProjectBreakdowns(

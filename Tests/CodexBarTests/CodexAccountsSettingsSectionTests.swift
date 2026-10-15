@@ -313,19 +313,8 @@ struct CodexAccountsSettingsSectionTests {
         return SettingsStore(
             userDefaults: defaults,
             configStore: configStore,
-            zaiTokenStore: NoopZaiTokenStore(),
-            syntheticTokenStore: NoopSyntheticTokenStore(),
             codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
-            cursorCookieStore: InMemoryCookieHeaderStore(),
-            opencodeCookieStore: InMemoryCookieHeaderStore(),
-            factoryCookieStore: InMemoryCookieHeaderStore(),
-            minimaxCookieStore: InMemoryMiniMaxCookieStore(),
-            minimaxAPITokenStore: InMemoryMiniMaxAPITokenStore(),
-            kimiTokenStore: InMemoryKimiTokenStore(),
-            augmentCookieStore: InMemoryCookieHeaderStore(),
-            ampCookieStore: InMemoryCookieHeaderStore(),
-            copilotTokenStore: InMemoryCopilotTokenStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
     }
 

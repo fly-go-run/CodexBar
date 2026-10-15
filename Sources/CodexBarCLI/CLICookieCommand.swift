@@ -146,12 +146,7 @@ extension CodexBarCLI {
         descriptor: ProviderDescriptor,
         config: CodexBarConfig?) -> BrowserCookieImportOrder
     {
-        let browsers = descriptor.metadata.browserCookieOrder ?? []
-        guard let selectedBrowsers = descriptor.settingsSection.selectedProfileBrowsers else { return browsers }
-        guard let profile = ProviderBrowserProfile.selected(
-            in: config?.providerConfig(for: descriptor.id.instanceID), browsers: selectedBrowsers)
-        else { return [] }
-        return browsers.filter { $0.rawValue == profile.browserID }
+        descriptor.metadata.browserCookieOrder ?? []
     }
 
     static func cookieRefreshFailure(
@@ -162,8 +157,7 @@ extension CodexBarCLI {
         let descriptor = ProviderDescriptorRegistry.descriptor(for: provider)
         let promptCapableBrowsers = Self.cookieRefreshBrowserOrder(descriptor: descriptor, config: config)
             .filter { BrowserCookieAccessGate.requiresKeychainPromptAcknowledgement(for: [$0]) }
-        let classifiedError = ((error as? ProviderBrowserSessionFailure)?.underlyingError ?? error)
-            as? ProviderFetchClassifiedError
+        let classifiedError = error as? ProviderFetchClassifiedError
         let message: String = if let browser = promptCapableBrowsers.first, KeychainAccessGate.isDisabled {
             "\(browser.displayName) cookie decryption is disabled in CodexBar; " +
                 "enable Keychain access and refresh."

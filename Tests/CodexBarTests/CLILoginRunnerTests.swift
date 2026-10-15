@@ -5,33 +5,6 @@ import Testing
 
 @Suite(.serialized)
 struct CLILoginRunnerTests {
-    @Test(.timeLimit(.minutes(1)), arguments: [false, true])
-    func `cancelling a provider login stops its process`(kiro: Bool) async throws {
-        let fixture = try Fixture(script: """
-        #!/bin/sh
-        printf '%s' "$$" > "$LOGIN_PID_FILE"
-        printf 'login-started\\n'
-        while :; do /bin/sleep 1; done
-        """, binaryName: kiro ? "kiro-cli" : "codex")
-        defer { fixture.remove() }
-        let task = Task {
-            if kiro {
-                return await KiroLoginRunner.run(
-                    timeout: 120, environment: fixture.environment, loginPATH: nil)
-            }
-            return await CodexLoginRunner.run(
-                homePath: fixture.root.path, timeout: 120, environment: fixture.environment, loginPATH: nil)
-        }
-        defer { task.cancel() }
-        let pid = try await fixture.waitForPID()
-        task.cancel()
-        let result = await task.value
-        #expect(result.outcome == .cancelled)
-        #expect(kill(pid, 0) == -1 && errno == ESRCH)
-        #expect(CodexLoginAlertPresentation.alertInfo(for: result) == nil)
-        #expect(KiroLoginAlertPresentation.alertInfo(for: result) == nil)
-    }
-
     @Test
     func `already cancelled login never launches the executable`() async throws {
         let fixture = try Fixture(script: "#!/bin/sh\nprintf '%s' \"$$\" > \"$LOGIN_PID_FILE\"\n")

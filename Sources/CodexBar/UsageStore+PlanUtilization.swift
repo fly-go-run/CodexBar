@@ -229,14 +229,7 @@ extension UsageStore {
             provider: provider,
             snapshot: snapshot,
             capturedAt: now)
-        let samples = provider == .antigravity
-            ? self.planUtilizationSeriesSamples(
-                provider: provider,
-                snapshot: snapshot,
-                capturedAt: now,
-                forSessionEquivalents: true)
-            + Self.antigravityQuotaObservationSamples(snapshot: snapshot, capturedAt: now)
-            : detectorSamples
+        let samples = detectorSamples
         var effectiveOwner = claudeOAuthHistoryOwnerIdentifier
         if provider == .claude, isClaudeOAuthSample, let owner = claudeOAuthHistoryOwnerIdentifier {
             effectiveOwner = self.resolvedClaudeOAuthHistoryOwner(evidence: ClaudeOAuthHistoryEvidence(
@@ -313,15 +306,7 @@ extension UsageStore {
             var histories = providerBuckets.histories(for: accountKey)
             let originalHistories = histories
             var samplesToPersist = samples
-            if provider == .antigravity,
-               samples.contains(where: { $0.name == .session }),
-               !histories.contains(where: { $0.name == .session })
-            {
-                // Pre-feature Antigravity history could contain a provider-wide weekly maximum.
-                // Drop it before starting the Gemini-pinned session/weekly pair.
-                histories.removeAll { $0.name == .weekly }
-            }
-            if ![UsageProvider.codex, .claude, .antigravity].contains(provider) {
+            if ![UsageProvider.codex, .claude].contains(provider) {
                 self.reconcileGenericSessionEquivalentHistory(
                     scope: (provider, accountKey),
                     snapshot: snapshot,
@@ -389,8 +374,7 @@ extension UsageStore {
                 self.assertPlanUtilizationEntriesSorted(updatedEntries)
                 guard self.updatedPlanUtilizationEntries(
                     existingEntries: &updatedEntries,
-                    entry: sample.entry,
-                    isQuotaObservation: sample.name.isQuotaObservation)
+                    entry: sample.entry)
                 else {
                     continue
                 }
@@ -422,8 +406,7 @@ extension UsageStore {
 
     private nonisolated static func updatedPlanUtilizationEntries(
         existingEntries: inout [PlanUtilizationHistoryEntry],
-        entry: PlanUtilizationHistoryEntry,
-        isQuotaObservation: Bool = false) -> Bool
+        entry: PlanUtilizationHistoryEntry) -> Bool
     {
         let insertionIndex = self.planUtilizationEntryInsertionIndex(
             entries: existingEntries,
@@ -434,8 +417,9 @@ extension UsageStore {
             insertionIndex: insertionIndex,
             hourBucket: sampleHourBucket)
         let existingHourEntries = Array(existingEntries[sameHourRange])
-        let compact = isQuotaObservation ? self.latestObservationHourEntries : self.canonicalPlanUtilizationHourEntries
-        let canonicalHourEntries = compact(existingHourEntries, entry)
+        let canonicalHourEntries = Self.canonicalPlanUtilizationHourEntries(
+            existingHourEntries: existingHourEntries,
+            incomingEntry: entry)
 
         guard canonicalHourEntries != existingHourEntries else { return false }
         existingEntries.replaceSubrange(sameHourRange, with: canonicalHourEntries)
@@ -589,8 +573,6 @@ extension UsageStore {
         case .primary:
             guard let minutes = resolved.window.windowMinutes else { return false }
             return minutes > 0 && minutes <= 6 * 60
-        case .copilotSecondaryFallback, .antigravityQuotaSummary, .antigravityLegacy:
-            return true
         }
     }
 
@@ -651,42 +633,6 @@ extension UsageStore {
             appendWindow(snapshot.primary, name: .session)
             appendWindow(snapshot.secondary, name: .weekly)
             appendWindow(snapshot.tertiary, name: .opus)
-        case .opencodego:
-            appendWindow(snapshot.primary, name: .session)
-            appendWindow(snapshot.secondary, name: .weekly)
-            appendWindow(snapshot.tertiary, name: .monthly)
-        case .kiro, .mimo, .stepfun, .ollama:
-            if snapshot.primary?.windowMinutes == ProviderPaceCapability.monthlyWindowSentinelMinutes {
-                appendWindow(snapshot.primary, name: .monthly)
-                if provider == .ollama {
-                    appendWindow(snapshot.secondary, name: .weekly)
-                }
-            } else {
-                appendGenericSessionEquivalentWindows()
-            }
-        case .antigravity:
-            if forSessionEquivalents {
-                guard let windows = self.sessionEquivalentWindows(provider: provider, snapshot: snapshot) else {
-                    return []
-                }
-                appendWindow(windows.session, name: .session)
-                appendWindow(windows.weekly, name: .weekly)
-            } else {
-                let namedWeeklyWindows = snapshot.extraRateWindows?
-                    .filter {
-                        $0.usageKnown
-                            && $0.id.hasPrefix("antigravity-quota-summary-")
-                            && $0.window.windowMinutes == Self.weeklyWindowMinutes
-                    }
-                    .map(\.window) ?? []
-                if let mostUsedWeeklyWindow = namedWeeklyWindows.max(by: { $0.usedPercent < $1.usedPercent }) {
-                    appendWindow(mostUsedWeeklyWindow, name: .weekly)
-                } else {
-                    appendWindow(
-                        self.planUtilizationWeeklyWindow(provider: provider, snapshot: snapshot),
-                        name: .weekly)
-                }
-            }
         default:
             appendGenericSessionEquivalentWindows()
         }
@@ -1371,7 +1317,7 @@ extension UsageStore {
         ])
         providerBuckets.setHistories(mergedHistory, for: accountKey)
         providerBuckets.setHistories([], for: nil)
-        if ![UsageProvider.codex, .claude, .antigravity].contains(provider) {
+        if ![UsageProvider.codex, .claude].contains(provider) {
             self.materializeLegacySessionEquivalentHistoryIdentityDuringAccountAdoption(
                 provider: provider,
                 from: nil,
@@ -1582,8 +1528,7 @@ extension UsageStore {
                 for entry in history.entries.sorted(by: { $0.capturedAt < $1.capturedAt }) {
                     _ = self.updatedPlanUtilizationEntries(
                         existingEntries: &mergedEntries,
-                        entry: entry,
-                        isQuotaObservation: history.name.isQuotaObservation)
+                        entry: entry)
                 }
                 mergedEntriesByKey[key] = mergedEntries
             }

@@ -64,11 +64,6 @@ struct UserFacingLocalizationCoverageTests {
                 ".value(\"Utilization Start\"",
                 ".value(\"Utilization End\"",
             ],
-            "Sources/CodexBar/Providers/JetBrains/JetBrainsLoginFlow.swift": [
-                "                \"Install a JetBrains IDE with AI Assistant enabled, then refresh CodexBar.\",",
-                "                \"Alternatively, set a custom path in Settings.\",",
-                "title: \"No JetBrains IDE detected\"",
-            ],
             "Sources/CodexBar/PreferencesCodexAccountsSection.swift": [
                 "?? \"No system account\"",
                 "return \"Adding Account…\"",
@@ -204,72 +199,6 @@ struct UserFacingLocalizationCoverageTests {
                 #expect(L("credential_expiry_notification_title", "Codex") == alertTitle)
                 #expect(L("credential_expiry_notification_body") == alertBody)
             }
-        }
-    }
-
-    @Test
-    func `provider detail localization preserves technical identifiers`() throws {
-        let details = try [
-            ProviderDetailSection(
-                title: "Usage",
-                rows: [
-                    .init(label: "Balance", value: "$12.34"),
-                    .init(label: "Top model", value: "deepseek-v4-flash"),
-                ],
-                chart: .init(
-                    kind: .bars,
-                    title: "Usage",
-                    unit: "tokens",
-                    points: [.init(label: "2026-08-20", value: 42)])),
-        ]
-
-        let localized = CodexBarLocalizationOverride.$appLanguage.withValue("zh-Hans") {
-            UsageMenuCardView.Model.localizedProviderDetails(details, provider: .deepseek)
-        }
-
-        let section = try #require(localized.first)
-        #expect(section.title == "用量")
-        #expect(section.rows.map(\.label) == ["余额", "最常用模型"])
-        #expect(section.rows.map(\.value) == ["$12.34", "deepseek-v4-flash"])
-        #expect(section.chart?.title == "用量")
-        #expect(section.chart?.unit == "token")
-        #expect(section.chart?.points.first?.label == "2026-08-20")
-    }
-
-    @Test
-    func `kiro cap phrases localize of prefixes`() throws {
-        let details = try [
-            ProviderDetailSection(
-                title: "Usage",
-                rows: [
-                    .init(label: "Overage usage", value: "3603.49 credits", secondaryValue: "of 10000"),
-                    .init(label: "Overage cost", value: "$144.14", secondaryValue: "of $400.00"),
-                ]),
-        ]
-
-        let localized = CodexBarLocalizationOverride.$appLanguage.withValue("zh-Hans") {
-            UsageMenuCardView.Model.localizedProviderDetails(details, provider: .kiro)
-        }
-
-        let section = try #require(localized.first)
-        #expect(section.rows.map(\.label) == ["超额用量", "超额费用"])
-        #expect(section.rows.map(\.value) == ["3603.49 额度", "$144.14"])
-        #expect(section.rows.map(\.secondaryValue) == ["/ 10000", "/ $400.00"])
-    }
-
-    @Test
-    func `grok reset coupon count and expiry localize at presentation`() throws {
-        let now = Date(timeIntervalSince1970: 1_800_000_000)
-        let snapshot = GrokRateLimitResetCreditsSnapshot(
-            expirations: [now.addingTimeInterval(172_800), now.addingTimeInterval(432_000)],
-            updatedAt: now)
-        try CodexBarLocalizationOverride.$appLanguage.withValue("ru") {
-            let presentation = try #require(LimitResetCreditsPresentation.make(
-                snapshot: snapshot, resetStyle: .countdown, now: now))
-            #expect(presentation.accessibilityLabel.contains("Кредиты сброса лимита"))
-            #expect(presentation.text == "2 доступен")
-            #expect(presentation.items.count == 2)
-            #expect(presentation.helpText.contains("Истекает"))
         }
     }
 

@@ -13,35 +13,6 @@ struct ProcessEnvironmentTests {
     private static let sentinelKey = "CODEXBAR_TEST_SENTINEL_SECRET"
 
     @Test
-    func `fetcher descriptions and recursive mirrors hide environment contents`() {
-        for value in Self.storingValues() {
-            Self.expectRedacted(String(describing: value))
-            Self.expectRedacted(String(reflecting: value))
-            Self.expectRedacted(String(describingForTest: value))
-            var output = ""
-            dump(value, to: &output)
-            Self.expectRedacted(output)
-            Self.expectMirrorRedacted(value)
-        }
-    }
-
-    @Test
-    func `failed expectations hide captured environment contents`() {
-        for value in Self.storingValues() {
-            let captured = CapturedValue(value: value)
-            let other = CapturedValue(value: nil)
-            withKnownIssue("Deliberate failure exercises Swift Testing operand expansion") {
-                #expect(captured == other)
-            } matching: { issue in
-                // Issue descriptions omit expanded operands; inspect the recorded values too.
-                var rendered = ""
-                dump(issue, to: &rendered)
-                return !rendered.contains(Self.sentinel) && !rendered.contains(Self.sentinelKey)
-            }
-        }
-    }
-
-    @Test
     func `wrapper preserves dictionary access and reports only the current count`() {
         var environment = ProcessEnvironment(wrappedValue: [Self.sentinelKey: Self.sentinel])
         #expect(environment.wrappedValue[Self.sentinelKey] == Self.sentinel)
@@ -55,52 +26,6 @@ struct ProcessEnvironmentTests {
         #expect(children.first?.label == "entryCount")
         #expect(children.first?.value as? Int == 2)
         Self.expectMirrorRedacted(environment)
-    }
-
-    private static func storingValues() -> [Any] {
-        let environment = [Self.sentinelKey: Self.sentinel, "ORDINARY_NAME": Self.sentinel]
-        let fetcher = UsageFetcher(environment: environment)
-        let browserDetection = BrowserDetection(homeDirectory: "/synthetic-home")
-        let claudeFetcher = ClaudeUsageFetcher(browserDetection: browserDetection, environment: environment)
-        let context = ProviderFetchContext(
-            runtime: .cli,
-            sourceMode: .auto,
-            includeCredits: false,
-            webTimeout: 1,
-            webDebugDumpHTML: false,
-            verbose: false,
-            env: environment,
-            settings: nil,
-            fetcher: fetcher,
-            claudeFetcher: claudeFetcher,
-            browserDetection: browserDetection)
-        return [
-            fetcher, claudeFetcher, context,
-            CodexStatusProbe(environment: environment),
-            ClaudeStatusProbe(environment: environment),
-            TTYCommandRunner.Options(baseEnvironment: environment),
-            CodexCLISession.CaptureOptions(
-                timeout: 1, rows: 1, cols: 1, environment: environment, extraArgs: [], workingDirectory: nil),
-            PiSessionCostScanner.Options(environment: environment),
-            PiSessionProcessContext(
-                command: "pi", workingDirectory: nil, selectorEnvironment: ["PI_PROFILE": Self.sentinel]),
-            AgentProcessRecord(
-                pid: 1, ppid: 0, startedAt: nil, command: "pi", piSelectorEnvironment: ["PI_PROFILE": Self.sentinel]),
-            DefaultCodexAccountReconciler(baseEnvironment: environment),
-            AntigravityRemoteUsageFetcher(homeDirectory: "/synthetic-home", environment: environment),
-            QwenCloudTokenPlanAPIClient.Context(
-                secToken: "",
-                secTokenSource: "fixture",
-                environment: environment,
-                apiCookieHeader: "",
-                dashboardURL: URL(string: "https://example.com")!),
-            MiniMaxUsageFetcher.WebFetchContext(
-                cookie: "",
-                authorizationToken: nil,
-                region: .global,
-                environment: environment,
-                transport: ProviderHTTPClient.shared),
-        ]
     }
 
     @Test

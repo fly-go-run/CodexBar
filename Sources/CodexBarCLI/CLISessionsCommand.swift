@@ -64,14 +64,13 @@ extension CodexBarCLI {
             [
                 session.state == .active ? "active" : "idle",
                 session.provider.rawValue,
-                session.dialect?.rawValue ?? "—",
                 session.source.rawValue,
                 session.projectName ?? "—",
                 Self.sessionAge(session, now: now),
                 session.id,
             ]
         }
-        let headers = ["STATE", "PROVIDER", "DIALECT", "SOURCE", "PROJECT", "ACTIVITY", "ID"]
+        let headers = ["STATE", "PROVIDER", "SOURCE", "PROJECT", "ACTIVITY", "ID"]
         let widths = headers.indices.map { index in
             ([headers[index]] + rows.map { $0[index] }).map(\ .count).max() ?? headers[index].count
         }
@@ -103,7 +102,7 @@ struct SessionsOptions: CommanderParsable {
     @Flag(name: .long("json"), help: "Emit legacy JSON compatible with older clients")
     var jsonShortcut: Bool = false
 
-    @Flag(name: .long("json-v2"), help: "Emit complete JSON, including Pi-family sessions")
+    @Flag(name: .long("json-v2"), help: "Emit the current JSON protocol (same rows as --json)")
     var jsonV2: Bool = false
 
     @Flag(name: .long("pretty"), help: "Pretty-print JSON output")

@@ -34,26 +34,6 @@ final class PaceVisibilityScreenshotRenderTests: XCTestCase {
         }
     }
 
-    func test_renderOpenCodeGoEstimateScreenshots() throws {
-        guard let dir = ProcessInfo.processInfo.environment["CODEXBAR_OPENCODEGO_PACE_SCREENSHOT_DIR"] else {
-            throw XCTSkip("Set CODEXBAR_OPENCODEGO_PACE_SCREENSHOT_DIR to render local quota estimate screenshots.")
-        }
-        let directory = URL(fileURLWithPath: NSString(string: dir).expandingTildeInPath, isDirectory: true)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        for (name, appearance, scheme) in [
-            ("light", NSAppearance.Name.aqua, ColorScheme.light),
-            ("dark", NSAppearance.Name.darkAqua, ColorScheme.dark),
-        ] {
-            let model = UsageMenuCardView.Model.make(OpenCodeGoPaceTestSupport.input(confidence: .estimated))
-            let view = AnyView(UsageMenuCardView(model: model, width: Self.width)
-                .padding(12)
-                .background(Color(nsColor: .windowBackgroundColor))
-                .environment(\.colorScheme, scheme))
-            let data = try XCTUnwrap(Self.pngData(for: view, appearance: appearance))
-            try data.write(to: directory.appendingPathComponent("opencodego-estimated-\(name).png"), options: .atomic)
-        }
-    }
-
     /// A Claude account running ahead of the sustainable rate, so the stripe and
     /// the forecast text both have something to render.
     private static func input(paceVisible: Bool) -> UsageMenuCardView.Model.Input {

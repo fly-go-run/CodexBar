@@ -25,11 +25,7 @@ extension SettingsStore {
             guard let self else { return }
             let environment = ProcessInfo.processInfo.environment
             let hasSources = await Task.detached(priority: .utility) {
-                let processContexts = await LocalAgentSessionScanner().piSessionProcessContexts(
-                    environment: environment)
-                return Self.hasAnyTokenCostUsageSources(
-                    env: environment,
-                    processContexts: processContexts)
+                Self.hasAnyTokenCostUsageSources(env: environment)
             }.value
             guard hasSources else { return }
             guard UserDefaults.standard.object(forKey: "tokenCostUsageEnabled") == nil else { return }
@@ -41,10 +37,9 @@ extension SettingsStore {
         env: [String: String] = ProcessInfo.processInfo.environment,
         fileManager: FileManager = .default,
         homeDirectory: URL? = nil,
-        workingDirectory: URL? = nil,
-        processContexts: [PiSessionProcessContext] = []) -> Bool
+        workingDirectory: URL? = nil) -> Bool
     {
-        // Provider-specific by design: Codex, Claude, and Pi-family stores can auto-enable token cost.
+        // Provider-specific by design: Codex and Claude stores can auto-enable token cost.
         let home = homeDirectory ?? fileManager.homeDirectoryForCurrentUser
 
         func hasAnyJsonl(in root: URL) -> Bool {
@@ -82,21 +77,6 @@ extension SettingsStore {
             return true
         }
         if let archivedCodexRoot, hasAnyJsonl(in: archivedCodexRoot) {
-            return true
-        }
-
-        var piEnvironment = env
-        if piEnvironment["HOME"]?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true {
-            piEnvironment["HOME"] = home.path
-        }
-        let piBaseDirectory = workingDirectory ?? URL(
-            fileURLWithPath: fileManager.currentDirectoryPath,
-            isDirectory: true)
-        let piRoots = PiFamilySessionRootResolver.costSessionRootURLs(
-            environment: piEnvironment,
-            baseDirectory: piBaseDirectory,
-            processContexts: processContexts)
-        if piRoots.contains(where: hasAnyJsonl(in:)) {
             return true
         }
 

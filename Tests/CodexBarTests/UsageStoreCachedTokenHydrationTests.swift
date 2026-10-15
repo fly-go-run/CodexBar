@@ -47,72 +47,6 @@ struct UsageStoreCachedTokenHydrationTests {
     }
 
     @Test
-    func `cached codex hydration does not duplicate pi rows when pi owns cost`() async throws {
-        let env = try CostUsageTestEnvironment()
-        defer { env.cleanup() }
-
-        let day = try env.makeLocalNoon(year: 2026, month: 4, day: 8)
-        try Self.writeCodexSessionFile(
-            homeRoot: env.codexHomeRoot,
-            env: env,
-            day: day,
-            filename: "cached.jsonl",
-            tokens: 42)
-        let piEntry: [String: Any] = [
-            "type": "message",
-            "timestamp": env.isoString(for: day),
-            "message": [
-                "role": "assistant",
-                "provider": "openai-codex",
-                "model": "gpt-5.4",
-                "timestamp": Int(day.timeIntervalSince1970 * 1000),
-                "usage": ["input": 7, "output": 0, "totalTokens": 7],
-            ],
-        ]
-        _ = try env.writePiSessionFile(
-            relativePath: "2026-04-08T10-00-00-000Z_pi.jsonl",
-            contents: env.jsonl([piEntry]))
-
-        let options = CostUsageScanner.Options(
-            codexSessionsRoot: env.codexSessionsRoot,
-            cacheRoot: env.cacheRoot)
-        _ = try await CostUsageFetcher.loadTokenSnapshot(
-            provider: .codex,
-            now: day,
-            historyDays: 1,
-            includePiSessions: false,
-            scannerOptions: options)
-        let piResult = try PiSessionCostScanner.loadDailyReportResultCancellable(
-            provider: .codex,
-            since: day,
-            until: day,
-            now: day,
-            options: PiSessionCostScanner.Options(
-                piSessionsRoot: env.piSessionsRoot,
-                cacheRoot: env.cacheRoot,
-                refreshMinIntervalSeconds: 0),
-            checkCancellation: nil)
-        #expect(piResult.report.data.first?.totalTokens == 7)
-
-        let settings = Self.makeCodexOnlySettings(historyDays: 1)
-        let piMetadata = try #require(ProviderRegistry.shared.metadata[.pi])
-        settings.setProviderEnabled(provider: .pi, metadata: piMetadata, enabled: true)
-        let store = UsageStore(
-            fetcher: UsageFetcher(),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            costUsageFetcher: CostUsageFetcher(scannerOptions: options),
-            settings: settings,
-            startupBehavior: .testing,
-            environmentBase: [:])
-
-        #expect(!store.shouldIncludePiSessionsInTokenSnapshot(for: .codex))
-        store.hydrateCachedTokenSnapshots(now: day)
-        try await Self.waitForCodexTokenSnapshot(in: store)
-
-        #expect(store.tokenSnapshot(for: .codex)?.sessionTokens == 42)
-    }
-
-    @Test
     func `cached codex token hydration skips managed codex homes`() async throws {
         let env = try CostUsageTestEnvironment()
         defer { env.cleanup() }
@@ -160,52 +94,6 @@ struct UsageStoreCachedTokenHydrationTests {
         }
 
         #expect(store.tokenSnapshot(for: .codex) == nil)
-    }
-
-    @Test
-    func `fresh cached hydration suppresses the redundant startup token refresh`() async throws {
-        let env = try CostUsageTestEnvironment()
-        defer { env.cleanup() }
-
-        let now = Date()
-        try Self.writeCodexSessionFile(
-            homeRoot: env.codexHomeRoot,
-            env: env,
-            day: now,
-            filename: "cached.jsonl",
-            tokens: 42)
-
-        let options = CostUsageScanner.Options(
-            codexSessionsRoot: env.codexSessionsRoot,
-            cacheRoot: env.cacheRoot)
-        _ = try await CostUsageFetcher.loadTokenSnapshot(
-            provider: .codex,
-            now: now,
-            historyDays: 1,
-            includePiSessions: false,
-            scannerOptions: options)
-
-        let settings = Self.makeCodexOnlySettings(historyDays: 1)
-        let piMetadata = try #require(ProviderRegistry.shared.metadata[.pi])
-        settings.setProviderEnabled(provider: .pi, metadata: piMetadata, enabled: true)
-        let store = UsageStore(
-            fetcher: UsageFetcher(),
-            browserDetection: BrowserDetection(cacheTTL: 0),
-            costUsageFetcher: CostUsageFetcher(scannerOptions: options),
-            settings: settings,
-            startupBehavior: .testing,
-            environmentBase: [:])
-        var tokenRefreshCount = 0
-        store._test_tokenUsageRefreshOverride = { _, _ in tokenRefreshCount += 1 }
-
-        store.hydrateCachedTokenSnapshots(now: now)
-        try await Self.waitForCodexTokenSnapshot(in: store)
-
-        await store.refreshTokenUsageNow(for: .codex, force: false)
-
-        #expect(store.tokenSnapshot(for: .codex)?.sessionTokens == 42)
-        #expect(store.tokenLastAttemptAt(for: .codex).map { abs($0.timeIntervalSince(now)) < 0.001 } == true)
-        #expect(tokenRefreshCount == 0)
     }
 
     @Test

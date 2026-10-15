@@ -348,11 +348,6 @@ extension SettingsStore {
         }
     }
 
-    var kiroMenuBarDisplayMode: KiroMenuBarDisplayMode {
-        get { KiroMenuBarDisplayMode(rawValue: self.defaultsState.kiroMenuBarDisplayModeRaw ?? "") ?? .automatic }
-        set { self.setOptionalDefault(\.kiroMenuBarDisplayModeRaw, newValue.rawValue, key: "kiroMenuBarDisplayMode") }
-    }
-
     var accountWidgetsEnabled: Bool {
         get { self.defaultsState.accountWidgetsEnabled }
         set { self.setDefault(\.accountWidgetsEnabled, newValue, key: "accountWidgetsEnabled") }
@@ -517,11 +512,6 @@ extension SettingsStore {
         self.userDefaults.set(blobs.v3, forKey: MenuBarLayoutUserDefaultsKey.overridesV3)
         self.userDefaults.set(blobs.released, forKey: MenuBarLayoutUserDefaultsKey.overridesReleased)
         self.userDefaults.set(blobs.legacy, forKey: MenuBarLayoutUserDefaultsKey.overrides)
-    }
-
-    var copilotIconSecondaryWindowIDRaw: String {
-        get { self.defaultsState.copilotIconSecondaryWindowIDRaw }
-        set { self.setDefault(\.copilotIconSecondaryWindowIDRaw, newValue, key: "copilotIconSecondaryWindowID") }
     }
 
     var costUsageEnabled: Bool {
@@ -727,25 +717,6 @@ extension SettingsStore {
         }
     }
 
-    var copilotBudgetExtrasEnabled: Bool {
-        get { self.defaultsState.copilotBudgetExtrasEnabled }
-        set {
-            self.setDefault(\.copilotBudgetExtrasEnabled, newValue, key: "copilotBudgetExtrasEnabled")
-            CodexBarLog.logger(LogCategories.settings).info(
-                "Copilot budget extras updated",
-                metadata: ["enabled": newValue ? "1" : "0"])
-            self.noteBackgroundWorkSettingsChanged()
-        }
-    }
-
-    var copilotSeatCreditEntitlementRaw: String {
-        get { self.defaultsState.copilotSeatCreditEntitlementRaw }
-        set {
-            self.setDefault(\.copilotSeatCreditEntitlementRaw, newValue, key: "copilotSeatCreditEntitlement")
-            self.noteBackgroundWorkSettingsChanged()
-        }
-    }
-
     var claudeWebExtrasEnabled: Bool {
         get { self.defaultsState.claudeWebExtrasEnabledRaw }
         set {
@@ -849,11 +820,6 @@ extension SettingsStore {
                 metadata: ["enabled": newValue ? "1" : "0"])
             self.noteBackgroundWorkSettingsChanged()
         }
-    }
-
-    var jetbrainsIDEBasePath: String {
-        get { self.defaultsState.jetbrainsIDEBasePath }
-        set { self.setDefault(\.jetbrainsIDEBasePath, newValue, key: "jetbrainsIDEBasePath") }
     }
 
     var mergeIcons: Bool {

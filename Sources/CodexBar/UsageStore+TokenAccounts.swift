@@ -31,11 +31,9 @@ extension UsageStore {
         if let snapshot = cached.snapshot {
             self.snapshots[provider.instanceID] = snapshot
             self.lastKnownResetSnapshots[provider.instanceID] = snapshot
-            self.installProviderDerivedTokenSnapshot(from: snapshot, for: provider)
         } else {
             self.snapshots.removeValue(forKey: provider.instanceID)
             self.lastKnownResetSnapshots.removeValue(forKey: provider.instanceID)
-            self.resetProviderDerivedTokenSnapshot(for: provider)
         }
         self.errors[provider.instanceID] = cached.error
         if let sourceLabel = cached.sourceLabel {
@@ -100,7 +98,6 @@ extension UsageStore {
     private func clearTokenAccountLiveSnapshot(provider: UsageProvider) {
         self.invalidateGenericWidgetUsage(for: provider)
         self.snapshots.removeValue(forKey: provider.instanceID)
-        self.resetProviderDerivedTokenSnapshot(for: provider)
         self.errors.removeValue(forKey: provider.instanceID)
         self.lastSourceLabels.removeValue(forKey: provider.instanceID)
         self.lastKnownResetSnapshots.removeValue(forKey: provider.instanceID)
@@ -583,12 +580,6 @@ extension UsageStore {
             self.accountSnapshots[provider.instanceID] = snapshots
         }
 
-        self.scheduleSupplementalUsageUpdates(
-            provider: provider,
-            results: results,
-            selectedAccountID: selectedAccount.id,
-            generation: generation)
-
         if let selectedOutcome, let resolvedSelectedAccount {
             await self.applySelectedOutcome(
                 selectedOutcome,
@@ -894,7 +885,6 @@ extension UsageStore {
             .generation
         let contextConfigRevision = self.settings.providerConfigRevision(for: provider)
         let originalAccountToken = account?.token
-        let originalManualToken = provider == .stepfun ? self.settings.stepfunToken : nil
         return ProviderFetchContext(
             runtime: .app,
             sourceMode: sourceMode,
@@ -935,31 +925,6 @@ extension UsageStore {
                         provider: provider,
                         generation: publicationGeneration)
                 }
-            },
-            providerManualTokenUpdater: { [weak self] provider, token in
-                await MainActor.run {
-                    guard let self, provider == .stepfun,
-                          self.settings.stepfunToken == originalManualToken
-                    else { return }
-                    guard
-                        self.providerConfigMutationIsCurrent(
-                            provider: provider,
-                            generation: publicationGeneration,
-                            originalConfigRevision: contextConfigRevision)
-                    else { return }
-                    self.settings.stepfunToken = token
-                    self.advanceProviderRefreshConfigRevision(
-                        provider: provider,
-                        generation: publicationGeneration)
-                }
-            },
-            settingsWriter: { [weak self] provider, values in
-                guard let self, provider == contextProvider else { return .stale }
-                return await self.persistPluginSettings(
-                    provider: provider,
-                    values: values,
-                    generation: publicationGeneration,
-                    originalConfigRevision: contextConfigRevision)
             },
             costUsageHistoryDays: self.settings.costUsageHistoryDays,
             claudeOwnerCLIRecoveryOnly: claudeOwnerCLIRecoveryOnly,
@@ -1015,8 +980,7 @@ extension UsageStore {
     }
 
     func tokenAccountErrorMessage(_ error: any Error) -> String? {
-        // Owned browser cancellation is suppressed only after checking the actual prior balance owner.
-        guard error is DeepSeekPlatformTransportError || !Self.errorIsCancellation(error) else { return nil }
+        guard !Self.errorIsCancellation(error) else { return nil }
         let message = error.localizedDescription.trimmingCharacters(in: .whitespacesAndNewlines)
         return message.isEmpty ? nil : message
     }
@@ -1216,8 +1180,7 @@ extension UsageStore {
         switch outcome.result {
         case let .success(result):
             let scoped = result.usage.scoped(to: provider)
-            let current = self.resolvingCurrentCopilotAllowance(in: scoped, provider: provider, account: account)
-            let labeled = current.withAccountLabel(account.label, for: provider)
+            let labeled = scoped.withAccountLabel(account.label, for: provider)
             let snapshot = TokenAccountUsageSnapshot(
                 account: account,
                 snapshot: labeled,
@@ -1256,7 +1219,7 @@ extension UsageStore {
               let current = self.uniqueTokenAccount(provider: provider, accountID: account.id),
               snapshot.cacheKey == self.tokenAccountSnapshotCacheKey(provider: provider, account: current)
         else { return nil }
-        return self.resolvingCurrentCopilotAllowance(in: snapshot, provider: provider, account: current)
+        return snapshot
     }
 
     private static func preservesClaudeOAuthSnapshot(
@@ -1283,7 +1246,6 @@ extension UsageStore {
             self.snapshots[provider.instanceID] = snapshot
             self.lastKnownResetSnapshots[provider.instanceID] = snapshot
             self.lastSourceLabels[provider.instanceID] = sourceLabel
-            self.installProviderDerivedTokenSnapshot(from: snapshot, for: provider)
         }
         let shouldSurface = self.failureGates[provider.instanceID]?
             .shouldSurfaceError(onFailureWithPriorData: hadPriorData) ?? true
@@ -1291,7 +1253,6 @@ extension UsageStore {
         if shouldSurface, snapshot == nil {
             self.invalidateGenericWidgetUsage(for: provider)
             self.snapshots.removeValue(forKey: provider.instanceID)
-            self.clearProviderDerivedTokenSnapshot(for: provider)
         }
     }
 
@@ -1481,19 +1442,13 @@ extension UsageStore {
         switch outcome.result {
         case let .success(result):
             let scoped = result.usage.scoped(to: provider)
-            let current = self.resolvingCurrentCopilotAllowance(in: scoped, provider: provider, account: account)
             let labeled: UsageSnapshot =
                 if let account {
-                    current.withAccountLabel(account.label, for: provider)
+                    scoped.withAccountLabel(account.label, for: provider)
                 } else {
-                    current
+                    scoped
                 }
-            let profileStable =
-                provider == .deepseek
-                    ? labeled.preservingDeepSeekPlatformProfiles(
-                        from: self.presentationSnapshot(for: .deepseek))
-                    : labeled
-            let backfilled = profileStable.backfillingResetTimes(
+            let backfilled = labeled.backfillingResetTimes(
                 from: self.lastKnownResetSnapshots[provider.instanceID])
             let warningAccountDiscriminator = Self.warningTokenAccountDiscriminator(account)
             self.handleQuotaWarningTransitions(
@@ -1509,19 +1464,10 @@ extension UsageStore {
             self.lastKnownResetSnapshots[provider.instanceID] = backfilled
             self.snapshots[provider.instanceID] = backfilled
             self.widgetUsagePreservationBlockedProviders.remove(provider.instanceID)
-            if provider == .deepseek {
-                self.clearDeepSeekProfileTransition()
-            }
-            self.publishProviderDerivedTokenSnapshot(from: backfilled, for: provider)
             self.lastSourceLabels[provider.instanceID] = result.sourceLabel
             self.errors[provider.instanceID] = nil
             self.knownLimitsAvailabilityByProvider.removeValue(forKey: provider.instanceID)
             self.failureGates[provider.instanceID]?.recordSuccess()
-            self.scheduleSupplementalUsageUpdate(
-                provider: provider,
-                result: result,
-                generation: generation,
-                accountID: account?.id)
             await self.recordPlanUtilizationHistorySample(
                 provider: provider,
                 snapshot: backfilled,
@@ -1535,18 +1481,6 @@ extension UsageStore {
         case let .failure(error):
             let prior = account.flatMap {
                 self.matchingTokenAccountSnapshot(fallbackAccountSnapshot, provider: provider, account: $0)
-            }
-            if error is DeepSeekPlatformTransportError,
-               Self.shouldSuppressProviderCancellation(error, priorSnapshot: prior?.snapshot),
-               let prior, let snapshot = prior.snapshot
-            {
-                self.snapshots[provider.instanceID] = snapshot
-                self.lastKnownResetSnapshots[provider.instanceID] = snapshot
-                self.lastSourceLabels[provider.instanceID] = prior.sourceLabel
-                self.installProviderDerivedTokenSnapshot(from: snapshot, for: provider)
-                self.errors[provider.instanceID] = nil
-                self.markDeepSeekProfileTransitionUnavailable()
-                return
             }
             if Self.preservesClaudeOAuthSnapshot(error, provider: provider, snapshot: prior),
                let prior, let fallback = prior.snapshot
@@ -1564,9 +1498,6 @@ extension UsageStore {
                 return
             }
             self.knownLimitsAvailabilityByProvider.removeValue(forKey: provider.instanceID)
-            if provider == .deepseek {
-                self.markDeepSeekProfileTransitionUnavailable()
-            }
             let retained = Self.shouldPreservePriorSnapshot(
                 after: error,
                 hadPriorData: prior != nil,

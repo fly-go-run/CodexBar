@@ -39,47 +39,6 @@ struct DarwinProcessEnumeratorTests {
     }
 
     @Test
-    func `proc args selector environment accepts normal terminators and padding`() {
-        var data = Self.procArgsData(
-            arguments: ["/usr/local/bin/omp", "", "--profile", "work"],
-            environment: ["HOME=/synthetic/home", "OMP_PROFILE=work", "UNRELATED=value"])
-        data.append(contentsOf: [0, 0, 0])
-
-        #expect(DarwinProcessEnumerator.parseProcArgs2Arguments(data) == [
-            "/usr/local/bin/omp", "", "--profile", "work",
-        ])
-        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(data) == [
-            "HOME": "/synthetic/home", "OMP_PROFILE": "work",
-        ])
-        #expect(DarwinProcessEnumerator.parseProcArgs2Arguments(data)?.contains("HOME=/synthetic/home") == false)
-    }
-
-    @Test
-    func `proc args selector environment distinguishes omitted empty and truncated evidence`() {
-        let empty = Self.procArgsData(arguments: ["pi"])
-        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(empty) == nil)
-        var paddedEmpty = empty
-        paddedEmpty.append(contentsOf: [0, 0])
-        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(paddedEmpty) == nil)
-        let knownEmpty = Self.procArgsData(arguments: ["pi"], environment: ["UNRELATED=value"])
-        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(knownEmpty) == [:])
-        var truncated = Self.procArgsData(arguments: ["pi"], environment: ["HOME=/synthetic/home"])
-        truncated.removeLast()
-        #expect(DarwinProcessEnumerator.parseProcArgs2Arguments(truncated) == ["pi"])
-        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(truncated) == nil)
-    }
-
-    @Test
-    func `proc args selector environment stops before Apple vectors`() {
-        var data = Self.procArgsData(arguments: ["pi"], environment: ["HOME=/synthetic/process"])
-        data.append(0)
-        data.append(contentsOf: "HOME=/synthetic/apple-vector\0ptr_munge=ignored\0".utf8)
-        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(data) == [
-            "HOME": "/synthetic/process",
-        ])
-    }
-
-    @Test
     func `proc args parser preserves embedded empty arguments`() {
         let data = Self.procArgsData(arguments: ["/usr/bin/tool", "", "value"])
 
@@ -92,57 +51,6 @@ struct DarwinProcessEnumeratorTests {
         data.replaceSubrange(0..<4, with: Self.littleEndianBytes(3))
 
         #expect(DarwinProcessEnumerator.parseProcArgs2Arguments(data) == nil)
-    }
-
-    @Test
-    func `antigravity candidate paths cover known executable shapes`() {
-        let paths = [
-            "/Applications/Antigravity.app/Contents/Resources/bin/language_server_macos_arm",
-            "/opt/editor/extensions/antigravity/bin/language_server",
-            "/usr/local/bin/agy",
-            "~/.antigravity/x/antigravity-cli",
-            "language_server",
-        ]
-
-        for path in paths {
-            #expect(DarwinProcessEnumerator.isAntigravityCandidatePath(path))
-        }
-    }
-
-    @Test
-    func `antigravity candidate paths reject unrelated executables`() {
-        let paths = [
-            "/bin/ps",
-            "/Applications/Xcode.app/Contents/MacOS/Xcode",
-            "/opt/gravity/bin/tool",
-        ]
-
-        for path in paths {
-            #expect(!DarwinProcessEnumerator.isAntigravityCandidatePath(path))
-        }
-    }
-
-    @Test
-    func `antigravity candidate prefilter is a superset of classifier fixtures`() {
-        let fixtures = [
-            (
-                "/Applications/Antigravity.app/Contents/Resources/bin/language_server --csrf_token token",
-                "/Applications/Antigravity.app/Contents/Resources/bin/language_server"),
-            (
-                "/Applications/Google Antigravity.app/Contents/Resources/bin/language-server --csrf_token token",
-                "/Applications/Google Antigravity.app/Contents/Resources/bin/language-server"),
-            (
-                "/Users/test/.local/bin/agy -p hello",
-                "/Users/test/.local/bin/agy"),
-            (
-                "node /Users/test/.gemini/antigravity-cli/build/mcp-server.cjs --app_data_dir antigravity",
-                "node"),
-        ]
-
-        for fixture in fixtures {
-            #expect(AntigravityStatusProbe.antigravityProcessKind(fixture.0) != nil)
-            #expect(DarwinProcessEnumerator.isAntigravityCandidatePath(fixture.1))
-        }
     }
 
     #if canImport(Darwin)
@@ -187,21 +95,6 @@ struct DarwinProcessEnumeratorTests {
         defer { close(listener.fileDescriptor) }
 
         #expect(DarwinProcessEnumerator.listeningTCPPorts(pid: getpid()).contains(listener.port))
-    }
-
-    @Test
-    func `darwin process record keeps agent argv when the executable was deleted`() throws {
-        // proc_pidpath returns ENOENT after an updater removes the package directory of a running binary.
-        let record = try #require(LocalAgentSessionScanner.darwinProcessRecord(
-            pid: 4242,
-            bsdInfo: { _ in (ppid: 1, startTime: Date(timeIntervalSince1970: 1_700_000_000)) },
-            processArguments: { _ in (arguments: ["claude"], piSelectorEnvironment: nil) },
-            executablePath: { _ in nil }))
-
-        #expect(record.command == "claude")
-        #expect(record.arguments == ["claude"])
-        #expect(AgentPSOutputParser.provider(for: record) == .claude)
-        #expect(AgentPSOutputParser.agentProcesses(from: [record]).map(\.pid) == [4242])
     }
 
     @Test

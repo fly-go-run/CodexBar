@@ -137,24 +137,11 @@ All provider fields are optional unless noted.
 - `source`: preferred source mode.
   - `auto|web|cli|oauth|api`
   - `auto` uses [provider-specific fallback order](providers.md#fetch-strategies-current).
-  - `api` uses the provider's API-backed mode; only some providers consume the `apiKey` field.
-- `apiKey`: raw API token for providers that support config-backed direct API usage.
-- `enterpriseHost`: provider-specific API host/base URL override. Used by Azure OpenAI, Copilot, LLM Proxy, LiteLLM,
-  ClawRouter, sub2api, and Wayfinder.
+  - `api` uses the provider's API-backed mode; only Claude consumes the `apiKey` field.
+- `apiKey`: raw API token for providers that support config-backed direct API usage (the Claude Admin API key).
 - `cookieSource`: cookie selection policy.
   - `auto` (browser import), `manual` (use `cookieHeader`), `off` (disable cookies)
 - `cookieHeader`: raw cookie header value (e.g. `key=value; other=...`).
-- `region`: provider-specific region (e.g. `zai`, `minimax`). Kimi accepts `china` (default, `kimi.com`) or `international` (`kimi.ai`); see [Kimi setup](kimi.md). This selects API, web, cookie discovery, and dashboard hosts. Automatic CLI credential reuse is limited to China because the credential file has no issuing-host metadata.
-- `workspaceID`: provider-specific workspace/deployment/project ID (e.g. Azure OpenAI deployment, OpenAI API project,
-  `opencode`, Notion space).
-- `modelRateLimits`: optional per-model organization rate limits for the provider-level key (`apiKey` or environment
-  key), currently used by OpenAI Live Usage. Token accounts never inherit these limits.
-  Each row has `model`, positive integer `tokensPerMinute`, and optional positive integer `requestsPerMinute`.
-  Model IDs are trimmed; empty IDs and non-positive TPM rows are dropped, non-positive RPM becomes absent,
-  and the last valid row for a duplicate ID wins. Empty arrays are omitted when encoding. Only these manual limits drive
-  organization utilization; API project caps are separate context. Exact IDs match first, then the longest model
-  ID followed by a hyphen (covering dated snapshots).
-  Example: `"modelRateLimits": [{"model": "gpt-5", "tokensPerMinute": 40000000, "requestsPerMinute": 15000}]`.
 - `tokenAccounts`: multi-account tokens for providers in `TokenAccountSupportCatalog`.
 - `claudeSwapEnabled`: allow the Claude provider to read account usage from claude-swap.
 - `claudeSwapExecutablePath`: path to the `cswap` executable.
@@ -197,29 +184,18 @@ codexbar config validate
 ```
 
 Replace the placeholder with your own cookie before fetching usage with `codexbar usage --provider claude`.
-For another provider, use its registered [ID](provider-ids.md) and the cookie format in its [setup guide](providers.md).
+Provider IDs are listed in [provider-ids.md](provider-ids.md); data sources are described in [providers](providers.md).
 
 ## CLI configuration
 
 ```bash
 codexbar config providers
-codexbar config enable --provider grok
-codexbar config disable --provider cursor
-printf '%s' "$ELEVENLABS_API_KEY" | codexbar config set-api-key --provider elevenlabs --stdin
+codexbar config enable --provider claude
+codexbar config disable --provider codex
+printf '%s' "$ANTHROPIC_ADMIN_KEY" | codexbar config set-api-key --provider claude --stdin
 ```
 
-Use the same `set-api-key --provider <id> --stdin` command with these provider/key pairs:
-
-| Provider ID | Key environment variable | Additional configuration |
-| --- | --- | --- |
-| `openai` | `OPENAI_ADMIN_KEY` | `workspaceID` maps to `OPENAI_PROJECT_ID` for Admin API usage; applies to the configured key, not selected token accounts. |
-| `groq` | `GROQ_API_KEY` | See [Groq](groq.md). |
-| `llmproxy` | `LLM_PROXY_API_KEY` | Required base URL: `enterpriseHost` or `LLM_PROXY_BASE_URL`. |
-| `litellm` | `LITELLM_API_KEY` | Required base URL: `enterpriseHost` or `LITELLM_BASE_URL`. |
-| `clawrouter` | `CLAWROUTER_API_KEY` | Defaults to the hosted service; override with `enterpriseHost` or `CLAWROUTER_BASE_URL`. |
-| `sub2api` | `SUB2API_API_KEY` | Required self-hosted base URL: `enterpriseHost` or `SUB2API_BASE_URL`. Use labeled token accounts for multiple group keys. |
-| `aiand` | `AIAND_API_KEY` | See [ai&](aiand.md). |
-| `xai` | `XAI_MANAGEMENT_API_KEY` | See [xAI](xai.md). |
+`set-api-key` currently applies to the `claude` provider (`ANTHROPIC_ADMIN_KEY`).
 
 See [CLI configuration](cli-configuration.md) for scripting examples and output formats.
 
@@ -242,31 +218,6 @@ and never paste real cookie values or readable DevTools screenshots into public 
   ]
 }
 ```
-
-Each OpenAI token account can store `tokenAccounts.accounts[].modelRateLimits`: omitted means not set; `[]` means
-explicitly no limits (kept so clears sync and older CodexBar versions cannot erase limits during sync). Rows use
-the same validation as provider-level `modelRateLimits`. Limits belong only to that account; there is no
-inheritance. Settings edits the selected account's limits, and switching accounts switches the list.
-
-```json
-{
-  "id": "openai",
-  "modelRateLimits": [{"model": "gpt-5", "tokensPerMinute": 40000000}],
-  "tokenAccounts": {
-    "version": 1,
-    "activeIndex": 0,
-    "accounts": [{
-      "id": "00000000-0000-0000-0000-000000000001",
-      "label": "Other organization",
-      "token": "<OPENAI_ADMIN_KEY>",
-      "addedAt": 1735123456,
-      "modelRateLimits": [{"model": "gpt-5", "tokensPerMinute": 80000000}]
-    }]
-  }
-}
-```
-
-z.ai team accounts also use `usageScope`, `organizationId`, and `workspaceID`; see [z.ai](zai.md).
 
 ## Provider IDs
 
@@ -295,7 +246,7 @@ Never synced, by design: `hooks` (sync payloads structurally cannot create or mo
 ## Notes
 - Fields not relevant to a provider are ignored.
 - Omitted providers are appended with defaults during normalization.
-- Unknown or retired provider entries are retained with all their fields, settings, and secrets in their original array positions during unrelated saves. This also applies when plugin discovery fails or the plugin runtime is unavailable. `config providers` labels unavailable entries as `plugin (not loaded)`; `config dump` includes them but redacts their opaque fields unless `--show-secrets` is explicitly requested. Remove plugin data through explicit plugin deletion, or remove the entry by editing the file.
+- Unknown or retired provider entries are retained with all their fields, settings, and secrets in their original array positions during unrelated saves. This keeps configuration written by a build that supported more providers intact. `config providers` labels unavailable entries as `unavailable provider`; `config dump` includes them but redacts their opaque fields unless `--show-secrets` is explicitly requested. Remove the entry by editing the file.
 - Keep the file private; it contains secrets.
 - Validate the file with `codexbar config validate` (JSON output available with `--format json`).
 

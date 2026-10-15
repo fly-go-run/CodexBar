@@ -1,24 +1,6 @@
 import Foundation
 
 enum DarwinProcessEnumerator {
-    /// Keep this predicate a superset of every executable path that
-    /// `AntigravityStatusProbe.antigravityProcessKind` can classify. The Darwin
-    /// process scan uses it before requesting the more privacy-sensitive argv.
-    static func isAntigravityCandidatePath(_ executablePath: String) -> Bool {
-        let lowercasedPath = executablePath.lowercased()
-        if lowercasedPath.contains("antigravity") {
-            return true
-        }
-
-        var basename = URL(fileURLWithPath: lowercasedPath).lastPathComponent
-        if basename.hasSuffix(".exe") {
-            basename.removeLast(4)
-        }
-        return basename.hasPrefix("language_server") ||
-            basename.hasPrefix("language-server") ||
-            ["agy", "antigravity-cli", "antigravity_cli", "node", "bun"].contains(basename)
-    }
-
     /// Returns the original argv from a `KERN_PROCARGS2` payload. Keeping the
     /// boundaries matters for flags whose values contain whitespace.
     static func parseProcArgs2Arguments(_ data: Data) -> [String]? {
@@ -27,7 +9,7 @@ enum DarwinProcessEnumerator {
 
     static func parseProcArgs2Environment(
         _ data: Data,
-        names: Set<String> = PiProcessEnvironment.selectorNames) -> [String: String]?
+        names: Set<String>) -> [String: String]?
     {
         guard let layout = self.parseProcArgs2Layout(data) else { return nil }
         let suffix = Data(data[layout.environmentOffset...])
@@ -40,11 +22,11 @@ enum DarwinProcessEnumerator {
             guard let terminator = suffix[offset...].firstIndex(of: 0) else { return nil }
             if terminator == offset {
                 // The empty environment terminator may be followed by unrelated Apple vectors.
-                return PiProcessEnvironment.parseNULSeparated(Data(suffix[start..<offset]), names: names)
+                return ProcessEnvironmentReader.parseNULSeparated(Data(suffix[start..<offset]), names: names)
             }
             offset = terminator + 1
         }
-        return PiProcessEnvironment.parseNULSeparated(Data(suffix[start...]), names: names)
+        return ProcessEnvironmentReader.parseNULSeparated(Data(suffix[start...]), names: names)
     }
 
     private static func parseProcArgs2Layout(_ data: Data) -> (arguments: [String], environmentOffset: Int)? {
@@ -125,18 +107,6 @@ extension DarwinProcessEnumerator {
         self.procArgs2Data(pid: pid).flatMap(self.parseProcArgs2Arguments)
     }
 
-    static func argumentsWithPiSelectorEnvironment(pid: Int32) -> (
-        arguments: [String], piSelectorEnvironment: [String: String]?)?
-    {
-        guard let data = self.procArgs2Data(pid: pid),
-              let layout = self.parseProcArgs2Layout(data)
-        else { return nil }
-        let environment = AgentPSOutputParser.piDialect(arguments: layout.arguments) == nil
-            ? nil
-            : self.parseProcArgs2Environment(data)
-        return (layout.arguments, environment)
-    }
-
     static func environment(pid: Int32, names: Set<String>) -> [String: String]? {
         self.procArgs2Data(pid: pid).flatMap { self.parseProcArgs2Environment($0, names: names) }
     }
@@ -146,7 +116,7 @@ extension DarwinProcessEnumerator {
         var byteCount = 0
         guard sysctl(&mib, u_int(mib.count), nil, &byteCount, nil, 0) == 0,
               byteCount >= MemoryLayout<Int32>.size,
-              byteCount <= PiProcessEnvironment.maxEnvironmentBytes
+              byteCount <= ProcessEnvironmentReader.maxEnvironmentBytes
         else { return nil }
 
         var data = Data(count: byteCount)

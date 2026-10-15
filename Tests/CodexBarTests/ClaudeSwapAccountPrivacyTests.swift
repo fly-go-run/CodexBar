@@ -63,30 +63,6 @@ struct ClaudeSwapAccountPrivacyTests {
         #expect(!hiddenRow.accessibilityText.contains(label))
     }
 
-    @Test
-    func `other account sources retain whole value privacy redaction`() throws {
-        for (provider, source) in [
-            (UsageProvider.codex, "codex-account"), (.claude, "token-account"), (.cursor, "token-account"),
-        ] {
-            let accounts = (1...4).map { slot in
-                self.account(
-                    slot: String(slot),
-                    label: "Private Person \(slot)",
-                    provider: provider,
-                    source: source,
-                    active: slot == 1)
-            }
-            for account in accounts {
-                #expect(ClaudeSwapAccountMenuDisplay.privacyOrdinal(for: account) == nil)
-                #expect(try self.card(for: account, hidePersonalInfo: true).email.isEmpty)
-                #expect(try self.card(for: account, hidePersonalInfo: false).email == account.displayLabel)
-            }
-            let models = try self.compactModels(for: accounts, hidePersonalInfo: true)
-            #expect(models.count == 3)
-            #expect(models.allSatisfy { $0.label.isEmpty && !$0.accessibilityText.contains("Private Person") })
-        }
-    }
-
     @Test(arguments: ["0", "-1", "owner@corp", "7 · Private Org", "92233720368547758070"])
     func `invalid source slots never become privacy labels`(slot: String) throws {
         let account = self.account(slot: slot, label: "Private alias")

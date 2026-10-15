@@ -18,22 +18,6 @@ extension CodexBarCLI {
         """
     }
 
-    static func pluginsHelp(version: String) -> String {
-        """
-        CodexBar \(version)
-
-        Usage:
-          codexbar plugins list
-          codexbar plugins fetch <id> [--json] [--pretty]
-
-        Description:
-          Discover local .js and .ts provider plugins. Fetch requires a recorded approval binding.
-          An interactive terminal can create the approval after showing exact origins, capabilities,
-          secret names, and cookie domains. Headless use fails closed. Browser-cookie plugins are
-          app-only and fail closed in the CLI.
-        """
-    }
-
     static func cardsHelp(version: String) -> String {
         """
         CodexBar \(version)
@@ -134,19 +118,16 @@ extension CodexBarCLI {
                        [--json-only]
                        [--json-output] [--log-level <trace|verbose|debug|info|warning|error|critical>] [-v|--verbose]
                        [--provider \(ProviderHelp.list)]
-                       [--no-color] [--pretty] [--refresh] [--breakdown] [--provider-native-only]
+                       [--no-color] [--pretty] [--refresh] [--breakdown]
                        [--period month-to-date|all] [--days <days>] [--group-by project|session]
                        [--remote <ssh-host> | --summary-only]
                        [--identified-only [--identified-end <unix-ms>]]
 
         Description:
-          Print local token cost usage from Claude/Codex native logs plus supported pi and OMP sessions.
-          Antigravity token history is read locally, with API-price estimates for known models; Muse Code remains
-          token-only.
-          Local readers need no web or provider CLI access; Cursor uses its authenticated dashboard API.
+          Print local token cost usage from Claude/Codex native logs.
+          Local readers need no web or provider CLI access.
           Use --refresh to bypass cached scan results.
           Use --breakdown with Claude text output to show daily and model details.
-          Experimental: use --provider-native-only to exclude pi and OMP session mirrors.
           Use --provider codex --remote <host> for separate local and SSH-host summaries.
           --summary-only emits versioned Codex JSON totals without account or session details.
           --identified-only requires --provider codex and JSON. It exports strong native request identities
@@ -176,9 +157,9 @@ extension CodexBarCLI {
           codexbar sessions focus <id>
 
         Description:
-          List live local Codex, Claude Code, pi, and OMP agent sessions.
+          List live local Codex and Claude Code agent sessions.
           --json emits the legacy v1 array with only Codex and Claude providers.
-          --json-v2 emits the complete current array, including Pi-family sessions.
+          --json-v2 emits the current protocol array (kept so mixed-version hosts keep decoding).
           JSON uses stable AgentSession field names and ISO-8601 dates.
           Focus activates the owning terminal or desktop app on macOS.
 
@@ -312,8 +293,6 @@ extension CodexBarCLI {
           codexbar config set-source --provider <name> --source auto|web|cli|oauth|api
                                    [--format text|json] [--json] [--json-only] [--pretty]
           codexbar config set-api-key --provider <name> (--api-key <key>|--stdin)
-                                    [--label <label>] [--usage-scope team]
-                                    [--organization-id <org>] [--workspace-id <project>]
                                     [--no-enable]
                                     [--format text|json] [--json] [--json-only] [--pretty]
 
@@ -327,19 +306,16 @@ extension CodexBarCLI {
           enable/disable updates the same provider toggle used by Settings.
           set-source stores a supported data source without changing provider enablement; auto clears the override.
           set-api-key stores a provider API key in the resolved config file and enables that provider by default.
-          For z.ai team usage, add --usage-scope team with BigModel organization and project IDs; this stores
-          the key as a token account instead of a provider-level personal key.
+          Only Claude consumes a config API key (the Admin API key).
 
         Examples:
           codexbar config validate --format json --pretty
           codexbar config dump --pretty
           codexbar config providers
-          codexbar config enable --provider grok
-          codexbar config disable --provider cursor
+          codexbar config enable --provider claude
+          codexbar config disable --provider codex
           codexbar config set-source --provider claude --source cli
-          printf '%s' "$ELEVENLABS_API_KEY" | codexbar config set-api-key --provider elevenlabs --stdin
-          printf '%s' "$Z_AI_API_KEY" | codexbar config set-api-key --provider zai --stdin \\
-            --label Team --usage-scope team --organization-id org_... --workspace-id proj_...
+          printf '%s' "$ANTHROPIC_ADMIN_KEY" | codexbar config set-api-key --provider claude --stdin
         """
     }
 
@@ -424,8 +400,8 @@ extension CodexBarCLI {
           account IDs, org IDs, raw responses, and billing-history records.
 
         Examples:
-          codexbar diagnose --provider minimax --format json --redact --output diagnostic.json
-          codexbar diagnose --provider minimax --format json --pretty
+          codexbar diagnose --provider codex --format json --redact --output diagnostic.json
+          codexbar diagnose --provider codex --format json --pretty
           codexbar diagnose --provider claude --format json --pretty
           codexbar diagnose --provider all --format json
         """
@@ -451,9 +427,9 @@ extension CodexBarCLI {
           explicit interactive retry flag is supplied. Cookie values are never shown.
 
         Examples:
-          codexbar cookie refresh --provider opencodego --allow-keychain-prompt
+          codexbar cookie refresh --provider claude --allow-keychain-prompt
           codexbar cookie refresh --all --allow-keychain-prompt
-          codexbar cookie refresh --provider opencodego --allow-keychain-prompt --format json --pretty
+          codexbar cookie refresh --provider claude --allow-keychain-prompt --format json --pretty
         """
     }
 
@@ -513,7 +489,6 @@ extension CodexBarCLI {
                        [--json-only]
                        [--json-output] [--log-level <trace|verbose|debug|info|warning|error|critical>] [-v|--verbose]
                        [--provider \(ProviderHelp.list)] [--no-color] [--pretty] [--refresh] [--breakdown]
-                       [--provider-native-only]
                        [--period month-to-date|all] [--days <days>] [--group-by project|session]
           codexbar sessions [--json|--json-v2] [--pretty]
           codexbar sessions focus <id>
@@ -533,11 +508,8 @@ extension CodexBarCLI {
           codexbar config disable --provider <name>
           codexbar config set-source --provider <name> --source auto|web|cli|oauth|api
           codexbar config set-api-key --provider <name> (--api-key <key>|--stdin)
-          codexbar config set-api-key --provider zai --stdin --usage-scope team
-                                   --organization-id <org> --workspace-id <project>
           codexbar hooks <list|enable|disable> [--format text|json] [--pretty]
           codexbar hooks test <event> --provider <name>
-          codexbar plugins <list|fetch <id>> [--json] [--pretty]
           codexbar cache clear <--cookies|--cost|--all> [--provider <name>]
           codexbar cookie refresh <--provider <name>|--all> [--allow-keychain-prompt]
           codexbar diagnose --provider <name|all> --format json [--redact] [--output <path>] [--pretty]
@@ -564,14 +536,12 @@ extension CodexBarCLI {
           codexbar dashboard --pretty
           codexbar serve --port 8080
           codexbar config validate --format json --pretty
-          codexbar config enable --provider grok
-          codexbar config set-api-key --provider elevenlabs --stdin
+          codexbar config enable --provider claude
           codexbar hooks test quota_reached --provider codex
-          codexbar plugins list
           codexbar cache clear --cookies
-          codexbar cookie refresh --provider opencodego --allow-keychain-prompt
-          codexbar diagnose --provider minimax --format json --redact --output diagnostic.json
-          codexbar diagnose --provider minimax --format json --pretty
+          codexbar cookie refresh --provider claude --allow-keychain-prompt
+          codexbar diagnose --provider codex --format json --redact --output diagnostic.json
+          codexbar diagnose --provider codex --format json --pretty
           codexbar diagnose --provider all --format json
           codexbar guard --provider claude --min-remaining 20
         """

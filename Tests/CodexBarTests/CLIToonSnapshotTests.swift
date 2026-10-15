@@ -101,7 +101,6 @@ struct CLIToonSnapshotTests {
                 status: nil,
                 usage: snapshot,
                 credits: nil,
-                antigravityPlanInfo: nil,
                 openaiDashboard: nil,
                 error: nil),
         ]

@@ -95,7 +95,6 @@ struct CostUsageCodexRequestLedgerTests {
                 forceRefresh: true,
                 historyDays: 30,
                 allowPricingRefresh: false,
-                includePiSessions: false,
                 scannerOptions: options)
         }
         let initial = try await fetch(sameWindow ? end : start)

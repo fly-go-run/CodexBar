@@ -15,21 +15,6 @@ struct CodexBarConfigStoreEmptyTests {
         #expect(try fixture.contents() == contents.map { Data($0.utf8) })
     }
 
-    @Test(arguments: [nil, "", " \t\r\n "] as [String?])
-    func `default creation and subsequent settings save produce private valid JSON`(_ contents: String?) throws {
-        let fixture = try Fixture(contents)
-        defer { fixture.remove() }
-
-        var config = try fixture.store.loadOrCreateDefault()
-        #expect(try config.encodedData() == CodexBarConfig.makeDefault().encodedData())
-        config.setProviderConfig(ProviderConfig(id: .grok, enabled: true))
-        try fixture.store.save(config)
-        #expect(try fixture.store.load()?.providerConfig(for: .grok)?.enabled == true)
-        let data = try #require(try fixture.contents())
-        #expect(try CodexBarConfig.decode(from: data).encodedData() == config.encodedData())
-        let attributes = try FileManager.default.attributesOfItem(atPath: fixture.store.fileURL.path)
-        #expect((attributes[.posixPermissions] as? NSNumber)?.intValue == 0o600)
-    }
 
     @Test(arguments: ["{", " \n{\"providers\":", "null", "garbage", "\u{0000}"])
     func `nonempty malformed configs still fail closed and retain their bytes`(_ contents: String) throws {

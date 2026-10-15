@@ -95,12 +95,7 @@ JSON compatibility does not prove installed WidgetKit upgrade/rollback behavior.
 
 ## Provider picker support
 The configurable provider widgets currently expose:
-Codex, Claude, Gemini, Alibaba, Alibaba Token Plan, Qwen Cloud, Antigravity, Cursor, z.ai / GLM,
-Copilot, Devin, MiniMax, Kilo, OpenCode, OpenCode Go, Mistral, Kimi Code, DeepSeek, OpenRouter, and Pi.
-
-DeepSeek shows its credit balance without a quota bar because it reports no quota denominator.
-OpenRouter shows its remaining credits alongside a configured API-key limit, or as the headline when
-the key is uncapped. The Metric widget's **Credits left** choice shows the same balance for both providers.
+Codex and Claude.
 
 Providers without a `ProviderChoice` case can still be present in the app snapshot, but they are not selectable from the widget configuration UI yet.
 
@@ -108,22 +103,19 @@ Burn-down provider choices are filtered from the enabled providers in the latest
 qualifies when it has a finite usage percentage, a positive `windowMinutes`, a reset date, and is not a
 synthetic placeholder. The compile-time AppIntent catalog covers all built-in providers; providers that
 only report balances, unknown durations, or unknown resets do not appear. Refresh CodexBar before
-configuring a newly enabled provider. Custom plugin instance IDs are not part of the AppEnum catalog.
+configuring a newly enabled provider.
 
-For **Burn Down**, select **Provider**, then **Usage window**. The choices use the snapshot's quota names:
-Devin offers **Daily** and **Weekly**; Cursor offers **Total**, **Cursor**, and **Third Party** when those
-billing-cycle quotas are present. Each chart uses that quota's actual duration and reset, including
-Cursor's billing cycle. The choice stays pinned to its quota slot: missing data shows the empty state,
-never another quota. Provider titles in the snapshot take precedence over descriptor defaults.
+For **Burn Down**, select **Provider**, then **Usage window**. The choices use the snapshot's quota names. Each chart
+uses that quota's actual duration and reset. The choice stays pinned to its quota slot: missing data shows the empty
+state, never another quota. Provider titles in the snapshot take precedence over descriptor defaults.
 
-**Burn Down (Combined)** shows the first two quota lanes with their own names and durations, such as
-Devin's **Daily & Weekly** or Cursor's **Total & Cursor**. A missing lane shows **No data** under its own
-name. The single widget also offers the third quota when available. Combined requires a compatible first or
-second quota; a provider with only a compatible third quota appears in the single widget picker.
+**Burn Down (Combined)** shows the first two quota lanes with their own names and durations. A missing lane shows
+**No data** under its own name. The single widget also offers the third quota when available. Combined requires a
+compatible first or second quota; a provider with only a compatible third quota appears in the single widget picker.
 
 Saved Codex/Claude intents retain their types, raw values, defaults, and exact **Session (5-hour)** / **Weekly (7-day)** meanings. Combined keeps those lanes and weekly-cap behavior; quota-slot choices and Combined use actual durations when different. Additive cases require no widget reconfiguration and preserve snapshot/empty-data handling and the 5–30-minute timeline schedule. This does not prevent Homebrew removing widget placements (#3627).
 
-Include a non-default Claude/Weekly widget in native upgrade verification, then check Devin/Cursor choices in the editor. Synthetic renders prove layout only, not installed WidgetKit behavior.
+Include a non-default Claude/Weekly widget in native upgrade verification. Synthetic renders prove layout only, not installed WidgetKit behavior.
 
 ## Visibility troubleshooting (macOS 14+)
 When widgets do not appear in the gallery at all, the issue is almost always

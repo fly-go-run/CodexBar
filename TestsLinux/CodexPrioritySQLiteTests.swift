@@ -208,8 +208,7 @@ struct CodexPrioritySQLiteTests {
                 codexHomePath: self.root.path,
                 historyDays: 1,
                 allowPricingRefresh: false,
-                refreshPricingInBackground: false,
-                includePiSessions: false)
+                refreshPricingInBackground: false)
         }
     }
 }

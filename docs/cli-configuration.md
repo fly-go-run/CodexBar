@@ -25,11 +25,11 @@ codexbar config providers --json --pretty
 Enable or disable a provider:
 
 ```bash
-codexbar config enable --provider grok
-codexbar config disable --provider cursor
+codexbar config enable --provider claude
+codexbar config disable --provider codex
 ```
 
-These are persistent app/CLI settings. They are different from `codexbar usage --provider grok`, which is a one-shot
+These are persistent app/CLI settings. They are different from `codexbar usage --provider claude`, which is a one-shot
 command override and does not edit config.
 
 If every provider is disabled, `codexbar usage` with no `--provider` prints no text output, and
@@ -37,51 +37,20 @@ If every provider is disabled, `codexbar usage` with no `--provider` prints no t
 
 ## API keys
 
-API keys are stored under the provider entry in config:
+The Claude Admin API key is stored under the provider entry in config:
 
 ```bash
-printf '%s' "$ELEVENLABS_API_KEY" | codexbar config set-api-key --provider elevenlabs --stdin
+printf '%s' "$ANTHROPIC_ADMIN_KEY" | codexbar config set-api-key --provider claude --stdin
 ```
 
 `set-api-key` enables the provider by default. Add `--no-enable` when you only want to save the key:
 
 ```bash
-printf '%s' "$OPENROUTER_API_KEY" | codexbar config set-api-key --provider openrouter --stdin --no-enable
+printf '%s' "$ANTHROPIC_ADMIN_KEY" | codexbar config set-api-key --provider claude --stdin --no-enable
 ```
 
-Useful examples:
-
-```bash
-printf '%s' "$OPENAI_ADMIN_KEY" | codexbar config set-api-key --provider openai --stdin
-printf '%s' "$ANTHROPIC_ADMIN_KEY" | codexbar config set-api-key --provider claude --stdin
-printf '%s' "$DEEPGRAM_API_KEY" | codexbar config set-api-key --provider deepgram --stdin
-printf '%s' "$GROQ_API_KEY" | codexbar config set-api-key --provider groq --stdin
-printf '%s' "$LLM_PROXY_API_KEY" | codexbar config set-api-key --provider llmproxy --stdin
-printf '%s' "$Z_AI_API_KEY" | codexbar config set-api-key --provider zai --stdin
-printf '%s' "$XAI_MANAGEMENT_API_KEY" | codexbar config set-api-key --provider xai --stdin
-```
-
-For a z.ai team account:
-
-```bash
-printf '%s' "$Z_AI_API_KEY" | codexbar config set-api-key --provider zai --stdin \
-  --label Team \
-  --usage-scope team \
-  --organization-id org_... \
-  --workspace-id proj_...
-```
-
-Use single-line BigModel organization/project IDs; see [z.ai](zai.md).
-
-Only providers that consume config-backed API keys accept this command. Admin API providers may require a key with
-organization/usage permissions, not a normal inference key. The `xai` provider reads xAI developer-platform billing
-with a Management key plus a team ID (set `workspaceID` in the provider entry, `XAI_TEAM_ID`, or the app settings
-pane); inference API keys are not accepted. The separate Grok provider tracks consumer Grok/SuperGrok subscriptions
-through its own browser/CLI session and takes no API key, so enable it with
-`codexbar config enable --provider grok`.
-
-LLM Proxy also needs a base URL. Use `LLM_PROXY_BASE_URL` for CLI runs, or add `"enterpriseHost"` to the provider entry
-in the CodexBar config file.
+Only providers that consume config-backed API keys accept this command (currently Claude). Admin API keys must
+carry organization/usage permissions; a normal inference key is not accepted.
 
 ## Isolated config files
 
@@ -89,7 +58,7 @@ For tests, demos, and CI, point CodexBar at a temporary config file:
 
 ```bash
 export CODEXBAR_CONFIG=/tmp/codexbar-config.json
-codexbar config enable --provider grok
+codexbar config enable --provider claude
 codexbar config providers --json --pretty
 ```
 

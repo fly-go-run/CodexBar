@@ -363,7 +363,7 @@ enum CostUsageClaudeCacheIO {
 
     #endif
 
-    // Provider-specific by design: Claude/Vertex cost caching still uses the legacy JSON artifact pending its own
+    // Provider-specific by design: Claude cost caching still uses the legacy JSON artifact pending its own
     // migration (see #2760).
 
     static func cacheFileURL(
@@ -371,7 +371,7 @@ enum CostUsageClaudeCacheIO {
         cacheRoot: URL? = nil,
         reportContext: CostUsageReportContext = .regular) -> URL
     {
-        precondition(provider == .claude || provider == .vertexai)
+        precondition(provider == .claude)
         let root = cacheRoot ?? FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
             .appendingPathComponent("CodexBar", isDirectory: true)
         // Parsing filters dates before selecting duplicate responses, so independent report windows

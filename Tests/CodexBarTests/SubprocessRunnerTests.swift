@@ -129,53 +129,6 @@ struct SubprocessRunnerTests {
         }
     }
 
-    @Test
-    func `returns partial output when detached child keeps pipes open`() async throws {
-        let root = FileManager.default.temporaryDirectory
-            .appendingPathComponent("codexbar-subprocess-drain-\(UUID().uuidString)", isDirectory: true)
-        let childPIDFile = root.appendingPathComponent("child.pid")
-        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: root) }
-        defer {
-            if let text = try? String(contentsOf: childPIDFile, encoding: .utf8),
-               let childPID = pid_t(text.trimmingCharacters(in: .whitespacesAndNewlines))
-            {
-                _ = kill(childPID, SIGKILL)
-            }
-        }
-
-        var environment = ProcessInfo.processInfo.environment
-        environment["CODEXBAR_TEST_CHILD_PID_FILE"] = childPIDFile.path
-        let script = """
-        import os
-        import subprocess
-        import sys
-
-        ready_read, ready_write = os.pipe()
-        child = subprocess.Popen(
-            [sys.executable, "-c", "import os,signal,sys; os.write(int(sys.argv[1]), b'R'); signal.pause()",
-             str(ready_write)],
-            start_new_session=True,
-            pass_fds=(ready_write,),
-        )
-        with open(os.environ["CODEXBAR_TEST_CHILD_PID_FILE"], "w") as handle:
-            handle.write(str(child.pid))
-        os.read(ready_read, 1)
-        print("parent-output", flush=True)
-        """
-
-        let result = try await SubprocessRunner.run(
-            binary: "/usr/bin/python3",
-            arguments: ["-c", script],
-            environment: environment,
-            timeout: 5,
-            label: "detached-output-holder")
-
-        #expect(result.stdout.contains("parent-output"))
-        let childPID = try #require(KiroProcessTestSupport.readPID(from: childPIDFile))
-        #expect(kill(childPID, 0) == 0)
-    }
-
     /// Regression test for #474: a hung subprocess must be killed and throw `.timedOut`
     /// instead of blocking indefinitely.
     ///
@@ -340,41 +293,6 @@ struct SubprocessRunnerTests {
                 Issue.record("Unexpected error at iteration \(i): \(error)")
             }
         }
-    }
-
-    @Test(.timeLimit(.minutes(1)))
-    func `cancellation terminates hung process promptly`() async throws {
-        let pidFile = FileManager.default.temporaryDirectory
-            .appendingPathComponent("codexbar-cancelled-process-\(UUID().uuidString).pid")
-        defer {
-            if let pid = KiroProcessTestSupport.readPID(from: pidFile) { _ = kill(pid, SIGKILL) }
-            try? FileManager.default.removeItem(at: pidFile)
-        }
-        let task = Task {
-            try await SubprocessRunner.run(
-                binary: "/usr/bin/python3",
-                arguments: [
-                    "-c",
-                    "import os,signal,sys; " +
-                        "open(sys.argv[1], 'w').write(str(os.getpid())); signal.pause()",
-                    pidFile.path,
-                ],
-                environment: [:],
-                timeout: .infinity,
-                label: "cancelled-hung-process")
-        }
-        defer { task.cancel() }
-        let pid = try await KiroProcessTestSupport.waitForPID(in: pidFile)
-        #expect(kill(pid, 0) == 0)
-        task.cancel()
-
-        do {
-            _ = try await task.value
-            Issue.record("Expected CancellationError but subprocess completed")
-        } catch is CancellationError {
-            // There is no timeout or natural exit path to mask missing cancellation teardown.
-        }
-        #expect(kill(pid, 0) == -1)
     }
 
     /// Verify that many concurrent SubprocessRunner calls complete without starving each other.

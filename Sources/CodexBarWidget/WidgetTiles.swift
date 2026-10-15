@@ -323,10 +323,10 @@ enum WidgetMetricRows {
             guard secondaryLaneCount == 0,
                   let token = entry.tokenUsage ?? WidgetUsageRow.compactTokenUsage(for: entry)
             else {
-                return self.balanceRows(for: entry)
+                return []
             }
             rows.append(self.sessionRow(token: token, entry: entry, isProminent: true, compact: true))
-            return rows + self.balanceRows(for: entry)
+            return rows
         }
 
         if let credits = entry.creditsRemaining {
@@ -344,7 +344,7 @@ enum WidgetMetricRows {
                         currencyCode: token.currencyCode)))
             }
         }
-        return rows + self.balanceRows(for: entry)
+        return rows
     }
 
     private static func sessionRow(
@@ -369,17 +369,6 @@ enum WidgetMetricRows {
             value: value,
             isProminent: isProminent)
     }
-
-    private static func balanceRows(for entry: WidgetSnapshot.ProviderEntry) -> [WidgetMetricRow] {
-        var rows: [WidgetMetricRow] = []
-        if let balance = WidgetBalanceFormatter.providerBalance(for: entry) {
-            rows.append(WidgetMetricRow(id: "provider-balance", title: balance.title, value: balance.value))
-        }
-        if let balance = WidgetBalanceFormatter.extraUsageBalance(for: entry) {
-            rows.append(WidgetMetricRow(id: "extra-usage", title: balance.title, value: balance.value))
-        }
-        return rows
-    }
 }
 
 // MARK: - Headline fallback
@@ -397,20 +386,6 @@ enum WidgetFallbackHero {
     /// Balance-only and credit-only providers report no quota lanes, so the headline falls back to
     /// the figure those tiles do have instead of leaving the tile blank.
     static func make(for entry: WidgetSnapshot.ProviderEntry) -> WidgetFallbackHeroContent? {
-        if let balance = WidgetBalanceFormatter.providerBalance(for: entry) {
-            return WidgetFallbackHeroContent(
-                value: balance.value,
-                caption: balance.title,
-                detail: nil,
-                consumedMetricID: "provider-balance")
-        }
-        if let cost = WidgetBalanceFormatter.extraUsageCost(for: entry) {
-            return WidgetFallbackHeroContent(
-                value: WidgetFormat.currency(cost.used, code: cost.currencyCode),
-                caption: W("Extra usage balance"),
-                detail: nil,
-                consumedMetricID: "extra-usage")
-        }
         if let credits = entry.creditsRemaining {
             return WidgetFallbackHeroContent(
                 value: WidgetFormat.credits(credits),

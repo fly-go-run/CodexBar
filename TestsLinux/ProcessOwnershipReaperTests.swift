@@ -168,52 +168,7 @@ struct ProcessOwnershipReaperTests {
         #expect(sent == [SIGTERM])
     }
 
-    @Test
-    func `Linux environment reader selects the marker and rejects unavailable evidence`() throws {
-        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        let process = root.appendingPathComponent("101", isDirectory: true)
-        try FileManager.default.createDirectory(at: process, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: root) }
-        let file = process.appendingPathComponent("environ")
-        let key = ProcessOwnershipReaper.environmentKey
-        let names: Set<String> = [key]
-        try Data("OTHER=ignored\0\(key)=fixture\0".utf8).write(to: file)
-        #expect(PiProcessEnvironment.readLinuxEnvironment(pid: 101, procRoot: root, names: names) == [key: "fixture"])
-        try Data("\(key)=fixture".utf8).write(to: file)
-        #expect(PiProcessEnvironment.readLinuxEnvironment(pid: 101, procRoot: root, names: names) == nil)
-        #expect(PiProcessEnvironment.readLinuxEnvironment(pid: 102, procRoot: root, names: names) == nil)
-    }
 
-    @Test
-    func `marker parsing requires an exact environment entry`() {
-        let key = ProcessOwnershipReaper.environmentKey
-        let names: Set<String> = [key]
-        #expect(PiProcessEnvironment.parseNULSeparated(Data("\(key)=fixture\0".utf8), names: names)?[key] == "fixture")
-        #expect(PiProcessEnvironment.parseNULSeparated(Data("OTHER=\(key)=fixture\0".utf8), names: names) == [:])
-        #expect(PiProcessEnvironment.parseNULSeparated(Data("\(key)=fixture".utf8), names: names) == nil)
-        #expect(PiProcessEnvironment.parseNULSeparated(
-            Data("\(key)=fixture\0\(key)=different\0".utf8), names: names) == nil)
-        var argc: Int32 = 2
-        var data = withUnsafeBytes(of: &argc) { Data($0) }
-        data.append(Data("/fixture\0\0fixture\0\(key)=argument-only\0OTHER=ok\0\0\(key)=apple-vector\0".utf8))
-        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(data, names: names) == [:])
-        var empty = withUnsafeBytes(of: &argc) { Data($0) }
-        empty.append(Data("/fixture\0\0fixture\0arg\0\0\(key)=apple-vector\0".utf8))
-        #expect(DarwinProcessEnumerator.parseProcArgs2Environment(empty, names: names) == nil)
-    }
 
-    @Test(arguments: [0, 64, 128])
-    func `marker parsing preserves boundaries around large unrelated values`(position: Int) {
-        let key = ProcessOwnershipReaper.environmentKey
-        let names: Set<String> = [key]
-        var records = (0..<128).map { "FIXTURE_\($0)=\(String(repeating: "x", count: 4096))" }
-        records.insert("\(key)=fixture", at: position)
-        let data = Data(("\0" + records.joined(separator: "\0\0") + "\0").utf8)
 
-        #expect(PiProcessEnvironment.parseNULSeparated(data, names: names) == [key: "fixture"])
-        #expect(PiProcessEnvironment.parseNULSeparated(data.dropLast(), names: names) == nil)
-        #expect(PiProcessEnvironment.parseNULSeparated(data + Data("malformed\0".utf8), names: names) == nil)
-        #expect(PiProcessEnvironment.parseNULSeparated(data + Data("\(key)=different\0".utf8), names: names) == nil)
-        #expect(PiProcessEnvironment.parseNULSeparated(Data(repeating: 0, count: data.count), names: names) == [:])
-    }
 }

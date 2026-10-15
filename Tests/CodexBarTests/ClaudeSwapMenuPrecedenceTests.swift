@@ -22,16 +22,4 @@ struct ClaudeSwapMenuPrecedenceTests {
             accountCount: 1,
             showSingleAccount: true))
     }
-
-    @Test
-    func `precedence requires Claude and at least one swap account`() {
-        #expect(!ClaudeSwapMenuPrecedence.prefersClaudeSwap(
-            provider: .claude,
-            accountCount: 0,
-            showSingleAccount: true))
-        #expect(!ClaudeSwapMenuPrecedence.prefersClaudeSwap(
-            provider: .openai,
-            accountCount: 2,
-            showSingleAccount: true))
-    }
 }

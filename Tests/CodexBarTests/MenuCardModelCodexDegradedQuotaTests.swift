@@ -195,33 +195,6 @@ struct MenuCardModelCodexDegradedQuotaTests {
         #expect(model.tokenUsage?.sessionLine.contains("$1.08") == true)
     }
 
-    @Test
-    func `credits select stacked detail layout without quota metrics`() {
-        let model = UsageMenuCardView.Model(
-            provider: .codex,
-            providerName: "Codex",
-            email: "user@example.com",
-            subtitleText: "Not fetched yet",
-            subtitleStyle: .info,
-            planText: nil,
-            metrics: [],
-            usageNotes: [],
-            openAIAPIUsage: nil,
-            inlineUsageDashboard: nil,
-            creditsText: "$12.34 remaining",
-            creditsRemaining: 12.34,
-            creditsProgressPercent: nil,
-            creditsScaleText: nil,
-            creditsHintText: nil,
-            creditsHintCopyText: nil,
-            providerCost: nil,
-            tokenUsage: nil,
-            placeholder: "No usage yet",
-            progressColor: .blue)
-
-        #expect(model.usesStackedDetailLayout)
-    }
-
     private func makeModel(
         tokenCostUsageEnabled: Bool,
         codexLocalSessionCostLedgerEnabled: Bool = true,

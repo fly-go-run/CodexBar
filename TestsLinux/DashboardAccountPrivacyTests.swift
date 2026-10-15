@@ -162,7 +162,6 @@ struct DashboardAccountPrivacyTests {
                     accountOrganization: "Private Team",
                     loginMethod: "pro")) : nil,
             credits: nil,
-            antigravityPlanInfo: nil,
             openaiDashboard: nil,
             error: error.map { ProviderErrorPayload(code: 1, message: $0, kind: .provider) })
         payload.dashboardAccount = DashboardUsageAccount(id: "opaque", label: "Private Team", active: true)

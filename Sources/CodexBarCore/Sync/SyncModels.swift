@@ -34,7 +34,6 @@ public struct ProviderIntentPayload: Codable, Sendable {
     public var enterpriseHost: String?
     public var claudeSwapEnabled: Bool?
     public var claudeSwapShowSingleAccount: Bool?
-    public var antigravityPrioritizeExhaustedQuotas: Bool?
     public var quotaWarnings: QuotaWarningConfig?
     /// Three-state on purpose. Nil means the sending Mac never reported the field, which is what an
     /// older client that predates accent colors sends. An empty string means the user cleared the
@@ -45,10 +44,6 @@ public struct ProviderIntentPayload: Codable, Sendable {
     public var modelRateLimits: [ProviderModelRateLimit]?
     /// Monotonic upgrade marker; older senders omit it and cannot undo the receiving Mac's migration.
     public var claudeResetCreditsVisibilityMigrated: Bool?
-    public var kiloKnownOrganizations: [KiloOrganization]?
-    public var kiloEnabledOrganizationIDs: [String]?
-    public var deepseekProfileID: String?
-    public var deepseekProfileScope: String?
 
     public init(config: ProviderConfig, schemaVersion: Int = CodexBarSyncSchema.currentVersion) {
         self.schemaVersion = schemaVersion
@@ -60,7 +55,6 @@ public struct ProviderIntentPayload: Codable, Sendable {
         self.enterpriseHost = config.enterpriseHost
         self.claudeSwapEnabled = config.claudeSwapEnabled
         self.claudeSwapShowSingleAccount = config.claudeSwapShowSingleAccount
-        self.antigravityPrioritizeExhaustedQuotas = config.antigravityPrioritizeExhaustedQuotas
         self.quotaWarnings = config.quotaWarnings
         // Always report, so that clearing an override propagates as an empty string.
         self.accentColor = config.accentColor ?? ""
@@ -68,10 +62,6 @@ public struct ProviderIntentPayload: Codable, Sendable {
         self.hiddenUsageItemIDs = config.hiddenUsageItemIDs
         self.modelRateLimits = config.modelRateLimits ?? []
         self.claudeResetCreditsVisibilityMigrated = config.claudeResetCreditsVisibilityMigrated
-        self.kiloKnownOrganizations = config.kiloKnownOrganizations
-        self.kiloEnabledOrganizationIDs = config.kiloEnabledOrganizationIDs
-        self.deepseekProfileID = config.deepseekProfileID
-        self.deepseekProfileScope = config.deepseekProfileScope
     }
 
     public func applying(
@@ -96,7 +86,6 @@ public struct ProviderIntentPayload: Codable, Sendable {
         result.enterpriseHost = self.enterpriseHost
         result.claudeSwapEnabled = self.claudeSwapEnabled
         result.claudeSwapShowSingleAccount = self.claudeSwapShowSingleAccount
-        result.antigravityPrioritizeExhaustedQuotas = self.antigravityPrioritizeExhaustedQuotas
         result.quotaWarnings = self.quotaWarnings
         // An older client omits the field entirely. Keep the local color rather than erase it.
         if let accentColor = self.accentColor {
@@ -112,10 +101,6 @@ public struct ProviderIntentPayload: Codable, Sendable {
         if self.claudeResetCreditsVisibilityMigrated == true {
             result.claudeResetCreditsVisibilityMigrated = true
         }
-        result.kiloKnownOrganizations = self.kiloKnownOrganizations
-        result.kiloEnabledOrganizationIDs = self.kiloEnabledOrganizationIDs
-        result.deepseekProfileID = self.deepseekProfileID
-        result.deepseekProfileScope = self.deepseekProfileScope
 
         if let value = secretFields[ProviderIntentSecretField.apiKey.rawValue] {
             result.apiKey = value.isEmpty ? nil : value

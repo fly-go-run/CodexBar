@@ -159,7 +159,6 @@ struct CodexSpendSnapshotLoadContext: Sendable {
     let force: Bool
     let historyDays: Int
     let refreshPricingInBackground: Bool
-    let includePiSessions: Bool
     let calendar: Calendar
 }
 
@@ -260,11 +259,7 @@ enum SpendDashboardSource {
             await withTaskGroup(of: Void.self) { group in
                 for baseline in baselinesToRefresh {
                     group.addTask {
-                        if UsageStore.tokenCostRequiresProviderSnapshot(baseline.provider) {
-                            await store.refreshProvider(baseline.provider)
-                        } else {
-                            await store.refreshSpendDashboardTokenUsageNow(for: baseline.provider, force: true)
-                        }
+                        await store.refreshSpendDashboardTokenUsageNow(for: baseline.provider, force: true)
                     }
                 }
             }
@@ -295,36 +290,11 @@ enum SpendDashboardSource {
                 force: mode.forcesLoader)
         }
 
-        // A native projection is disjoint from the inclusive Claude/Codex publication while
-        // Pi owns the same rows, even when the Pi input is hidden from the chart.
-        let piBaseline = providerBaselines.first { $0.provider == .pi }
-        let piCurrent = self.capturedTokenPublication(store: store, provider: .pi)
-        let piOwnsSource = providers.contains(.pi)
-            && piBaseline != nil
-            && piCurrent.publication?.snapshot != nil
-            && !(piBaseline?.shouldRefresh == true && piBaseline?.publicationRevision == piCurrent.revision)
         var inputs: [SpendDashboardModel.ProviderInput] = []
         var unavailableSourceIDs: Set<String> = []
         var confirmedEmptySourceIDs: Set<String> = []
         // Provider-specific by design: spend dashboard
         for provider in providers where provider != .codex {
-            // Provider-specific by design: Grok local session tokens are independent of the
-            // remote billing snapshot, so a failed probe still publishes readable logs.
-            if provider == .grok {
-                if let snapshot = store.tokenSnapshot(
-                    fromProviderSnapshot: store.snapshot(for: .grok),
-                    provider: .grok,
-                    historyDays: Self.scanDays)
-                {
-                    inputs.append(SpendDashboardModel.ProviderInput(
-                        provider: .grok,
-                        displayName: store.metadata(for: .grok).displayName,
-                        snapshot: snapshot))
-                } else {
-                    confirmedEmptySourceIDs.insert(UsageProvider.grok.rawValue)
-                }
-                continue
-            }
             guard let baseline = providerBaselines.first(where: { $0.provider == provider }) else {
                 unavailableSourceIDs.insert(provider.rawValue)
                 continue
@@ -339,12 +309,7 @@ enum SpendDashboardSource {
                 unavailableSourceIDs.insert(provider.rawValue)
                 continue
             }
-            guard let snapshot = self.dashboardTokenSnapshot(
-                store: store,
-                provider: provider,
-                publication: currentPublication,
-                piOwnsSource: piOwnsSource)
-            else {
+            guard let snapshot = currentPublication.snapshot else {
                 confirmedEmptySourceIDs.insert(provider.rawValue)
                 continue
             }
@@ -352,9 +317,7 @@ enum SpendDashboardSource {
                 provider: provider,
                 displayName: store.metadata(for: provider).displayName,
                 snapshot: snapshot,
-                // Provider-specific by design: Pi reports local history rather than a subscription feed.
-                sourceKind: provider == .pi ? .localHistory : .native,
-                accounting: currentPublication.accounting))
+                sourceKind: .native))
         }
         return SpendDashboardLoadRequest(
             configuration: configuration,
@@ -413,7 +376,6 @@ enum SpendDashboardSource {
                         now: context.now,
                         codexHomePath: context.account.homePath,
                         historyDays: context.historyDays,
-                        includePiSessions: false,
                         includeProjectAndSessionBreakdowns: true,
                         calendar: context.calendar)
             })
@@ -612,7 +574,6 @@ enum SpendDashboardSource {
             force: force,
             historyDays: historyDays,
             refreshPricingInBackground: false,
-            includePiSessions: false,
             calendar: request.configuration.bucketCalendar)
     }
 
@@ -626,8 +587,7 @@ enum SpendDashboardSource {
             forceRefresh: context.force,
             codexHomePath: context.account.homePath,
             historyDays: context.historyDays,
-            refreshPricingInBackground: context.refreshPricingInBackground,
-            includePiSessions: context.includePiSessions)
+            refreshPricingInBackground: context.refreshPricingInBackground)
     }
 
     private static func loadCodexActivity(
@@ -882,44 +842,6 @@ enum SpendDashboardSource {
             return "\(provider.rawValue):\(self.sha256(encoded)):\(self.sha256(scope)):" +
                 self.sha256("\(accountOwnership)\u{0}\(settings.costUsageBucketTimeZoneIdentifier)")
         }
-    }
-
-    @MainActor
-    private static func dashboardTokenSnapshot(
-        store: UsageStore,
-        provider: UsageProvider,
-        publication: CurrentProviderConfigTokenPublication,
-        piOwnsSource: Bool) -> CostUsageTokenSnapshot?
-    {
-        // Provider-specific by design: Grok's catalog input is the local session scan, even when
-        // the remote billing snapshot is missing.
-        if provider == .grok {
-            return store.tokenSnapshot(
-                fromProviderSnapshot: store.snapshot(for: .grok),
-                provider: .grok,
-                historyDays: self.scanDays)
-        }
-        if UsageStore.tokenCostRequiresProviderSnapshot(provider),
-           let usage = store.snapshot(for: provider.instanceID),
-           let derived = store.tokenSnapshot(
-               fromProviderSnapshot: usage,
-               provider: provider,
-               historyDays: scanDays)
-        {
-            return derived
-        }
-        // An inclusive publication can predate Pi becoming a separate source.
-        // Project its retained native portion while the replacement refresh is pending,
-        // so the combined rows stay disjoint throughout that transition.
-        // Provider-specific by design: Claude and Codex publications expose a native projection when Pi is
-        // accounted for separately in the combined dashboard.
-        if piOwnsSource,
-           provider == .claude || provider == .codex,
-           case let .includesPi(_, native) = publication.accounting
-        {
-            return native
-        }
-        return publication.snapshot
     }
 
     @MainActor
@@ -1744,16 +1666,10 @@ final class SpendDashboardController {
             } else {
                 .unavailable
             }
-            // Provider-specific by design: Pi remains local history while its snapshot is loading,
-            // unavailable, or confirmed empty, when no ProviderInput is available yet.
-            let role: SpendSourcePublication.Role = if provider == .pi {
-                .localHistory
-            } else {
-                switch input?.sourceKind {
-                case .openCodex: .enrichment
-                case .localHistory: .localHistory
-                case .native, nil: .subscription
-                }
+            let role: SpendSourcePublication.Role = switch input?.sourceKind {
+            case .openCodex: .enrichment
+            case .localHistory: .localHistory
+            case .native, nil: .subscription
             }
             return SpendSourcePublication(
                 id: sourceID,

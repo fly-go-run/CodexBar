@@ -8,9 +8,7 @@ private struct CodexCostCatchUpContext {
     let scopeSignature: String
     let providerConfigRevision: UInt64
     let costUsageSettingsRevision: UInt64
-    let includePiSessions: Bool
     @ProcessEnvironment private(set) var environment: [String: String]
-    let piHistoryScopeGeneration: UInt64
 }
 
 extension UsageStore {
@@ -53,9 +51,7 @@ extension UsageStore {
             scopeSignature: scopeSignature,
             providerConfigRevision: self.settings.providerConfigRevision(for: .codex),
             costUsageSettingsRevision: self.settings.costUsageSettingsRevision,
-            includePiSessions: self.shouldIncludePiSessionsInTokenSnapshot(for: .codex),
-            environment: self.environmentBase,
-            piHistoryScopeGeneration: self.piHistoryScopeGeneration)
+            environment: self.environmentBase)
         self.codexCostCatchUpToken = token
         self.codexCostCatchUpScopeSignature = scopeSignature
         self.codexCostCatchUpMode = mode
@@ -243,37 +239,30 @@ extension UsageStore {
         let result: (
             snapshot: CostUsageTokenSnapshot,
             lastRefreshAt: Date?,
-            staleSnapshotUpdatedAt: Date?,
-            accounting: PiSnapshotAccounting?)? = if let override = self._test_cachedCodexTokenSnapshotLoaderOverride
+            staleSnapshotUpdatedAt: Date?)? = if let override = self._test_cachedCodexTokenSnapshotLoaderOverride
         {
             await override(now, context.codexHomePath, context.historyDays)
-                .map { ($0.snapshot, $0.lastRefreshAt, $0.staleSnapshotUpdatedAt, nil) }
+                .map { ($0.snapshot, $0.lastRefreshAt, $0.staleSnapshotUpdatedAt) }
         } else {
             await self.costUsageFetcher.loadCachedCodexTokenSnapshotResult(
                 now: now,
                 codexHomePath: context.codexHomePath,
                 historyDays: context.historyDays,
-                includePiSessions: context.includePiSessions,
                 calendar: self.settings.costUsageBucketCalendar,
                 requireCompleteHistory: true,
                 environment: context.environment)
-                .map { ($0.snapshot, $0.lastRefreshAt, $0.staleSnapshotUpdatedAt, $0.accounting) }
+                .map { ($0.snapshot, $0.lastRefreshAt, $0.staleSnapshotUpdatedAt) }
         }
         try Task.checkCancellation()
         // Provider-specific by design: Codex owns completed-cache publication and account validation here.
-        guard await self.refreshPiHistoryScope(for: .codex) else { throw CancellationError() }
         guard self.codexCostCatchUpContextIsCurrent(context),
               self.tokenSnapshotPublicationRevision(for: .codex) == publicationRevision
         else {
-            if context.includePiSessions, self.piHistoryScopeGeneration != context.piHistoryScopeGeneration {
-                self.requestTokenRefreshAfterStaleCompletion(for: .codex)
-            }
             throw CancellationError()
         }
         guard let result,
               result.snapshot.historyCoverageIsEstablished,
-              result.staleSnapshotUpdatedAt == nil,
-              self.tokenAccountingScopeIsCurrent(result.accounting, for: .codex)
+              result.staleSnapshotUpdatedAt == nil
         else { return nil }
         let snapshot = result.snapshot
 
@@ -282,10 +271,10 @@ extension UsageStore {
             self.lastTokenFetchScope[.codex] = context.scopeSignature
         }
         if snapshot.daily.isEmpty, snapshot.meteredCostUSD == nil {
-            self.publishConfirmedEmptyTokenSnapshot(for: .codex, accounting: result.accounting)
+            self.publishConfirmedEmptyTokenSnapshot(for: .codex)
             self.tokenErrors[.codex] = Self.tokenCostNoDataMessage(for: .codex)
         } else {
-            self.publishTokenSnapshot(snapshot, for: .codex, accounting: result.accounting)
+            self.publishTokenSnapshot(snapshot, for: .codex)
             self.tokenErrors[.codex] = nil
         }
         self.tokenFailureGates[.codex]?.recordSuccess()

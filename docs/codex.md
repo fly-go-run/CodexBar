@@ -114,7 +114,7 @@ Usage source picker:
   account-scoped refresh, including credits and OpenAI web extras. Zero or one account, and ambient PAT mode, keep
   the single-account presentation. Local token/cost usage appears once, with its current-profile or **This Mac** scope.
 - Reusing OpenCode OAuth enables remote account quota, not OpenCode session token/cost ingestion. See
-  [OpenCode with Codex or OpenAI](opencode.md#using-opencode-with-codex-or-openai) for the current history boundary.
+  OpenCode with Codex or OpenAI for the current history boundary.
 
 ### “Codex auth.json needs refresh”
 
@@ -338,7 +338,6 @@ token record. CodexBar cannot convert a quota percentage into dollars or recover
 | Source | Local token/cost coverage |
 | --- | --- |
 | Native Codex | Supported session and archived-session records in the selected home. |
-| Pi / OMP | Supported backend history; enable [Pi](pi.md) for a separate Usage & Spend source. Account-scoped Codex rows stay native. |
 | OpenCodex | Opt-in `~/.opencodex/usage.jsonl` (or `$OPENCODEX_HOME/usage.jsonl`), with recorded provider provenance. This is distinct from OpenCode's session database. |
 | OpenCode using OpenAI/Codex | No native session import; reusing its OAuth credentials only enables remote quota. The OpenCode Go SQLite reader selects `opencode-go` records. |
 | Amp | Account allowances and credits are supported, but Amp session-token history is not imported into Codex costs. |
@@ -424,18 +423,9 @@ unavailable (`costUSD: null`). This opt-in CLI mode does not change ordinary cos
     page rather than the original fork ancestor. Bounded scans retain the resolved fork baseline across restarts
     and revalidate its parent before resuming. Cross-file request identity includes the timestamp so restarted
     page-local event indices do not erase distinct requests; exact active/archive copies still deduplicate.
-  - pi and OMP sessions count assistant-message usage rows and attribute `openai-codex` assistant usage to Codex.
-  - pi-compatible assistant usage is bucketed by assistant-turn timestamp, so mixed-model sessions can contribute to
-    multiple days/models correctly.
-  - Matching assistant entry IDs within the same session are counted once across roots; distinct turns are retained.
-  - Native conversation rows reuse the corrected cached per-file totals and existing pricing tables. They are hidden
-    when pi-compatible usage joins the aggregate because the native-only rows would not reconcile with the merged total.
+  - Native conversation rows reuse the corrected cached per-file totals and existing pricing tables.
 - Cache:
   - Native session store: `~/Library/Caches/CodexBar/cost-usage/cost-usage.sqlite`
-  - pi-compatible session cache: `~/Library/Caches/CodexBar/cost-usage/pi-sessions-v9.json`
-    is replaced atomically on macOS and Linux, retaining complete cached scan state across refreshes.
-    Version 8 rebuilds once from transcripts to establish source scope and completeness. Enabling the standalone
-    [Pi provider](pi.md) keeps Codex history native-only in combined views and completed catch-up publication.
   - Catch-up status reads progress metadata without loading historical usage JSON or replay bodies. Cached token
     activity reads scoped daily aggregates without decoding individual usage events, retaining account, time zone,
     coverage, and incomplete-scan checks. Cached reports
@@ -652,9 +642,7 @@ invalid home is omitted; it never falls back to ambient `~/.codex` or to the glo
 Refreshing many accounts retains each account's successful history and reports failed scans instead of silently
 omitting them.
 
-These account rows intentionally exclude pi and OMP sessions because their history is machine-local rather than owned
-by one Codex account. The normal Codex cost menu and CLI scan continue to include supported pi-compatible history. The
-dashboard labels its values as local estimates and keeps currencies separate.
+The dashboard labels its values as local estimates and keeps currencies separate.
 
 Cost refreshes and cached dashboard loads share each file report between session and project views. Daily and
 project totals retain their own pricing evidence scopes. All preparation is local to one call, so later loads use

@@ -282,62 +282,6 @@ struct SpawnedProcessGroupTests {
     }
 
     @Test
-    func `termination waits for grace before killing escaped descendants`() async throws {
-        let childPIDFile = FileManager.default.temporaryDirectory
-            .appendingPathComponent("codexbar-process-group-\(UUID().uuidString).pid")
-        defer { try? FileManager.default.removeItem(at: childPIDFile) }
-
-        let script = """
-        import subprocess
-        import sys
-        import signal
-
-        child = subprocess.Popen(
-            [
-                sys.executable,
-                "-c",
-                "import os,signal,sys; signal.signal(signal.SIGTERM, signal.SIG_IGN); "
-                "open(sys.argv[1], 'w').write(str(os.getpid())); signal.pause()",
-                sys.argv[1],
-            ],
-            start_new_session=True,
-        )
-        signal.pause()
-        """
-        let stdoutPipe = Pipe()
-        let stderrPipe = Pipe()
-        let process = try SpawnedProcessGroup.launch(
-            binary: "/usr/bin/python3",
-            arguments: ["-c", script, childPIDFile.path],
-            environment: ProcessInfo.processInfo.environment,
-            stdoutPipe: stdoutPipe,
-            stderrPipe: stderrPipe)
-
-        let escapedPID: pid_t
-        do {
-            escapedPID = try await KiroProcessTestSupport.waitForPID(in: childPIDFile)
-        } catch {
-            await process.terminate(grace: 0)
-            throw error
-        }
-        defer { _ = kill(escapedPID, SIGKILL) }
-
-        let ticks = LockIsolated(0)
-        await process.terminate(
-            grace: 0.3,
-            now: { Date(timeIntervalSinceReferenceDate: Double(ticks.value) / 10) },
-            sleep: { duration in
-                #expect(duration == .milliseconds(20))
-                #expect(kill(escapedPID, 0) == 0, "SIGKILL must not precede the grace deadline")
-                ticks.setValue(ticks.value + 1)
-                await Task.yield()
-            })
-
-        #expect(ticks.value == 3)
-        #expect(kill(escapedPID, 0) == -1)
-    }
-
-    @Test
     func `termination kills reparented process group members after root exit`() async throws {
         let childPIDFile = FileManager.default.temporaryDirectory
             .appendingPathComponent("codexbar-process-group-member-\(UUID().uuidString).pid")

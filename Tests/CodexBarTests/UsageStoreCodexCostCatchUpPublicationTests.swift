@@ -37,7 +37,6 @@ struct UsageStoreCodexCostCatchUpPublicationTests {
             environment: [:],
             now: now,
             allowPricingRefresh: false,
-            includePiSessions: false,
             scannerOptions: options)
         #expect(initial.historyCoverageIsEstablished)
         #expect(initial.last30DaysTokens == 100)
@@ -79,7 +78,6 @@ struct UsageStoreCodexCostCatchUpPublicationTests {
             await CostUsageFetcher.loadCachedCodexTokenSnapshotResult(
                 now: now.addingTimeInterval(2),
                 historyDays: days,
-                includePiSessions: false,
                 requireCompleteHistory: true,
                 scannerOptions: scanOptions)
                 .map { ($0.snapshot, $0.lastRefreshAt, $0.staleSnapshotUpdatedAt) }
@@ -133,7 +131,6 @@ struct UsageStoreCodexCostCatchUpPublicationTests {
             environment: [:],
             now: now,
             allowPricingRefresh: false,
-            includePiSessions: false,
             scannerOptions: options)
         #expect(initial.last30DaysTokens == 100)
         #expect(initial.historyCoverageIsEstablished)
@@ -154,14 +151,12 @@ struct UsageStoreCodexCostCatchUpPublicationTests {
                 environment: [:],
                 now: now.addingTimeInterval(2),
                 allowPricingRefresh: false,
-                includePiSessions: false,
                 scannerOptions: scannerOptions)
         }
         store._test_cachedCodexTokenSnapshotLoaderOverride = { _, _, days in
             await CostUsageFetcher.loadCachedCodexTokenSnapshotResult(
                 now: now.addingTimeInterval(2),
                 historyDays: days,
-                includePiSessions: false,
                 requireCompleteHistory: true,
                 scannerOptions: scannerOptions)
                 .map { ($0.snapshot, $0.lastRefreshAt, $0.staleSnapshotUpdatedAt) }
@@ -178,7 +173,6 @@ struct UsageStoreCodexCostCatchUpPublicationTests {
                 environment: [:],
                 now: now.addingTimeInterval(1),
                 allowPricingRefresh: false,
-                includePiSessions: false,
                 scannerOptions: scannerOptions)
             #expect(completed.last30DaysTokens == 200)
             #expect(completed.historyCoverageIsEstablished)
@@ -209,7 +203,6 @@ struct UsageStoreCodexCostCatchUpPublicationTests {
             environment: [:],
             now: now.addingTimeInterval(3),
             allowPricingRefresh: false,
-            includePiSessions: false,
             scannerOptions: scannerOptions)
         #expect(next.last30DaysTokens == 300)
         #expect(next.historyCoverageIsEstablished)
@@ -348,179 +341,6 @@ struct UsageStoreCodexCostCatchUpPublicationTests {
         await store.codexCostCatchUpTask?.value
         #expect(store.tokenSnapshot(for: .codex)?.quotaSlices == recovered.quotaSlices)
         #expect(store.tokenSnapshotPublicationRevision(for: .codex) > 1)
-    }
-
-    @Test
-    func `completed catch-up remains native only when Pi owns history and no Pi cache exists`() async throws {
-        let env = try CostUsageTestEnvironment()
-        defer { env.cleanup() }
-        let now = Date()
-        let iso = env.isoString(for: now)
-        _ = try env.writeCodexSessionFile(
-            day: now,
-            filename: "rollout-pi-owned-publication.jsonl",
-            contents: """
-            {"type":"session_meta","timestamp":"\(iso)","payload":{"session_id":"pi-owned-publication"}}
-            {"type":"turn_context","timestamp":"\(iso)","payload":{"model":"openai/gpt-5.2-codex"}}
-            \(Self.tokenRecord(iso: iso, input: 100))
-
-            """)
-        var options = CostUsageScanner.Options(
-            codexSessionsRoot: env.codexSessionsRoot,
-            cacheRoot: env.cacheRoot,
-            codexTraceDatabaseURL: env.root.appendingPathComponent("missing.sqlite"))
-        options.refreshMinIntervalSeconds = 0
-        let expected = try await CostUsageFetcher.loadTokenSnapshot(
-            provider: .codex,
-            environment: [:],
-            now: now,
-            allowPricingRefresh: false,
-            includePiSessions: false,
-            scannerOptions: options)
-        #expect(expected.last30DaysTokens == 100)
-        #expect(expected.historyCoverageIsEstablished)
-        let piCacheURL = PiSessionCostCacheIO.cacheFileURL(cacheRoot: env.cacheRoot)
-        #expect(!FileManager.default.fileExists(atPath: piCacheURL.path))
-
-        let store = try Self.makeStore(
-            suite: "pi-owned-native-cache",
-            costUsageFetcher: CostUsageFetcher(scannerOptions: options))
-        defer { store.cancelCodexCostCatchUp() }
-        store.settings.codexLocalSessionCostLedgerEnabled = true
-        store.settings.costUsageBucketTimeZoneIdentifier = options.calendar.timeZone.identifier
-        let piMetadata = try #require(ProviderRegistry.shared.metadata[.pi])
-        store.settings.setProviderEnabled(provider: .pi, metadata: piMetadata, enabled: true)
-        #expect(!store.shouldIncludePiSessionsInTokenSnapshot(for: .codex))
-        store._test_piHistoryScopeResolver = { _ in
-            Issue.record("A native-only Codex completion must not resolve Pi processes or roots")
-            return "unexpected-pi-scope"
-        }
-        store._test_widgetSnapshotSaveOverride = { _ in }
-        store.publishTokenSnapshot(
-            Self.snapshot(tokens: 1, now: now.addingTimeInterval(-3600)),
-            for: .codex,
-            accounting: .nativeOnly)
-        Self.stubCompletion(on: store)
-        // Leave the cached loader override unset: this must exercise the production
-        // completed-cache helper and its forwarded includePiSessions policy.
-        #expect(store._test_cachedCodexTokenSnapshotLoaderOverride == nil)
-
-        store.startCodexCostCatchUpIfNeeded(mode: .accelerated)
-        await store.codexCostCatchUpTask?.value
-        await store.widgetSnapshotPersistTask?.value
-
-        let publication = try #require(store.tokenSnapshotPublicationForCurrentProviderConfig(for: .codex))
-        let completed = try #require(publication.snapshot)
-        #expect(completed.last30DaysTokens == 100)
-        #expect(completed.historyCoverageIsEstablished)
-        #expect(completed.hourly == expected.hourly)
-        #expect(completed.quotaSlices == expected.quotaSlices)
-        #expect(abs(completed.updatedAt.timeIntervalSince(expected.updatedAt)) < 0.002)
-        #expect(publication.accounting == .nativeOnly)
-        #expect(store.codexCostCatchUpActivity?.phase == .complete)
-        #expect(store.tokenErrors[.codex] == nil)
-        #expect(!FileManager.default.fileExists(atPath: piCacheURL.path))
-    }
-
-    @Test(arguments: [false, true])
-    func `suspended completed cache cannot publish across a Pi root generation change`(
-        returnsToOriginalRoot: Bool) async throws
-    {
-        let store = try Self.makeStore(suite: "pi-root-change-\(returnsToOriginalRoot)")
-        let gate = PiCatchUpCachedReadGate()
-        defer {
-            gate.release()
-            store.cancelCodexCostCatchUp()
-        }
-        let piMetadata = try #require(ProviderRegistry.shared.metadata[.pi])
-        store.settings.setProviderEnabled(provider: .pi, metadata: piMetadata, enabled: false)
-        store.settings.codexLocalSessionCostLedgerEnabled = true
-        let root = PiCatchUpScopeValue("root-A")
-        store._test_piHistoryScopeResolver = { _ in await root.read() }
-        #expect(await store.refreshPiHistoryScope(for: .codex))
-        let initialGeneration = store.piHistoryScopeGeneration
-        let oldTime = Date().addingTimeInterval(-3600)
-        store.publishTokenSnapshot(Self.snapshot(tokens: 100, now: oldTime), for: .codex)
-        let originalPublicationRevision = store.tokenSnapshotPublicationRevision(for: .codex)
-        Self.stubCompletion(on: store)
-        // A rejected completion legitimately requests another refresh. Keep that retry
-        // contained while this test checks only the obsolete publication.
-        store._test_tokenUsageRefreshOverride = { _, _ in }
-        store._test_widgetSnapshotSaveOverride = { _ in }
-        store._test_cachedCodexTokenSnapshotLoaderOverride = { _, _, _ in
-            await gate.enter()
-            return (Self.snapshot(tokens: 200, now: oldTime), oldTime, nil)
-        }
-
-        store.startCodexCostCatchUpIfNeeded(mode: .accelerated)
-        let catchUp = try #require(store.codexCostCatchUpTask)
-        await gate.waitForStart()
-        await root.set("root-B")
-        #expect(await store.refreshPiHistoryScope(for: .codex))
-        if returnsToOriginalRoot {
-            await root.set("root-A")
-            #expect(await store.refreshPiHistoryScope(for: .codex))
-        }
-        #expect(store.piHistoryScopeGeneration == initialGeneration + (returnsToOriginalRoot ? 2 : 1))
-        #expect(store.tokenSnapshotPublicationRevision(for: .codex) == originalPublicationRevision)
-        #expect(store.tokenSnapshotPublicationForCurrentProviderConfig(for: .codex) == nil)
-        store.tokenErrors[.codex] = "Error belonging to the current Pi scope"
-        gate.release()
-        await catchUp.value
-
-        #expect(store.piHistoryScopeFingerprint == (returnsToOriginalRoot ? "root-A" : "root-B"))
-        #expect(store.tokenSnapshotPublicationForCurrentProviderConfig(for: .codex) == nil)
-        #expect(store.tokenSnapshotPublicationRevision(for: .codex) == originalPublicationRevision)
-        #expect(store.tokenErrors[.codex] == "Error belonging to the current Pi scope")
-        #expect(store.codexCostCatchUpTask == nil)
-
-        // Prevent a queued retry from surviving the test's synthetic scope.
-        store.settings.costUsageEnabled = false
-        store.settings.codexLocalSessionCostLedgerEnabled = false
-        let retry = store.tokenRefreshSequenceTask
-        retry?.cancel()
-        await retry?.value
-        await Task.yield()
-        store.tokenRefreshRetryProviders.removeAll()
-        await store.widgetSnapshotPersistTask?.value
-        let relief = store.memoryPressureReliefTask
-        relief?.cancel()
-        await relief?.value
-    }
-
-    @Test
-    func `retained Pi history from another stable scope does not request immediate retries`() async throws {
-        let store = try Self.makeStore(suite: "stable-pi-scope-mismatch")
-        let piMetadata = try #require(ProviderRegistry.shared.metadata[.pi])
-        store.settings.setProviderEnabled(provider: .pi, metadata: piMetadata, enabled: true)
-        store._test_piHistoryScopeResolver = { _ in "scope-B" }
-        #expect(await store.refreshPiHistoryScope(for: .pi))
-        let now = Date()
-        let signature = store.tokenSnapshotScopeSignature(for: .pi)
-        let context = UsageStore.TokenUsageRefreshContext(
-            provider: .pi,
-            now: now,
-            historyDays: store.settings.costUsageHistoryDays,
-            costScopeSignature: signature,
-            publicationScope: store.tokenRefreshPublicationScope(
-                for: .pi,
-                historyDays: store.settings.costUsageHistoryDays,
-                costScopeSignature: signature),
-            startedAt: now)
-        let result = CostUsageTokenResult(
-            snapshot: Self.snapshot(tokens: 100, now: now.addingTimeInterval(-3600), complete: false),
-            accounting: .piOnly(scope: "scope-A"))
-
-        do {
-            try store.commitTokenUsageResult(result, context: context)
-            Issue.record("Unavailable replacement roots must surface a normal history failure")
-        } catch UsageStore.TokenSnapshotError.historyUnavailable {
-            // Expected: a periodic or explicit refresh can retry after the root is available.
-        }
-        #expect(store.tokenSnapshotPublicationForCurrentProviderConfig(for: .pi) == nil)
-        #expect(store.tokenRefreshRetryProviders.isEmpty)
-        #expect(store.tokenRefreshSequenceTask == nil)
-        store.settings.costUsageEnabled = false
     }
 
     private static func stubCompletion(on store: UsageStore) {

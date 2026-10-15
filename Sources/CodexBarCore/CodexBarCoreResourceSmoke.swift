@@ -5,7 +5,7 @@ import Foundation
 ///
 /// 0.48.0 shipped a `Bundle.module`-based resource load that trapped at launch
 /// on every machine without the build checkout. The loads are lazy, so a plain
-/// "launch and stay alive" check only catches the regression when some provider
+/// "launch and stay alive" check only catches the regression when some code
 /// happens to hit the code path within the observation window. This probe makes
 /// the check deterministic: when `CODEXBAR_RESOURCE_SMOKE=1` is set, the app
 /// forces the resource loads before any UI or AppKit setup and exits, so the
@@ -29,29 +29,8 @@ public enum CodexBarCoreResourceSmoke {
             return [CodexBarCoreResources.missingBundleMessage]
         }
 
-        if bundle.url(forResource: "provider-plugin-prelude", withExtension: "js") == nil {
-            failures.append("provider-plugin-prelude.js missing from \(bundle.bundleURL.path)")
-        }
-        let sucrase = "sucrase-\(UserProviderPluginLoader.sucraseVersion).min"
-        if bundle.url(forResource: sucrase, withExtension: "js") == nil {
-            failures.append("\(sucrase).js missing from \(bundle.bundleURL.path)")
-        }
-
-        let pluginNames = bundle.paths(forResourcesOfType: "js", inDirectory: nil)
-            .map { URL(fileURLWithPath: $0).deletingPathExtension().lastPathComponent }
-            .filter { $0 != "provider-plugin-prelude" && $0 != sucrase }
-            .sorted()
-        if pluginNames.isEmpty {
-            failures.append("no bundled provider plugin scripts found in \(bundle.bundleURL.path)")
-        }
-        // Construct one real runtime so the actual plugin-load call sites
-        // (prelude + script resolution) execute, not just URL lookups.
-        if let name = pluginNames.first {
-            do {
-                _ = try ProviderPluginRuntime(bundledPlugin: name)
-            } catch {
-                failures.append("bundled plugin runtime '\(name)' failed to load: \(error)")
-            }
+        if bundle.url(forResource: "Acknowledgements", withExtension: "json") == nil {
+            failures.append("Acknowledgements.json missing from \(bundle.bundleURL.path)")
         }
         return failures
     }

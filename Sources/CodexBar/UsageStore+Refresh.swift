@@ -42,29 +42,6 @@ extension UsageStore {
         let generation: UInt64
     }
 
-    static func commandCodeSnapshotResolvingDepletionOnEnrichmentFailure(
-        current: UsageSnapshot,
-        previous: UsageSnapshot?) -> UsageSnapshot
-    {
-        let previousProvesPaidDepletion = previous?.commandCodeHasSubscriptionPlan == true ||
-            (previous?.commandCodeSubscriptionEnrichmentUnavailable == true &&
-                previous?.commandCodeMonthlyGrantDepleted == true &&
-                previous?.tertiary?.usedPercent == 100)
-        guard current.commandCodeSubscriptionEnrichmentUnavailable,
-              current.commandCodeMonthlyGrantDepleted,
-              previousProvesPaidDepletion,
-              let previousMonthly = previous?.tertiary
-        else {
-            return current
-        }
-        let depleted = RateWindow(
-            usedPercent: 100,
-            windowMinutes: previousMonthly.windowMinutes,
-            resetsAt: previousMonthly.resetsAt,
-            resetDescription: previousMonthly.resetDescription)
-        return current.with(tertiary: depleted)
-    }
-
     func refreshForSettingsChange() async {
         _ = await ProviderInteractionContext.$current.withValue(.background) {
             await self.runRefresh(
@@ -78,11 +55,6 @@ extension UsageStore {
         // Provider-specific by design: Codex active-source correction reconciles managed profile filesystem state.
         guard provider == nil || provider == .codex else { return }
         _ = self.settings.persistResolvedCodexActiveSourceCorrectionIfNeeded()
-    }
-
-    /// Force refresh Augment session (called from UI button)
-    func forceRefreshAugmentSession() async {
-        await self.performRuntimeAction(.forceSessionRefresh, for: .augment)
     }
 
     private func providerRefreshSpec(_ provider: UsageProvider) async -> ProviderSpec? {
@@ -121,9 +93,7 @@ extension UsageStore {
             generation: request.generation,
             enablementRevision: self.settings.providerEnablementRevision(for: provider),
             configRevision: self.settings.providerConfigRevision(for: provider),
-            tokenCostScopeSignature: Self.tokenCostRequiresProviderSnapshot(provider)
-                ? self.tokenSnapshotScopeSignature(for: provider)
-                : nil,
+            tokenCostScopeSignature: nil,
             allowDisabled: allowDisabled)
         let task = Task { @MainActor [weak self] in
             guard let self else { return }
@@ -142,9 +112,7 @@ extension UsageStore {
                     generation: request.generation,
                     enablementRevision: self.settings.providerEnablementRevision(for: provider),
                     configRevision: self.settings.providerConfigRevision(for: provider),
-                    tokenCostScopeSignature: Self.tokenCostRequiresProviderSnapshot(provider)
-                        ? self.tokenSnapshotScopeSignature(for: provider)
-                        : nil,
+                    tokenCostScopeSignature: nil,
                     allowDisabled: allowDisabled)
                 snapshotUpdatedAtBeforeRefresh = self.snapshot(for: provider.instanceID)?.updatedAt
                 didStartRefresh = true
@@ -318,16 +286,6 @@ extension UsageStore {
             self.reconcileCodexWidgetAccountSnapshots()
         }
 
-        if provider == .kilo, self.shouldFanOutKiloScopes() {
-            await self.refreshKiloScopes(generation: generation)
-            guard self.isCurrentProviderRefreshGeneration(provider, generation: generation) else { return nil }
-            // Continue to also fetch the personal snapshot through the regular path
-            // so the existing single-card render keeps working when only personal is shown.
-            // The presence of multi-element kiloScopeSnapshots triggers stacked rendering.
-        } else if provider == .kilo {
-            await MainActor.run { self.kiloScopeSnapshots = [] }
-        }
-
         if provider == .claude {
             self.scheduleClaudeSwapAccountRefresh(generation: generation)
         }
@@ -481,11 +439,6 @@ extension UsageStore {
         }
         guard self.isCurrentProviderRefreshGeneration(provider, generation: context.generation) else { return nil }
         await self.applyProviderRefreshOutcome(provider: provider, outcome: outcome, context: context)
-        self.scheduleSupplementalUsageUpdate(
-            provider: provider,
-            outcome: outcome,
-            generation: context.generation,
-            accountID: context.tokenAccount?.id)
         return nil
     }
 
@@ -680,31 +633,13 @@ extension UsageStore {
             } else {
                 self.lastKnownResetSnapshots[provider.instanceID]
             }
-            // Resolve display-only allowances after any suspended request has completed.
-            let allowanceCurrent = self.resolvingCurrentCopilotAllowance(in: accountScoped, provider: provider)
             let backfilled = self.preparePublishedSnapshot(
-                allowanceCurrent, provider: provider, resetBackfillSource: resetBackfillSource, context: context)
+                accountScoped, provider: provider, resetBackfillSource: resetBackfillSource, context: context)
             let notifications = self.handleProviderRefreshNotifications(
                 provider: provider, result: result, snapshot: backfilled, context: context)
             self.lastKnownResetSnapshots[provider.instanceID] = backfilled
             self.snapshots[provider.instanceID] = backfilled
             self.widgetUsagePreservationBlockedProviders.remove(provider.instanceID)
-            if provider == .deepseek {
-                self.clearDeepSeekProfileTransition()
-            }
-            if let tokenSnapshot = self.tokenSnapshot(fromProviderSnapshot: backfilled, provider: provider) {
-                self.publishTokenSnapshot(tokenSnapshot, for: provider)
-                self.tokenErrors[provider.instanceID] = nil
-                self.tokenFailureGates[provider.instanceID]?.recordSuccess()
-            } else if provider == .xai, XAICostUsageMapping.isAnalyticsUnavailable(backfilled) {
-                // Provider-specific by design: prepaid balance without usage history is unavailable,
-                // not a confirmed-empty $0 spend row.
-                self.clearTokenSnapshot(for: provider)
-                self.tokenErrors[provider.instanceID] = nil
-            } else if Self.tokenCostRequiresProviderSnapshot(provider) {
-                self.publishConfirmedEmptyTokenSnapshot(for: provider)
-                self.tokenErrors[provider.instanceID] = nil
-            }
             self.lastSourceLabels[provider.instanceID] = result.sourceLabel
             self.recordProviderFetchSuccessErrorState(provider: provider)
             self.diagnostics[provider.instanceID] = result.diagnostic
@@ -714,9 +649,6 @@ extension UsageStore {
                     account: tokenAccount,
                     snapshot: backfilled,
                     sourceLabel: result.sourceLabel)
-            }
-            if provider == .gemini {
-                self.clearGeminiConsumerTierDeprecationObservation()
             }
             self.knownLimitsAvailabilityByProvider.removeValue(forKey: provider.instanceID)
             self.failureGates[provider.instanceID]?.recordSuccess()
@@ -788,17 +720,9 @@ extension UsageStore {
         }
         // Credential-change cleanup already ran above; cancellation is now safe to suppress.
         if Self.shouldSuppressProviderCancellation(error, priorSnapshot: self.snapshots[provider.instanceID]) {
-            if provider == .deepseek,
-               self.isCurrentProviderRefreshGeneration(provider, generation: context.generation)
-            {
-                self.markDeepSeekProfileTransitionUnavailable()
-            }
             return
         }
         guard self.isCurrentProviderRefreshGeneration(provider, generation: context.generation) else { return }
-        if provider == .deepseek {
-            self.markDeepSeekProfileTransitionUnavailable()
-        }
         self.handleCredentialOutcome(
             provider: provider,
             account: self.credentialAccount(provider: provider, context: context),
@@ -833,24 +757,12 @@ extension UsageStore {
     {
         let resetBackfillSource = provider == .codex && Self.codexPlanChanged(from: resetBackfillSource, to: snapshot)
             ? nil : resetBackfillSource
-        let profileStable = self.preservingDeepSeekProfileCatalog(in: snapshot, provider: provider)
-        let stabilized = Self.commandCodeSnapshotResolvingDepletionOnEnrichmentFailure(
-            current: profileStable,
-            previous: self.snapshots[provider.instanceID])
         return self.preservingCodexCost(
-            in: stabilized,
+            in: snapshot,
             for: provider,
             owner: context.codexExpectedGuard,
             includesCredits: context.includesCredits)
-            .backfillingResetTimesForProvider(provider, from: resetBackfillSource)
-    }
-
-    private func preservingDeepSeekProfileCatalog(
-        in snapshot: UsageSnapshot,
-        provider: UsageProvider) -> UsageSnapshot
-    {
-        guard provider == .deepseek else { return snapshot }
-        return snapshot.preservingDeepSeekPlatformProfiles(from: self.presentationSnapshot(for: .deepseek))
+            .backfillingResetTimes(from: resetBackfillSource)
     }
 
     private func bindCodexFailurePublicationOwner(
@@ -1304,39 +1216,15 @@ extension UsageStore {
         attempts: [ProviderFetchAttempt],
         context: ProviderRefreshOutcomeContext) async
     {
-        // Provider-specific by design: Grok's local fallback scans off the main thread when remote billing fails.
-        let grokLocalFallback: CostUsageTokenSnapshot? = if provider == .grok {
-            try? await self.loadGrokLocalTokenSnapshot(historyDays: SpendDashboardSource.scanDays)
-        } else {
-            nil
-        }
         guard !Task.isCancelled else { return }
         let shouldNotifyPermissionPrompt = Self.isPermissionPromptWaiting(error)
         await MainActor.run {
             guard self.isCurrentProviderRefreshGeneration(provider, generation: context.generation) else { return }
-            // Local Grok tokens remain fresh even when a billing outage retains an older quota snapshot.
-            if let local = grokLocalFallback {
-                self.snapshots[provider.instanceID] = self.snapshots[provider.instanceID]?
-                    .replacing(costUsage: .value(local))
-                self.publishTokenSnapshot(local, for: provider)
-            }
             self.diagnostics[provider.instanceID] = nil
             let restoredClaudeHistory = self.prepareClaudeHistoryFallback(
                 provider: provider,
                 usesConsumerAutoPipeline: context.claudeUsesConsumerAutoPipeline,
                 accountStateWasStable: context.claudeOAuthActiveAccountObservation != .changed)
-            if provider == .gemini, Self.isGeminiConsumerTierDeprecationError(error) {
-                // This is a durable provider migration signal, not a transient fetch failure.
-                // Surface it immediately so a cached snapshot cannot hide the required handoff.
-                self.observeGeminiConsumerTierDeprecation(from: error)
-                self.errors[provider.instanceID] = error.localizedDescription
-                self.snapshots.removeValue(forKey: provider.instanceID)
-                self.lastKnownResetSnapshots.removeValue(forKey: provider.instanceID)
-                self.knownLimitsAvailabilityByProvider.removeValue(forKey: provider.instanceID)
-                self.lastSourceLabels.removeValue(forKey: provider.instanceID)
-                self.failureGates[provider.instanceID]?.reset()
-                return
-            }
             if provider == .claude,
                ClaudeUsageError.isClaudeOAuthUsageRateLimit(error)
             {
@@ -1437,9 +1325,6 @@ extension UsageStore {
                 self.errors[provider.instanceID] = error.localizedDescription
                 if !preservesPriorData, !preservesClaudeWebSessionFailure {
                     self.snapshots.removeValue(forKey: provider.instanceID)
-                    if Self.tokenCostRequiresProviderSnapshot(provider), grokLocalFallback == nil {
-                        self.clearTokenSnapshot(for: provider)
-                    }
                 }
                 self.emitHook(
                     .refreshFailed,

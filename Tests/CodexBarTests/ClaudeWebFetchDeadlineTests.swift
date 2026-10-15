@@ -191,49 +191,6 @@ struct ClaudeWebFetchDeadlineTests {
         #expect(webFetchProbe.invocationCount == 0)
     }
 
-    @Test(.timeLimit(.minutes(1)), arguments: [Duration.milliseconds(119_990), .seconds(120), .seconds(240)])
-    func `app auto availability and fetch share one web deadline`(availabilityDuration: Duration) async {
-        let deadlineClock = ClaudeWebDeadlineClock()
-        let releaseUsage = HeldRequestGate()
-        defer { Task { await releaseUsage.open() } }
-        let context = Self.makeContext(
-            runtime: .app,
-            sourceMode: .auto,
-            webTimeout: 120,
-            cookieSource: .auto)
-        let availabilityOverride: @Sendable (ProviderFetchContext, BrowserDetection) -> Bool = { _, _ in
-            deadlineClock.advance(by: availabilityDuration)
-            return true
-        }
-        let strategy = ClaudeWebFetchStrategy(
-            browserDetection: context.browserDetection,
-            usageLoader: { _ in
-                if availabilityDuration >= .seconds(120) {
-                    Issue.record("An exhausted shared deadline must not start a usage load")
-                }
-                await releaseUsage.wait()
-                return Self.makeClaudeUsage()
-            },
-            deadlineNow: { deadlineClock.now() })
-
-        let available = await ClaudeWebFetchStrategy.$availabilityProbeOverrideForTesting.withValue(
-            availabilityOverride)
-        {
-            await strategy.isAvailable(context)
-        }
-        #expect(available)
-
-        do {
-            _ = try await strategy.fetch(context)
-            Issue.record("Expected only the remaining shared web deadline")
-        } catch let error as ClaudeWebFetchStrategyError {
-            #expect(error == .timedOut(seconds: 120))
-        } catch {
-            Issue.record("Unexpected error: \(error)")
-        }
-        #expect(await releaseUsage.isOpen == false)
-    }
-
     @Test
     func `CLI auto timeout cancels web and falls back to CLI`() async throws {
         let probe = ClaudeWebDeadlineProbe()

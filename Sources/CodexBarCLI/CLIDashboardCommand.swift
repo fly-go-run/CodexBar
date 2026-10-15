@@ -106,31 +106,17 @@ struct DashboardSnapshotProducer: Sendable {
                     selection: .custom(providers),
                     context: context.usage)
             },
-            collectCost: { providers, config in
+            collectCost: { providers, _ in
                 let costFetcher = CostUsageFetcher()
-                let piSessionProcessContexts = await CodexBarCLI.piSessionProcessContextsForCost(
+                return await CodexBarCLI.serveCollectCostPayloads(
                     providers: providers,
-                    includePiSessions: true)
-                return await CodexBarCLI.collectConfiguredCostPayloads(
-                    providers: providers,
-                    config: config,
                     context: context.costCollection)
-                { provider, cursorCookieHeaderOverride in
+                { provider in
                     do {
                         let snapshot = try await costFetcher.loadTokenSnapshot(
                             provider: provider,
-                            antigravityAdditionalProfileHomes:
-                            config.providerConfig(for: provider.instanceID)?.antigravityAdditionalProfileHomes ?? [],
                             forceRefresh: false,
-                            cursorCookieHeaderOverride: cursorCookieHeaderOverride,
-                            refreshPricingInBackground: context.costRefreshesPricingInBackground,
-                            includePiSessions: CodexBarCLI.costIncludePiSessions(
-                                provider: provider,
-                                selectedProviders: providers,
-                                groupBy: .none,
-                                format: .json,
-                                includePiSessions: true),
-                            piSessionProcessContexts: piSessionProcessContexts)
+                            refreshPricingInBackground: context.costRefreshesPricingInBackground)
                         return CodexBarCLI.makeCostPayload(provider: provider, snapshot: snapshot, error: nil)
                     } catch {
                         return CodexBarCLI.makeCostPayload(provider: provider, snapshot: nil, error: error)
@@ -408,7 +394,6 @@ extension CodexBarCLI {
     {
         await providerOperations.shutdown()
         await costOperations.shutdown()
-        await ProviderCLISessionLifecycle.shutdownPersistentSessions()
         TTYCommandRunner.terminateActiveProcessesForAppShutdown()
     }
 }

@@ -509,7 +509,6 @@ extension CostUsageStoreReadWorkTests {
                 now: fixture.now,
                 historyDays: 1,
                 allowPricingRefresh: false,
-                includePiSessions: false,
                 scannerOptions: fixture.options)
         }
         #expect(snapshot == fixture.fullCachedSnapshot())

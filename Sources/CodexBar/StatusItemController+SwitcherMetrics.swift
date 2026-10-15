@@ -17,8 +17,6 @@ extension StatusItemController {
         let presentation = ProviderDescriptorRegistry.descriptor(for: provider).presentation
         let window: RateWindow? = if preference == .monthlyPlan {
             metric
-        } else if provider == .mistral {
-            nil
         } else if preference == .automatic,
                   let metric,
                   presentation.switcherUsesAutomaticMenuBarWindow

@@ -15,7 +15,6 @@ struct ProviderPayload: Encodable {
     let rateWindowLabels: ProviderWindowLabelsPayload?
     let credits: CreditsSnapshot?
     let resetCredits: ProviderResetCreditsPayload?
-    let antigravityPlanInfo: AntigravityPlanInfoSummary?
     let openaiDashboard: OpenAIDashboardSnapshot?
     let diagnostic: String?
     let error: ProviderErrorPayload?
@@ -31,7 +30,6 @@ struct ProviderPayload: Encodable {
         case rateWindowLabels
         case credits
         case resetCredits
-        case antigravityPlanInfo
         case openaiDashboard
         case diagnostic
         case error
@@ -47,7 +45,6 @@ struct ProviderPayload: Encodable {
         status: ProviderStatusPayload?,
         usage: UsageSnapshot?,
         credits: CreditsSnapshot?,
-        antigravityPlanInfo: AntigravityPlanInfoSummary?,
         openaiDashboard: OpenAIDashboardSnapshot?,
         error: ProviderErrorPayload?,
         diagnostic: String? = nil,
@@ -62,7 +59,6 @@ struct ProviderPayload: Encodable {
             status: status,
             usage: usage,
             credits: credits,
-            antigravityPlanInfo: antigravityPlanInfo,
             openaiDashboard: openaiDashboard,
             error: error,
             diagnostic: diagnostic,
@@ -78,7 +74,6 @@ struct ProviderPayload: Encodable {
         status: ProviderStatusPayload?,
         usage: UsageSnapshot?,
         credits: CreditsSnapshot?,
-        antigravityPlanInfo: AntigravityPlanInfoSummary?,
         openaiDashboard: OpenAIDashboardSnapshot?,
         error: ProviderErrorPayload?,
         diagnostic: String? = nil,
@@ -94,7 +89,6 @@ struct ProviderPayload: Encodable {
         self.rateWindowLabels = Self.makeRateWindowLabels(providerID: providerID, usage: usage)
         self.credits = credits
         self.resetCredits = usage?.codexResetCredits.map { ProviderResetCreditsPayload($0) }
-        self.antigravityPlanInfo = antigravityPlanInfo
         self.openaiDashboard = openaiDashboard
         self.diagnostic = diagnostic
         self.error = error
