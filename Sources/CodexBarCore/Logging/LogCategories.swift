@@ -19,7 +19,6 @@ public enum LogCategories {
     public static let creditsPurchase = "creditsPurchase"
     public static let hooks = "hooks"
     public static let keychainCache = "keychain-cache"
-    public static let keychainMigration = "keychain-migration"
     public static let keychainPreflight = "keychain-preflight"
     public static let keychainPrompt = "keychain-prompt"
     public static let launchAtLogin = "launch-at-login"

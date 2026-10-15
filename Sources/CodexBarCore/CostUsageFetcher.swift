@@ -136,45 +136,6 @@ public struct CostUsageFetcher: Sendable {
             scannerOptions: self.scannerOptions(calendar: calendar))
     }
 
-    public func loadCachedCodexLocalProjectUsageSnapshot(
-        now: Date = Date(),
-        codexHomePath: String? = nil,
-        historyDays: Int = 30,
-        hidePersonalInfo: Bool) async -> CodexLocalProjectUsageSnapshot?
-    {
-        await Self.loadCachedCodexLocalProjectUsageSnapshot(
-            now: now,
-            codexHomePath: codexHomePath,
-            historyDays: historyDays,
-            hidePersonalInfo: hidePersonalInfo,
-            scannerOptions: self.scannerOptions)
-    }
-
-    public func loadCodexLocalProjectUsageSnapshot(
-        now: Date = Date(),
-        forceRefresh: Bool = false,
-        codexHomePath: String? = nil,
-        historyDays: Int = 30,
-        hidePersonalInfo: Bool,
-        progress: (@Sendable (CodexLocalProjectUsageIndexProgress) -> Void)? = nil)
-        async throws -> CodexLocalProjectUsageSnapshot
-    {
-        try await Self.loadCodexLocalProjectUsageSnapshot(
-            now: now,
-            forceRefresh: forceRefresh,
-            codexHomePath: codexHomePath,
-            historyDays: historyDays,
-            hidePersonalInfo: hidePersonalInfo,
-            progress: progress,
-            scannerOptions: self.scannerOptions)
-    }
-
-    public func clearCachedCodexLocalProjectUsageSnapshot(codexHomePath: String? = nil) async {
-        await Self.clearCachedCodexLocalProjectUsageSnapshot(
-            codexHomePath: codexHomePath,
-            scannerOptions: self.scannerOptions)
-    }
-
     package func loadTokenSnapshot(
         provider: UsageProvider,
         environment: [String: String] = ProcessInfo.processInfo.environment,
@@ -913,74 +874,6 @@ public struct CostUsageFetcher: Sendable {
     /// Providers whose token-cost snapshot `loadTokenSnapshot` can produce.
     static func supportsTokenSnapshot(_ provider: UsageProvider) -> Bool {
         ProviderDescriptorRegistry.descriptor(for: provider).tokenCost.supportsTokenSnapshot
-    }
-
-    static func loadCachedCodexLocalProjectUsageSnapshot(
-        now: Date = Date(),
-        codexHomePath: String? = nil,
-        historyDays: Int = 30,
-        hidePersonalInfo: Bool,
-        scannerOptions overrideScannerOptions: CostUsageScanner.Options? = nil) async -> CodexLocalProjectUsageSnapshot?
-    {
-        let cachedSnapshot: CodexLocalProjectUsageSnapshot?? = try? await CostUsageScanExecutor.run { _ in
-            let options = Self.codexLocalScannerOptions(
-                codexHomePath: codexHomePath,
-                overrideScannerOptions: overrideScannerOptions)
-            return CodexLocalProjectUsageIndexer.cachedSnapshot(
-                now: now,
-                historyDays: historyDays,
-                options: CodexLocalProjectUsageIndexer.Options(scannerOptions: options))
-        }
-        return cachedSnapshot.flatMap(\.self)?.hidingPersonalInformation(hidePersonalInfo)
-    }
-
-    static func loadCodexLocalProjectUsageSnapshot(
-        now: Date = Date(),
-        forceRefresh: Bool = false,
-        codexHomePath: String? = nil,
-        historyDays: Int = 30,
-        hidePersonalInfo: Bool,
-        progress: (@Sendable (CodexLocalProjectUsageIndexProgress) -> Void)? = nil,
-        scannerOptions overrideScannerOptions: CostUsageScanner
-            .Options? = nil) async throws -> CodexLocalProjectUsageSnapshot
-    {
-        let options = Self.codexLocalScannerOptions(
-            codexHomePath: codexHomePath,
-            overrideScannerOptions: overrideScannerOptions)
-        let scanOptions = options
-        let snapshot = try await CostUsageScanExecutor.run { checkCancellation in
-            try CodexLocalProjectUsageIndexer.loadSnapshot(
-                now: now,
-                historyDays: historyDays,
-                forceRefresh: forceRefresh,
-                options: CodexLocalProjectUsageIndexer.Options(scannerOptions: scanOptions),
-                progress: progress,
-                checkCancellation: checkCancellation)
-        }
-        return snapshot.hidingPersonalInformation(hidePersonalInfo)
-    }
-
-    static func clearCachedCodexLocalProjectUsageSnapshot(
-        codexHomePath: String? = nil,
-        scannerOptions overrideScannerOptions: CostUsageScanner.Options? = nil) async
-    {
-        _ = try? await CostUsageScanExecutor.run { _ in
-            let options = Self.codexLocalScannerOptions(
-                codexHomePath: codexHomePath,
-                overrideScannerOptions: overrideScannerOptions)
-            CodexWorkspaceUsageSidecar(cacheRoot: options.cacheRoot).clear()
-        }
-    }
-
-    private static func codexLocalScannerOptions(
-        codexHomePath: String?,
-        overrideScannerOptions: CostUsageScanner.Options?) -> CostUsageScanner.Options
-    {
-        let options = Self.resolvedScannerOptions(
-            overrideScannerOptions,
-            provider: .codex, // Provider-specific by design: local history belongs to the selected Codex home.
-            codexHomePath: codexHomePath)
-        return CodexLocalDataScope.resolve(options: options).applying(to: options)
     }
 
     static func tokenSnapshot(

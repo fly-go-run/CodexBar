@@ -157,8 +157,8 @@ final class StatusMenuAppearanceNativeProofTests: XCTestCase {
         XCTAssertEqual(allMatched, environment["CODEXBAR_APPEARANCE_EXPECT_FIXED"] == "1")
     }
 
-    private static func makeFixture() throws -> CodexWorkspacesNavigationFixture {
-        let fixture = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+    private static func makeFixture() throws -> CodexMenuTestFixture {
+        let fixture = try CodexMenuTestFixture(userDefaults: InMemoryUserDefaults())
         fixture.settings.mergeIcons = true
         fixture.settings.selectedMenuProvider = .codex
         fixture.settings.setProviderEnabled(

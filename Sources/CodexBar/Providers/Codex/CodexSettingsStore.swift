@@ -76,10 +76,6 @@ extension SettingsStore {
         return account
     }
 
-    var activeManagedCodexRemoteHomePath: String? {
-        self.managedCodexRemoteHomePath(forActiveSource: self.codexResolvedActiveSource)
-    }
-
     func liveSystemCodexHomePath(forActiveSource source: CodexActiveSource) -> String? {
         guard source == .liveSystem else {
             return nil
@@ -126,17 +122,6 @@ extension SettingsStore {
             return accounts.account(id: id)?.managedHomePath ?? Self.failClosedManagedCodexHomePath()
         } catch {
             return Self.failClosedManagedCodexHomePath()
-        }
-    }
-
-    var activeManagedCodexCookieCacheScope: CookieHeaderCache.Scope? {
-        switch self.managedCodexAccountStoreState() {
-        case let .selected(account):
-            .managedAccount(account.id)
-        case .unreadable:
-            .managedStoreUnreadable
-        case .none:
-            nil
         }
     }
 

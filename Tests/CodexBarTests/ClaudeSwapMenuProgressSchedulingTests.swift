@@ -123,7 +123,7 @@ struct ClaudeSwapMenuProgressSchedulingTests {
 
 @MainActor
 private final class ClaudeSwapMenuProgressFixture {
-    let navigation: CodexWorkspacesNavigationFixture
+    let navigation: CodexMenuTestFixture
     let controller: StatusItemController
     let menu: NSMenu
     let executable: URL
@@ -145,7 +145,7 @@ private final class ClaudeSwapMenuProgressFixture {
     }
 
     init() throws {
-        let navigation = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let navigation = try CodexMenuTestFixture(userDefaults: InMemoryUserDefaults())
         self.navigation = navigation
         let executable = navigation.files.root.appendingPathComponent("cswap-menu-progress")
         self.executable = executable

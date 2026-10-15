@@ -6,7 +6,7 @@ import XCTest
 /// Uses only pre-existing store/task seams so the identical fixture can also prove the unfixed baseline.
 @MainActor
 final class ClaudeSwapProgressNativeProofFixture {
-    let navigation: CodexWorkspacesNavigationFixture
+    let navigation: CodexMenuTestFixture
     let executable: URL
     let refreshGate = ClaudeSwapProgressNativeRefreshGate()
     let targetID = ProviderAccountIdentity(source: ClaudeSwapAccountProjection.sourceName, opaqueID: "2")
@@ -37,7 +37,7 @@ final class ClaudeSwapProgressNativeProofFixture {
     }
 
     init() throws {
-        let navigation = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        let navigation = try CodexMenuTestFixture(userDefaults: InMemoryUserDefaults())
         self.navigation = navigation
         let executable = navigation.files.root.appendingPathComponent("synthetic-cswap-native")
         self.executable = executable

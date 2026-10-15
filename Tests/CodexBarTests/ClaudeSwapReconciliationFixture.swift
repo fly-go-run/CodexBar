@@ -5,7 +5,7 @@ import Testing
 
 @MainActor
 final class ClaudeSwapReconciliationFixture {
-    let navigation: CodexWorkspacesNavigationFixture
+    let navigation: CodexMenuTestFixture
     let executable: URL
     let ambientGate = ClaudeSwapReconciliationAmbientGate()
     let targetID = ProviderAccountIdentity(source: ClaudeSwapAccountProjection.sourceName, opaqueID: "2")
@@ -31,7 +31,7 @@ final class ClaudeSwapReconciliationFixture {
     }
 
     init(failure: ClaudeSwapReconciliationFailure) throws {
-        self.navigation = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        self.navigation = try CodexMenuTestFixture(userDefaults: InMemoryUserDefaults())
         self.executable = self.navigation.files.root.appendingPathComponent("cswap-reconciliation")
         self.executables = [self.executable]
         do {

@@ -15,10 +15,6 @@ extension UsageStore {
         self.enabledProvidersForDisplay().compactMap(\.firstPartyProvider)
     }
 
-    func enabledFirstPartyProvidersForBackgroundWork() -> [UsageProvider] {
-        self.enabledProvidersForBackgroundWork().compactMap(\.firstPartyProvider)
-    }
-
     func version(for provider: UsageProvider) -> String? {
         self.versions[provider.instanceID]
     }
@@ -63,26 +59,12 @@ extension UsageStore {
         return nil
     }
 
-    var lastCodexError: String? {
-        // Provider-specific by design: Codex dashboard and credits surfaces expose separate app-owned error lanes.
-        self.errors[.codex]
-    }
-
-    var userFacingLastCodexError: String? {
-        self.userFacingError(for: .codex)
-    }
-
     var userFacingLastCreditsError: String? {
         CodexUIErrorMapper.userFacingMessage(self.lastCreditsError)
     }
 
     var userFacingLastOpenAIDashboardError: String? {
         CodexUIErrorMapper.userFacingMessage(self.lastOpenAIDashboardError)
-    }
-
-    var lastClaudeError: String? {
-        // Provider-specific by design: Claude swap/account surfaces consume the active Claude error lane directly.
-        self.errors[.claude]
     }
 
     func error(for provider: UsageProvider) -> String? {

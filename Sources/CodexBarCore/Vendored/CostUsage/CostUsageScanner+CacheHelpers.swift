@@ -192,7 +192,7 @@ extension CostUsageScanner {
         updated.codexRows = Self.codexRowsWithPricingMetadata(
             rows,
             priorityTurns: priorityTurns)
-        return updated.refreshingCodexWorkspaceUsageFingerprint()
+        return updated
     }
 
     static func codexRowsWithPricingMetadata(
@@ -376,7 +376,7 @@ extension CostUsageScanner {
             Self.mapOutsideScanWindow(usage.codexPriorityTokens, range: context.range), modeTokens.priority)
         updated.codexTurnIDs = Self.codexTurnIDs(rows: rows)
         updated.codexRows = rows
-        return updated.refreshingCodexWorkspaceUsageFingerprint()
+        return updated
     }
 
     static func mergeMaps<Value: AdditiveArithmetic>(
@@ -889,7 +889,6 @@ extension CostUsageScanner {
             codexRequestLedgerState: delta.requestLedgerState,
             codexBufferedSubagentLines: delta.bufferedSubagentLines,
             codexBufferedUnresolvedForkLines: delta.bufferedUnresolvedForkLines)
-            .refreshingCodexWorkspaceUsageFingerprint()
         fileUsage.codexNextUsageRowIndex = delta.nextUsageRowIndex
         Self.retainCodexSourcePricing(
             &fileUsage,
@@ -1046,7 +1045,6 @@ extension CostUsageScanner {
             codexRequestLedgerState: parsed.requestLedgerState,
             codexBufferedSubagentLines: parsed.bufferedSubagentLines,
             codexBufferedUnresolvedForkLines: parsed.bufferedUnresolvedForkLines)
-            .refreshingCodexWorkspaceUsageFingerprint()
         fileUsage.codexNextUsageRowIndex = parsed.nextUsageRowIndex
         Self.retainCodexSourcePricing(&fileUsage, pricing: sourcePricing, anchor: sourceAnchor)
         fileUsage.codexPendingPricing = pendingPricing.isEmpty

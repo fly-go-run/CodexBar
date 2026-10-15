@@ -40,8 +40,7 @@ extension StatusItemController {
 
     func makeMenuDescriptor(
         provider: UsageProvider?,
-        includeContextualActions: Bool,
-        codexWorkspacesMenuEnabled: Bool = CodexWorkspacesMenuAvailability.isEnabledForCurrentProcess) -> MenuDescriptor
+        includeContextualActions: Bool) -> MenuDescriptor
     {
         MenuDescriptor.build(
             provider: provider,
@@ -55,7 +54,6 @@ extension StatusItemController {
             isInstallingUpdate: self.updater.updateStatus.isInstalling,
             canCheckForUpdates: self.updater.isAvailable,
             includeContextualActions: includeContextualActions,
-            codexWorkspacesMenuEnabled: codexWorkspacesMenuEnabled,
             isKeepingAwake: self.agentSessions.isKeepingAwake,
             agentSessionsEnabled: self.settings.agentSessionsEnabled,
             agentSessionLabelStyle: self.settings.agentSessionLabelStyle,
@@ -159,8 +157,6 @@ extension StatusItemController {
             "openTerminal:\(command)"
         case let .loginToProvider(url):
             "loginToProvider:\(url)"
-        case .openCodexWorkspaces:
-            self.windowMenuAction(for: action).1
         case .settings:
             "settings"
         case let .providerSettings(provider):

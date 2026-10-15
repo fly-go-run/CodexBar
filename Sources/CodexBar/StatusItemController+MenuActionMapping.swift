@@ -16,8 +16,6 @@ extension StatusItemController {
         case let .switchAccount(provider): (#selector(self.runSwitchAccount(_:)), provider.rawValue)
         case let .openTerminal(command): (#selector(self.openTerminalCommand(_:)), command)
         case let .loginToProvider(url): (#selector(self.openLoginToProvider(_:)), url)
-        case .openCodexWorkspaces:
-            self.windowMenuAction(for: action)
         case .settings: (#selector(self.showSettingsGeneral), nil)
         case let .providerSettings(provider): (#selector(self.showProviderSettings(_:)), provider.rawValue)
         case .about: (#selector(self.showSettingsAbout), nil)
@@ -25,15 +23,6 @@ extension StatusItemController {
         case let .copyError(message): (#selector(self.copyError(_:)), message)
         case let .focusAgentSession(session, remoteHost):
             (#selector(self.focusAgentSession(_:)), [session.id, remoteHost ?? ""])
-        }
-    }
-
-    func windowMenuAction(for action: MenuDescriptor.MenuAction) -> (Selector, String) {
-        switch action {
-        case .openCodexWorkspaces:
-            (#selector(self.openCodexWorkspaces(_:)), CodexWorkspacesWindowIdentity.menuItem)
-        default:
-            preconditionFailure("Expected a window menu action")
         }
     }
 

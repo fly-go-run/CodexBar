@@ -62,8 +62,8 @@ Current `main` has two independent refresh paths:
 
 Relevant implementation seams:
 
-- `Sources/AdaptiveRefreshCore/AdaptiveRefreshPolicyCore.swift`: canonical package-internal policy table shared by the
-  app adapter and offline replay tooling.
+- `Sources/AdaptiveRefreshCore/AdaptiveRefreshPolicyCore.swift`: canonical package-internal policy table used by the
+  app adapter.
 - `Sources/CodexBar/SettingsStore.swift`: `RefreshFrequency` and fixed interval mapping.
 - `Sources/CodexBar/UsageStore.swift`: timer ownership and provider-batch refresh.
 - `Sources/CodexBar/AgentSessionsStore.swift`: 30-second local scan ownership and timestamp-only Adaptive projection.
@@ -328,7 +328,7 @@ Any of those requires its own evidence and product/privacy review.
 
 ## Local replay follow-up (2026-07-10, evidence only)
 
-This follow-up adds offline replay tooling only. It does not add app-side recording, persistent diagnostic storage,
+This follow-up added offline replay tooling only (that tooling, `AdaptiveReplayCLI` and `AdaptiveReplayKit`, has since been removed from the repository; the results below remain as recorded evidence). It does not add app-side recording, persistent diagnostic storage,
 transcript-directory scanning, or a new production-policy input. The evaluated 1,780-record snapshot came from local
 experimental instrumentation that is not part of this change. Its SHA-256 is
 `b1e4aa33180b7c177293eb9ed16b45e24e026d259600fba2b1b67b931b904f0b`; the raw trace remains local.

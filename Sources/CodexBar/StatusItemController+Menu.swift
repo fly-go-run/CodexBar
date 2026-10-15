@@ -354,7 +354,6 @@ extension StatusItemController {
             self.menuLogger.debug("populateMenu(open): rebuilding whole menu and replacing provider switcher")
         }
         #endif
-        MenuSwitchFlickerProbe.debugLog("full-rebuild-path \(String(describing: switcherSelection))")
         self.rebuildMenuContent(
             menu,
             context: MenuRebuildContext(
@@ -963,7 +962,6 @@ extension StatusItemController {
             },
             onSelect: { [weak self, weak menu] selection in
                 guard let self, let menu else { return }
-                MenuSwitchFlickerProbe.debugLog("onSelect \(selection)")
                 var provider: UsageProvider?
                 self.preservingMergedSwitcherContentCachesDuringInvalidation {
                     switch selection {

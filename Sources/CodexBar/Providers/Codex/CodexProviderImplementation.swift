@@ -259,9 +259,6 @@ struct CodexProviderImplementation: ProviderImplementation {
 
     @MainActor
     func appendActionMenuEntries(context: ProviderMenuActionContext, entries: inout [ProviderMenuEntry]) {
-        if context.codexWorkspacesMenuEnabled {
-            entries.append(.action(L("Workspaces"), .openCodexWorkspaces))
-        }
         if let note = context.codexAccountPromotionCoordinator?.daemonRestartNote {
             entries.append(.text(note, .secondary))
         }

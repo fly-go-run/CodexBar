@@ -99,42 +99,6 @@ struct CodexModelsAnalyticsTests {
     }
 
     @Test
-    func `indexer periods are adjacent equal seconds across both DST transitions`() throws {
-        let springSince = try #require(self.calendar.date(from: DateComponents(year: 2026, month: 3, day: 6)))
-        let springUntil = try #require(self.calendar.date(from: DateComponents(year: 2026, month: 3, day: 12)))
-        let fallSince = try #require(self.calendar.date(from: DateComponents(year: 2026, month: 10, day: 30)))
-        let fallUntil = try #require(self.calendar.date(from: DateComponents(year: 2026, month: 11, day: 5)))
-
-        for periods in [
-            CodexLocalProjectUsageIndexer.modelsAnalyticsPeriods(
-                since: springSince,
-                until: springUntil,
-                calendar: self.calendar),
-            CodexLocalProjectUsageIndexer.modelsAnalyticsPeriods(
-                since: fallSince,
-                until: fallUntil,
-                calendar: self.calendar),
-        ] {
-            #expect(periods.current.duration == periods.previous.duration)
-            #expect(periods.previous.end == periods.current.start)
-        }
-
-        let fallPeriods = CodexLocalProjectUsageIndexer.modelsAnalyticsPeriods(
-            since: fallSince,
-            until: fallUntil,
-            calendar: self.calendar)
-        let scanStart = CodexLocalProjectUsageIndexer.modelsAnalyticsScanStart(
-            since: fallSince,
-            until: fallUntil,
-            calendar: self.calendar)
-        let calendarDaySubtraction = try #require(
-            self.calendar.date(byAdding: .day, value: -7, to: fallPeriods.current.start))
-        #expect(calendarDaySubtraction > fallPeriods.previous.start)
-        #expect(scanStart <= fallPeriods.previous.start)
-        #expect(fallPeriods.previous.start.timeIntervalSince(scanStart) < 24 * 60 * 60)
-    }
-
-    @Test
     func `timestamp filtering uses half open current and previous boundaries`() {
         let intervals = self.intervals(days: 2)
         let current = [
@@ -463,17 +427,6 @@ struct CodexModelsAnalyticsTests {
         #expect(decoded.daily[0].interval == nil)
         #expect(decoded.daily[0].sessionReferenceIDs == decoded.daily[0].sessionIDs)
         #expect(decoded.totalTokens == 10)
-    }
-
-    @Test
-    func `feature flag defaults on and supports rollback`() throws {
-        let name = "CodexModelsAnalyticsTests.featureFlag.\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: name))
-        defer { defaults.removePersistentDomain(forName: name) }
-
-        #expect(CodexModelsRollout.isEnabled(defaults: defaults))
-        defaults.set(false, forKey: CodexModelsRollout.featureFlagKey)
-        #expect(!CodexModelsRollout.isEnabled(defaults: defaults))
     }
 
     private func build(

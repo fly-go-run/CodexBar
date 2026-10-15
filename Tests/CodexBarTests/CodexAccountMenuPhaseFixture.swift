@@ -6,7 +6,7 @@ import Testing
 
 @MainActor
 struct CodexAccountMenuPhaseFixture {
-    let navigation: CodexWorkspacesNavigationFixture
+    let navigation: CodexMenuTestFixture
     let gate = CodexAccountMenuPhaseGate()
     let managedID = UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-111111111111")!
 
@@ -19,7 +19,7 @@ struct CodexAccountMenuPhaseFixture {
     }
 
     init() throws {
-        self.navigation = try CodexWorkspacesNavigationFixture(userDefaults: InMemoryUserDefaults())
+        self.navigation = try CodexMenuTestFixture(userDefaults: InMemoryUserDefaults())
         let settings = self.settings
         settings.mergeIcons = true
         settings.selectedMenuProvider = .codex

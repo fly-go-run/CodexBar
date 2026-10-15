@@ -5,24 +5,15 @@ import Testing
 @testable import CodexBar
 
 @MainActor
-struct CodexWorkspacesNavigationFixture {
+struct CodexMenuTestFixture {
     let files: CostUsageTestEnvironment
     let settings: SettingsStore
     let store: UsageStore
 
-    var inspectorConfiguration: CodexWorkspacesInspectorModel.Configuration {
-        let scope = self.store.tokenCostScope(for: .codex)
-        return .init(
-            codexHomePath: scope.codexHomePath,
-            scopeSignature: scope.signature,
-            historyDays: self.settings.costUsageHistoryDays,
-            hidePersonalInfo: self.settings.hidePersonalInfo)
-    }
-
     init(userDefaults: UserDefaults? = nil) throws {
         self.files = try CostUsageTestEnvironment()
         self.settings = testSettingsStore(
-            suiteName: "CodexWorkspacesNavigationTests",
+            suiteName: "CodexMenuTestFixture",
             userDefaults: userDefaults,
             config: CodexBarConfig(providers: UsageProvider.allCases.map {
                 ProviderConfig(id: $0.instanceID, enabled: $0 == .codex)

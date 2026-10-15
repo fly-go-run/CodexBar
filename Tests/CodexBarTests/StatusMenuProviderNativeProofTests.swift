@@ -11,7 +11,7 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
     private static func nativeReceipt(
         menu: NSMenu,
         host: NSWindow,
-        fixture: CodexWorkspacesNavigationFixture,
+        fixture: CodexMenuTestFixture,
         controller: StatusItemController) -> [String: String]
     {
         let overviewRow = menu.items.first {
@@ -84,7 +84,7 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
             .write(to: directory.appendingPathComponent("benchmark.json"), options: .atomic)
     }
 
-    private static func seedCompactAccounts(in fixture: CodexWorkspacesNavigationFixture) {
+    private static func seedCompactAccounts(in fixture: CodexMenuTestFixture) {
         fixture.settings.multiAccountMenuLayout = .stacked
         for index in 0..<5 {
             fixture.settings.addTokenAccount(
@@ -114,7 +114,7 @@ final class StatusMenuProviderNativeProofTests: XCTestCase {
         }
     }
 
-    private static func seedOverviewHistory(in fixture: CodexWorkspacesNavigationFixture) {
+    private static func seedOverviewHistory(in fixture: CodexMenuTestFixture) {
         fixture.settings.costUsageEnabled = true
         fixture.settings.costSummaryDisplayStyle = .both
         let now = Date()

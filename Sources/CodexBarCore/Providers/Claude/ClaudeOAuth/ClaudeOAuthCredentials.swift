@@ -1765,39 +1765,6 @@ public enum ClaudeOAuthCredentialsStore {
         return true
     }
 
-    public static func authFingerprintToken(
-        environment: [String: String] = ProcessInfo.processInfo.environment) -> String
-    {
-        let file = self.credentialsFileFingerprintToken(environment: environment) ?? "nil"
-        let keychain = self.claudeKeychainFingerprintToken() ?? "nil"
-        return "file=\(file)|keychain=\(keychain)"
-    }
-
-    public static func consumeClaudeKeychainFingerprintChangeWithoutPrompt() -> Bool {
-        let current: ClaudeKeychainFingerprint?
-        switch self.probeClaudeKeychainFingerprintWithoutPrompt() {
-        case .unavailable:
-            return false
-        case let .value(fingerprint):
-            current = fingerprint
-        }
-        let stored = self.loadClaudeKeychainFingerprint()
-        guard current != stored else { return false }
-        self.saveClaudeKeychainFingerprint(current)
-        return true
-    }
-
-    public static func claudeKeychainFingerprintChangedWithoutConsuming() -> Bool {
-        let current: ClaudeKeychainFingerprint?
-        switch self.probeClaudeKeychainFingerprintWithoutPrompt() {
-        case .unavailable:
-            return false
-        case let .value(fingerprint):
-            current = fingerprint
-        }
-        return current != self.loadClaudeKeychainFingerprint()
-    }
-
     public static func claudeKeychainFingerprintToken() -> String? {
         let fingerprint: ClaudeKeychainFingerprint? = switch self.probeClaudeKeychainFingerprintWithoutPrompt() {
         case .unavailable:
@@ -2224,11 +2191,6 @@ public enum ClaudeOAuthCredentialsStore {
                 allowKeychainPrompt: true)
         }
         return try self.loadFromClaudeKeychainUsingSecurityFramework()
-    }
-
-    /// Legacy alias for backward compatibility
-    public static func loadFromKeychain() throws -> Data {
-        try self.loadFromClaudeKeychain()
     }
 
     private static func loadFromClaudeKeychainUsingSecurityFramework(

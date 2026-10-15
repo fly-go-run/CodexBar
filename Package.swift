@@ -28,8 +28,6 @@ let package = Package(
         var products: [Product] = [
             .library(name: "CodexBarCore", targets: ["CodexBarCore"]),
             .executable(name: "CodexBarCLI", targets: ["CodexBarCLI"]),
-            // Offline adaptive-refresh replay harness. Keep the supporting library package-internal.
-            .executable(name: "AdaptiveReplayCLI", targets: ["AdaptiveReplayCLI"]),
         ]
 
         #if os(macOS)
@@ -37,7 +35,6 @@ let package = Package(
             .executable(name: "CodexBar", targets: ["CodexBar"]),
             .executable(name: "CodexBarClaudeWatchdog", targets: ["CodexBarClaudeWatchdog"]),
             .executable(name: "CodexBarWidget", targets: ["CodexBarWidget"]),
-            .executable(name: "CodexBarClaudeWebProbe", targets: ["CodexBarClaudeWebProbe"]),
         ])
         #endif
 
@@ -98,47 +95,13 @@ let package = Package(
                     .enableUpcomingFeature("StrictConcurrency"),
                 ],
                 linkerSettings: sqlite3LinkerSettings),
-            // Sole owner of the adaptive refresh decision table. Package-internal so the app and
-            // offline replay tool share behavior without publishing another library product.
+            // Sole owner of the adaptive refresh decision table. Package-internal; not published as a library product.
             .target(
                 name: "AdaptiveRefreshCore",
                 dependencies: [],
                 path: "Sources/AdaptiveRefreshCore",
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
-                ]),
-            // Offline adaptive-refresh replay harness: pure Foundation,
-            // no CodexBar/CodexBarCore dependency, so it builds anywhere CodexBarCore does.
-            .target(
-                name: "AdaptiveReplayKit",
-                dependencies: ["AdaptiveRefreshCore"],
-                path: "Sources/AdaptiveReplayKit",
-                exclude: ["README.md"],
-                swiftSettings: [
-                    .enableUpcomingFeature("StrictConcurrency"),
-                ]),
-            .executableTarget(
-                name: "AdaptiveReplayCLI",
-                dependencies: ["AdaptiveReplayKit"],
-                path: "Sources/AdaptiveReplayCLI",
-                swiftSettings: [
-                    .enableUpcomingFeature("StrictConcurrency"),
-                ]),
-            .testTarget(
-                name: "AdaptiveReplayCLITests",
-                dependencies: ["AdaptiveReplayCLI", "AdaptiveReplayKit"],
-                path: "Tests/AdaptiveReplayCLITests",
-                swiftSettings: [
-                    .enableUpcomingFeature("StrictConcurrency"),
-                    .enableExperimentalFeature("SwiftTesting"),
-                ]),
-            .testTarget(
-                name: "AdaptiveReplayKitTests",
-                dependencies: ["AdaptiveRefreshCore", "AdaptiveReplayKit"],
-                path: "Tests/AdaptiveReplayKitTests",
-                swiftSettings: [
-                    .enableUpcomingFeature("StrictConcurrency"),
-                    .enableExperimentalFeature("SwiftTesting"),
                 ]),
             .testTarget(
                 name: "CodexBarLinuxTests",
@@ -191,13 +154,6 @@ let package = Package(
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
                 ]),
-            .executableTarget(
-                name: "CodexBarClaudeWebProbe",
-                dependencies: ["CodexBarCore"],
-                path: "Sources/CodexBarClaudeWebProbe",
-                swiftSettings: [
-                    .enableUpcomingFeature("StrictConcurrency"),
-                ]),
         ])
 
         targets.append(.testTarget(
@@ -207,10 +163,6 @@ let package = Package(
                 .product(name: "Sparkle", package: "Sparkle"),
             ],
             path: "Tests",
-            exclude: [
-                "AdaptiveReplayCLITests",
-                "AdaptiveReplayKitTests",
-            ],
             resources: [
                 .copy("CodexBarTests/Fixtures"),
             ],

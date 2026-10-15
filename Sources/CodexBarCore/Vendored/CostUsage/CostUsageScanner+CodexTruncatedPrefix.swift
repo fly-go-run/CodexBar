@@ -112,16 +112,6 @@ extension CostUsageScanner {
         }
     }
 
-    static func extractJSONIntField(
-        _ field: String,
-        from text: Substring,
-        atDepth targetDepth: Int) -> Int?
-    {
-        self.extractJSONField(field, from: text, atDepth: targetDepth) { text, index in
-            Self.parseJSONInt(in: text, index: &index)
-        }
-    }
-
     static func extractJSONField<T>(
         _ field: String,
         from text: Substring,

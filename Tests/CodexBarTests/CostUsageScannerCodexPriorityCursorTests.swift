@@ -1511,7 +1511,7 @@ extension CostUsageScannerCodexPriorityCursorTests {
                     pricingModel: row.pricingModel,
                     pricingMode: nil)
             }
-            migrationCache.files[path] = usage.refreshingCodexWorkspaceUsageFingerprint()
+            migrationCache.files[path] = usage
         }
         return migrationCache
     }

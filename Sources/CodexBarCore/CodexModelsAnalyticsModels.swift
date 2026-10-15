@@ -1,14 +1,5 @@
 import Foundation
 
-public enum CodexModelsRollout {
-    public static let featureFlagKey = "codex.models.revamp.enabled"
-    public static let defaultEnabled = true
-
-    public static func isEnabled(defaults: UserDefaults = .standard) -> Bool {
-        defaults.object(forKey: self.featureFlagKey) as? Bool ?? self.defaultEnabled
-    }
-}
-
 public enum CodexModelsMetric: String, CaseIterable, Codable, Identifiable, Sendable {
     case tokens
     case knownCost
@@ -24,20 +15,6 @@ public enum CodexModelsMetric: String, CaseIterable, Codable, Identifiable, Send
         case .knownCost: "Cost"
         case .sessionReferences: "Session refs"
         }
-    }
-}
-
-public enum CodexModelsGranularity: String, CaseIterable, Codable, Identifiable, Sendable {
-    case daily
-    case weekly
-    case monthly
-
-    public var id: Self {
-        self
-    }
-
-    public var title: String {
-        self.rawValue.capitalized
     }
 }
 
