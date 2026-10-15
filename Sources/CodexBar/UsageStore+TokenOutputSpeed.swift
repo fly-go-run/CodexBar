@@ -1,6 +1,8 @@
 import CodexBarCore
 import Foundation
 
+typealias TokenOutputSpeedScanOverride = @Sendable (UsageProvider, String?) async throws -> TokenOutputSpeedSnapshot?
+
 extension UsageStore {
     /// Speed scans only parse what was appended to the session logs, but still walk the log tree.
     static let tokenOutputSpeedMinInterval: TimeInterval = 30
