@@ -731,32 +731,14 @@ extension SettingsStore {
     }
 
     private static func loadMenuBarLayout(userDefaults: UserDefaults) -> MenuBarLayout? {
-        MenuBarLayoutPersistence.loadLayout(
-            current: self.decodeMenuBarLayout(userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.layoutCurrent)),
-            v4: self.decodeMenuBarLayout(userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.layoutV4)),
-            v3: self.decodeMenuBarLayout(userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.layoutV3)),
-            released: self.decodeMenuBarLayout(
-                userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.layoutReleased)),
-            legacy: self.decodeMenuBarLayout(userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.layout)),
-            into: userDefaults)
+        self.decodeMenuBarLayout(userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.layoutCurrent))
     }
 
     private static func loadMenuBarLayoutConditionals(userDefaults: UserDefaults) -> [MenuBarLayoutConditional] {
-        // No persisted generation means a fresh install, so hand back the shipped library. Any edit, add,
-        // or removal writes every generation, so a library the user deliberately emptied is never reseeded.
-        MenuBarLayoutPersistence.loadLibrary(
-            current: self.decodeMenuBarLayoutConditionals(
-                userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.conditionalsCurrent)),
-            v4: self
-                .decodeMenuBarLayoutConditionals(userDefaults
-                    .data(forKey: MenuBarLayoutUserDefaultsKey.conditionalsV4)),
-            v3: self.decodeMenuBarLayoutConditionals(
-                userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.conditionalsV3)),
-            released: self.decodeMenuBarLayoutConditionals(
-                userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.conditionalsReleased)),
-            legacy: self.decodeMenuBarLayoutConditionals(
-                userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.conditionals)),
-            into: userDefaults)
+        // No persisted library means a fresh install, so hand back the shipped library. Any edit, add,
+        // or removal writes the library, so one the user deliberately emptied is never reseeded.
+        self.decodeMenuBarLayoutConditionals(
+            userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.conditionalsCurrent))
             ?? MenuBarLayoutConditional.shippedLibrary()
     }
 
@@ -769,17 +751,8 @@ extension SettingsStore {
     }
 
     private static func loadMenuBarLayoutOverrides(userDefaults: UserDefaults) -> [String: MenuBarLayout] {
-        MenuBarLayoutPersistence.loadOverrides(
-            current: self.decodeMenuBarLayoutOverrides(
-                userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.overridesCurrent)),
-            v4: self.decodeMenuBarLayoutOverrides(userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.overridesV4)),
-            v3: self.decodeMenuBarLayoutOverrides(
-                userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.overridesV3)),
-            released: self.decodeMenuBarLayoutOverrides(
-                userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.overridesReleased)),
-            legacy: self.decodeMenuBarLayoutOverrides(
-                userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.overrides)),
-            into: userDefaults)
+        self.decodeMenuBarLayoutOverrides(
+            userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.overridesCurrent)) ?? [:]
     }
 
     private static func decodeMenuBarLayout(_ data: Data?) -> MenuBarLayout? {

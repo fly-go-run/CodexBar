@@ -485,33 +485,18 @@ extension SettingsStore {
     }
 
     private func persistMenuBarLayout(_ layout: MenuBarLayout) {
-        guard let blobs = try? MenuBarLayoutPersistence.encoded(layout) else { return }
-        self.userDefaults.set(blobs.current, forKey: MenuBarLayoutUserDefaultsKey.layoutCurrent)
-        self.userDefaults.set(blobs.v4, forKey: MenuBarLayoutUserDefaultsKey.layoutV4)
-        self.userDefaults.set(blobs.v3, forKey: MenuBarLayoutUserDefaultsKey.layoutV3)
-        self.userDefaults.set(blobs.released, forKey: MenuBarLayoutUserDefaultsKey.layoutReleased)
-        self.userDefaults.set(blobs.legacy, forKey: MenuBarLayoutUserDefaultsKey.layout)
+        guard let data = try? JSONEncoder().encode(layout) else { return }
+        self.userDefaults.set(data, forKey: MenuBarLayoutUserDefaultsKey.layoutCurrent)
     }
 
     private func persistMenuBarLayoutConditionals() {
-        guard let blobs = try? MenuBarLayoutPersistence
-            .encodedLibrary(self.defaultsState.menuBarLayoutConditionals)
-        else { return }
-        self.userDefaults.set(blobs.current, forKey: MenuBarLayoutUserDefaultsKey.conditionalsCurrent)
-        self.userDefaults.set(blobs.v4, forKey: MenuBarLayoutUserDefaultsKey.conditionalsV4)
-        self.userDefaults.set(blobs.v3, forKey: MenuBarLayoutUserDefaultsKey.conditionalsV3)
-        self.userDefaults.set(blobs.released, forKey: MenuBarLayoutUserDefaultsKey.conditionalsReleased)
-        self.userDefaults.set(blobs.legacy, forKey: MenuBarLayoutUserDefaultsKey.conditionals)
+        guard let data = try? JSONEncoder().encode(self.defaultsState.menuBarLayoutConditionals) else { return }
+        self.userDefaults.set(data, forKey: MenuBarLayoutUserDefaultsKey.conditionalsCurrent)
     }
 
     private func persistMenuBarLayoutOverrides() {
-        guard let blobs = try? MenuBarLayoutPersistence.encodedOverrides(self.defaultsState.menuBarLayoutOverridesRaw)
-        else { return }
-        self.userDefaults.set(blobs.current, forKey: MenuBarLayoutUserDefaultsKey.overridesCurrent)
-        self.userDefaults.set(blobs.v4, forKey: MenuBarLayoutUserDefaultsKey.overridesV4)
-        self.userDefaults.set(blobs.v3, forKey: MenuBarLayoutUserDefaultsKey.overridesV3)
-        self.userDefaults.set(blobs.released, forKey: MenuBarLayoutUserDefaultsKey.overridesReleased)
-        self.userDefaults.set(blobs.legacy, forKey: MenuBarLayoutUserDefaultsKey.overrides)
+        guard let data = try? JSONEncoder().encode(self.defaultsState.menuBarLayoutOverridesRaw) else { return }
+        self.userDefaults.set(data, forKey: MenuBarLayoutUserDefaultsKey.overridesCurrent)
     }
 
     var costUsageEnabled: Bool {

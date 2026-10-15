@@ -867,18 +867,6 @@ struct MenuBarLayoutRendererTests {
     }
 
     @Test
-    func `progress bar degrades to percent in older layout projections`() {
-        let token = MenuBarLayoutToken.progressBar(window: .session)
-        #expect(!token.hasReleasedRepresentation)
-        #expect(!token.hasV3Representation)
-        #expect(!token.hasLegacyRepresentation)
-        #expect(MenuBarLayout(lines: [[.icon, token, .resetCountdown]]).legacyCompatible()
-            == MenuBarLayout(lines: [[.icon, .percent(window: .session), .resetCountdown]]))
-        #expect(MenuBarLayout(lines: [[.icon, token]]).releasedCompatible()
-            == MenuBarLayout(lines: [[.icon, .percent(window: .session)]]))
-    }
-
-    @Test
     func `absolute reset falls back to provider text`() {
         let renderer = MenuBarLayoutRenderer()
         let textOnlyWindow = MenuBarLayoutRenderWindow(RateWindow(

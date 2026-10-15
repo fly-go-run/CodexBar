@@ -336,19 +336,7 @@ struct WidgetUsageRow: Identifiable, Equatable {
     {
         let rows: [WidgetUsageRow]
         if let usageRows = entry.usageRows {
-            let resolvedSnapshots = usageRows.map { row in
-                guard row.window == nil,
-                      let window = self.legacyCodexRateWindow(for: row.id, entry: entry)
-                else {
-                    return row
-                }
-                return WidgetSnapshot.WidgetUsageRowSnapshot(
-                    id: row.id,
-                    title: row.title,
-                    percentLeft: row.percentLeft,
-                    window: window)
-            }
-            let sourceRows = resolvedSnapshots.map { row in
+            let sourceRows = usageRows.map { row in
                 // The generic snapshot writer stores only a percentage for the primary/secondary/
                 // tertiary slots and leaves their reset on the entry's own windows, so recover it
                 // here. Without this the reset caption is present for Codex and absent for every
@@ -363,7 +351,7 @@ struct WidgetUsageRow: Identifiable, Equatable {
             }
             rows = applyBindingCap ? self.applyingCodexWeeklyCap(
                 sourceRows,
-                snapshots: resolvedSnapshots,
+                snapshots: usageRows,
                 provider: entry.provider,
                 now: now) : sourceRows
         } else {
@@ -430,27 +418,6 @@ struct WidgetUsageRow: Identifiable, Equatable {
         case "tertiary": entry.tertiary
         default: nil
         }
-    }
-
-    private static func legacyCodexRateWindow(
-        for rowID: String,
-        entry: WidgetSnapshot.ProviderEntry) -> RateWindow?
-    {
-        // Provider-specific by design: old Codex timelines reconstruct session/weekly windows by duration.
-        guard entry.provider == .codex else { return nil }
-        let candidates = [(entry.primary, "session"), (entry.secondary, "weekly")]
-        for (window, fallbackID) in candidates {
-            guard let window else { continue }
-            let classifiedID = switch window.windowMinutes {
-            case 300: "session"
-            case 10080: "weekly"
-            default: fallbackID
-            }
-            if classifiedID == rowID {
-                return window
-            }
-        }
-        return nil
     }
 
     static func compactTokenUsage(

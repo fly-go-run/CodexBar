@@ -3,7 +3,6 @@ import Testing
 @testable import CodexBar
 @testable import CodexBarCore
 
-// swiftlint:disable:next type_body_length
 struct MenuBarLayoutTests {
     private struct UnnormalizedLayout: Encodable {
         let lines: [[MenuBarLayoutToken]]
@@ -344,7 +343,7 @@ struct MenuBarLayoutTests {
         blob[1]["clauses"] = clauses
         try settings.userDefaults.set(
             JSONSerialization.data(withJSONObject: blob),
-            forKey: "menuBarLayoutConditionals")
+            forKey: MenuBarLayoutUserDefaultsKey.conditionalsCurrent)
 
         let reloaded = Self.reloadSettingsStore(settings)
         #expect(reloaded.menuBarLayoutConditionals == [valid])
@@ -592,42 +591,6 @@ struct MenuBarLayoutTests {
     }
 
     @Test
-    func `conditional and hidden tokens drop out of the older-readable projection`() {
-        let conditional = MenuBarLayoutConditional(
-            clauses: [MenuBarConditionalClause(
-                combinator: nil,
-                predicate: MenuBarConditionalPredicate(metric: .session, comparison: .greaterThan, threshold: 30))],
-            thenToken: .percent(window: .session),
-            elseToken: .hidden)
-
-        // A 0.53.x decoder has no case for these tokens, so the projection must not contain them;
-        // the surrounding arrangement has to survive.
-        let mixed = MenuBarLayout(lines: [[
-            .icon,
-            .conditional(id: conditional.id),
-            .percent(window: .session),
-            .hidden,
-        ]])
-        #expect(mixed.legacyCompatible() == MenuBarLayout(lines: [[.icon, .percent(window: .session)]]))
-
-        // A line emptied purely by filtering must not survive as a blank stacked row.
-        let stacked = MenuBarLayout(lines: [
-            [.icon, .percent(window: .weekly)],
-            [.conditional(id: conditional.id)],
-        ])
-        #expect(stacked.legacyCompatible() == MenuBarLayout(lines: [[.icon, .percent(window: .weekly)]]))
-
-        // Nothing left to project falls back to the default layout rather than an empty title.
-        let conditionalOnly = MenuBarLayout(lines: [[.conditional(id: conditional.id)]])
-        #expect(conditionalOnly.legacyCompatible() == .defaultLayout)
-
-        // A line the user left empty (line break added, no token dropped in yet) is not the same as
-        // one emptied by filtering, so it survives the projection unchanged.
-        let pendingSecondLine = MenuBarLayout(lines: [[.icon, .conditional(id: conditional.id)], []])
-        #expect(pendingSecondLine.legacyCompatible() == MenuBarLayout(lines: [[.icon], []]))
-    }
-
-    @Test
     func `legacy layout JSON without lanePercent cannot decode current lane tokens`() throws {
         let current = try JSONEncoder().encode(MenuBarLayout(lines: [[
             .icon,
@@ -806,200 +769,6 @@ struct MenuBarLayoutTests {
     }
 
     @Test
-    @MainActor
-    func `startup writes a missing fallback when only the V2 layout key exists`() throws {
-        let settings = testSettingsStore(suiteName: "MenuBarLayoutTests-v2-only-startup")
-        let current = MenuBarLayout(lines: [[.icon, .lanePercent(lane: .tertiary)]])
-        settings.setMenuBarLayout(current, for: nil)
-        settings.userDefaults.removeObject(forKey: MenuBarLayoutUserDefaultsKey.layout)
-
-        let reloaded = Self.reloadSettingsStore(settings)
-        #expect(reloaded.menuBarLayout == current)
-        let legacyGlobal = try #require(reloaded.userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.layout))
-        #expect(try JSONDecoder().decode(PreLanePercentMenuBarLayout.self, from: legacyGlobal)
-            == PreLanePercentMenuBarLayout(lines: [[.icon, .percent(window: .automatic)]]))
-    }
-
-    @Test
-    @MainActor
-    func `lane layout load prefers a legacy blob edited by an older release`() throws {
-        let settings = testSettingsStore(suiteName: "MenuBarLayoutTests-lane-downgrade-edit")
-        let current = MenuBarLayout(lines: [[.icon, .lanePercent(lane: .primary)]])
-        let edited = MenuBarLayout(lines: [[.icon, .percent(window: .weekly)]])
-        settings.setMenuBarLayout(current, for: nil)
-        try settings.userDefaults.set(
-            JSONEncoder().encode(edited),
-            forKey: MenuBarLayoutUserDefaultsKey.layout)
-
-        let reloaded = Self.reloadSettingsStore(settings)
-        #expect(reloaded.menuBarLayout == edited)
-        let persistedCurrent = try JSONDecoder().decode(
-            MenuBarLayout.self,
-            from: #require(reloaded.userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.layoutCurrent)))
-        let persistedLegacy = try JSONDecoder().decode(
-            MenuBarLayout.self,
-            from: #require(reloaded.userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.layout)))
-        #expect(persistedCurrent == current)
-        #expect(persistedLegacy == edited)
-    }
-
-    @Test
-    @MainActor
-    func `lane layout load keeps current lanes when the legacy blob is the fallback`() throws {
-        let settings = testSettingsStore(suiteName: "MenuBarLayoutTests-lane-legacy-echo")
-        let current = MenuBarLayout(lines: [[.icon, .lanePercent(lane: .secondary)]])
-        settings.setMenuBarLayout(current, for: nil)
-        let fallback = current.legacyCompatible()
-        try settings.userDefaults.set(
-            JSONEncoder().encode(fallback),
-            forKey: MenuBarLayoutUserDefaultsKey.layout)
-
-        let reloaded = Self.reloadSettingsStore(settings)
-        #expect(reloaded.menuBarLayout == current)
-    }
-
-    @Test
-    @MainActor
-    func `conditional library dual-writes an older-readable projection`() throws {
-        let settings = testSettingsStore(suiteName: "MenuBarLayoutTests-conditional-downgrade")
-        let readable = MenuBarLayoutConditional(
-            name: "readable",
-            clauses: [MenuBarConditionalClause(
-                combinator: nil,
-                predicate: MenuBarConditionalPredicate(
-                    metric: .session,
-                    comparison: .greaterThan,
-                    threshold: 50))],
-            thenToken: .percent(window: .session),
-            elseToken: .hidden)
-        let newMetric = MenuBarLayoutConditional(
-            name: "new metric",
-            clauses: [MenuBarConditionalClause(
-                combinator: nil,
-                predicate: MenuBarConditionalPredicate(
-                    metric: .sessionResetsIn,
-                    comparison: .lessThan,
-                    threshold: 2))],
-            thenToken: .resetCountdown,
-            elseToken: .hidden)
-        // An older release ignores the unknown `direction` key, so this would come back inverted rather
-        // than absent — worse than dropping it.
-        let inverted = MenuBarLayoutConditional(
-            name: "inverted",
-            clauses: [MenuBarConditionalClause(
-                combinator: nil,
-                predicate: MenuBarConditionalPredicate(
-                    metric: .weekly,
-                    direction: .remaining,
-                    comparison: .greaterThan,
-                    threshold: 20))],
-            thenToken: .percent(window: .weekly),
-            elseToken: .hidden)
-        settings.menuBarLayoutConditionals = [readable, newMetric, inverted]
-
-        let decoder = JSONDecoder()
-        let current = try #require(
-            settings.userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.conditionalsCurrent))
-        let legacy = try #require(settings.userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.conditionals))
-
-        #expect(try decoder.decode([MenuBarLayoutConditional].self, from: current) ==
-            [readable, newMetric, inverted])
-
-        // The whole point: a 0.54.0 decoder reads the projection, and would have thrown on the full blob.
-        let legacyEntries = try decoder.decode([PreExpandedConditional].self, from: legacy)
-        #expect(legacyEntries.map(\.name) == ["readable"])
-        #expect(legacyEntries.first?.clauses.first?.predicate.metric == .session)
-        #expect(throws: DecodingError.self) {
-            try decoder.decode([PreExpandedConditional].self, from: current)
-        }
-
-        let reloaded = Self.reloadSettingsStore(settings)
-        #expect(reloaded.menuBarLayoutConditionals == [readable, newMetric, inverted])
-    }
-
-    @Test
-    @MainActor
-    func `conditional library load prefers a legacy blob edited by an older release`() throws {
-        let settings = testSettingsStore(suiteName: "MenuBarLayoutTests-conditional-downgrade-edit")
-        let current = MenuBarLayoutConditional(
-            name: "current",
-            clauses: [MenuBarConditionalClause(
-                combinator: nil,
-                predicate: MenuBarConditionalPredicate(
-                    metric: .runsOutIn,
-                    comparison: .lessThan,
-                    threshold: 6))],
-            thenToken: .runsOut,
-            elseToken: .hidden)
-        settings.menuBarLayoutConditionals = [current]
-
-        // An older release rewrote the shared key with its own edit; that must win over our projection.
-        let edited = MenuBarLayoutConditional(
-            name: "edited by older release",
-            clauses: [MenuBarConditionalClause(
-                combinator: nil,
-                predicate: MenuBarConditionalPredicate(
-                    metric: .weekly,
-                    comparison: .greaterThan,
-                    threshold: 75))],
-            thenToken: .percent(window: .weekly),
-            elseToken: .hidden)
-        try settings.userDefaults.set(
-            JSONEncoder().encode([edited]),
-            forKey: MenuBarLayoutUserDefaultsKey.conditionals)
-
-        let reloaded = Self.reloadSettingsStore(settings)
-        #expect(reloaded.menuBarLayoutConditionals == [edited])
-    }
-
-    @Test
-    @MainActor
-    func `conditional library load keeps new metrics when the legacy blob is its own projection`() {
-        let settings = testSettingsStore(suiteName: "MenuBarLayoutTests-conditional-legacy-echo")
-        let newMetric = MenuBarLayoutConditional(
-            name: "new metric",
-            clauses: [MenuBarConditionalClause(
-                combinator: nil,
-                predicate: MenuBarConditionalPredicate(
-                    metric: .costToday,
-                    comparison: .greaterThan,
-                    threshold: 1))],
-            thenToken: .costToday,
-            elseToken: .hidden)
-        settings.menuBarLayoutConditionals = [newMetric]
-
-        let reloaded = Self.reloadSettingsStore(settings)
-        #expect(reloaded.menuBarLayoutConditionals == [newMetric])
-    }
-
-    @Test
-    @MainActor
-    func `startup materializes a missing conditional projection`() throws {
-        let settings = testSettingsStore(suiteName: "MenuBarLayoutTests-conditional-startup-dual-write")
-        // A pre-upgrade install only has the legacy key.
-        let existing = MenuBarLayoutConditional(
-            name: "existing",
-            clauses: [MenuBarConditionalClause(
-                combinator: nil,
-                predicate: MenuBarConditionalPredicate(
-                    metric: .automatic,
-                    comparison: .greaterThan,
-                    threshold: 40))],
-            thenToken: .percent(window: .automatic),
-            elseToken: .hidden)
-        settings.userDefaults.removeObject(forKey: MenuBarLayoutUserDefaultsKey.conditionalsCurrent)
-        try settings.userDefaults.set(
-            JSONEncoder().encode([existing]),
-            forKey: MenuBarLayoutUserDefaultsKey.conditionals)
-
-        let reloaded = Self.reloadSettingsStore(settings)
-        #expect(reloaded.menuBarLayoutConditionals == [existing])
-        let materialized = try #require(
-            reloaded.userDefaults.data(forKey: MenuBarLayoutUserDefaultsKey.conditionalsCurrent))
-        #expect(try JSONDecoder().decode([MenuBarLayoutConditional].self, from: materialized) == [existing])
-    }
-
-    @Test
     func `preset application matches and manual edit becomes custom`() throws {
         let preset = MenuBarLayoutPreset.percentAndReset
         let layout = try #require(preset.layout)
@@ -1017,40 +786,6 @@ struct MenuBarLayoutTests {
             codexCookieStore: InMemoryCookieHeaderStore(),
             claudeCookieStore: InMemoryCookieHeaderStore(),
             tokenAccountStore: InMemoryTokenAccountStore())
-    }
-
-    private static func writeStartupMigrationProof(
-        beforeKeys: [String],
-        currentGlobal: Data,
-        legacyGlobal: Data,
-        currentOverrides: Data,
-        legacyOverrides: Data)
-    {
-        guard let dir = ProcessInfo.processInfo.environment["CODEXBAR_LAYOUT_PROOF_DIR"] else { return }
-        let directory = URL(
-            fileURLWithPath: NSString(string: dir).expandingTildeInPath,
-            isDirectory: true)
-        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let payload: [String: Any] = [
-            "fixture": "pre-V2 menuBarLayout keys only, then SettingsStore.init",
-            "beforeKeys": beforeKeys,
-            "afterKeys": [
-                MenuBarLayoutUserDefaultsKey.layout,
-                MenuBarLayoutUserDefaultsKey.layoutCurrent,
-                MenuBarLayoutUserDefaultsKey.overrides,
-                MenuBarLayoutUserDefaultsKey.overridesCurrent,
-            ],
-            "v2GlobalJSON": String(data: currentGlobal, encoding: .utf8) ?? "",
-            "legacyGlobalJSON": String(data: legacyGlobal, encoding: .utf8) ?? "",
-            "v2OverridesJSON": String(data: currentOverrides, encoding: .utf8) ?? "",
-            "legacyOverridesJSON": String(data: legacyOverrides, encoding: .utf8) ?? "",
-            "legacyGlobalDecodesOn0530": true,
-            "inMemoryKeepsLaneTokens": true,
-        ]
-        guard JSONSerialization.isValidJSONObject(payload),
-              let data = try? JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys])
-        else { return }
-        try? data.write(to: directory.appendingPathComponent("menubar-lane-startup-migration.json"), options: .atomic)
     }
 }
 

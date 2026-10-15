@@ -18,15 +18,6 @@ struct MenuBarProgressBarTests {
             [.progressBar(window: .session), .windowResetCountdown(window: .session)],
             [.progressBar(window: .weekly), .windowResetCountdown(window: .weekly)],
         ]))
-
-        let barsStacked = try #require(MenuBarLayoutPreset.barsStacked.layout)
-        let percentages = MenuBarLayout(lines: [[.percent(window: .session)], [.percent(window: .weekly)]])
-        #expect(barsStacked.releasedCompatible() == percentages)
-        #expect(barsStacked.legacyCompatible() == percentages)
-        #expect(barsStacked.v3Compatible() == MenuBarLayout(lines: [
-            [.percent(window: .session), .windowResetCountdown(window: .session)],
-            [.percent(window: .weekly), .windowResetCountdown(window: .weekly)],
-        ]))
     }
 
     @Test
