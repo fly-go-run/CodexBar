@@ -11,18 +11,7 @@ extension UsageStore {
     static let networkRecoveryDebounce: TimeInterval = 2
 
     /// URL-loading failures that mean "this device cannot reach the network right now".
-    nonisolated static let offlineURLErrorCodes: Set<Int> = [
-        NSURLErrorNotConnectedToInternet,
-        NSURLErrorNetworkConnectionLost,
-        NSURLErrorCannotFindHost,
-        NSURLErrorCannotConnectToHost,
-        NSURLErrorDNSLookupFailed,
-        NSURLErrorDataNotAllowed,
-        NSURLErrorInternationalRoamingOff,
-        NSURLErrorCallIsActive,
-        // Captive portals and half-open links commonly surface as TLS failures.
-        NSURLErrorSecureConnectionFailed,
-    ]
+    nonisolated static let offlineURLErrorCodes = ProviderNetworkFailure.offlineURLErrorCodes
 
     /// Offline codes plus timeouts: failures a later retry on a healthy network is expected to fix.
     nonisolated static let transientURLErrorCodes: Set<Int> = UsageStore.offlineURLErrorCodes
