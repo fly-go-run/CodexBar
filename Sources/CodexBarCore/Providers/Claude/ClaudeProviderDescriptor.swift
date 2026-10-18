@@ -256,7 +256,19 @@ public enum ClaudeProviderDescriptor {
     private static func resolveFallbackError(_ previous: Error?, _ current: Error) -> Error {
         if ClaudeOAuthFetchError.isCancellation(current) { return current }
         if let previous, case ClaudeOAuthCredentialsError.credentialsChanged = previous { return previous }
+        // OAuth only runs after another source when Keychain access is disabled, as a last-chance credentials-file
+        // read. Its absence says nothing about why the earlier source failed, so keep that concrete error.
+        if let previous, self.isMissingOAuthCredentials(current) { return previous }
         return current
+    }
+
+    private static func isMissingOAuthCredentials(_ error: Error) -> Bool {
+        switch error as? ClaudeOAuthCredentialsError {
+        case .missingOAuth?, .missingAccessToken?, .notFound?:
+            true
+        default:
+            false
+        }
     }
 
     private static func menuBarWindow(
@@ -530,9 +542,13 @@ struct ClaudePlannedFetchStrategy: ProviderFetchStrategy {
         // Web is terminal in the default app-auto order; when it leads (Keychain disabled) a missing or
         // rejected browser session must hand off to the CLI instead of ending the fetch.
         if self.plannedStep.inclusionReason == .appAutoKeychainDisabledPreferredWeb {
+            // Offline (e.g. right after wake) the CLI and OAuth fallbacks cannot succeed either. Stopping here
+            // surfaces the connectivity error, which the store absorbs, and keeps a doomed background CLI attempt
+            // from revoking the owner CLI's background availability.
             return !Task.isCancelled
                 && !(error is CancellationError)
                 && (error as? URLError)?.code != .cancelled
+                && !ProviderNetworkFailure.isOfflineURLError(error)
         }
         return self.base.shouldFallback(on: error, context: context)
     }
