@@ -119,6 +119,77 @@ struct MenuCardRedesignProofTests {
             now: now))
     }
 
+    @Test
+    func `renders the synthetic Claude cost submenu with every model's speed`() throws {
+        guard let directory = ProcessInfo.processInfo.environment["CODEXBAR_MENU_CARD_PROOF"] else { return }
+        let now = Date()
+        func samples(
+            _ model: String,
+            tokens: Int,
+            seconds: TimeInterval,
+            minutesAgo: [Double]) -> [TokenOutputSpeedSample]
+        {
+            minutesAgo.map { minutes in
+                let end = now.addingTimeInterval(-minutes * 60)
+                return TokenOutputSpeedSample(
+                    model: model, outputTokens: tokens, startedAt: end.addingTimeInterval(-seconds), completedAt: end)
+            }
+        }
+        let speed = TokenOutputSpeedSnapshot(
+            samples: samples("claude-opus-4-1", tokens: 640, seconds: 10, minutesAgo: [3, 8, 14, 22, 35, 48])
+                + samples("claude-opus-4-1", tokens: 900, seconds: 10, minutesAgo: [90, 150, 210, 300])
+                + samples("claude-sonnet-4-5", tokens: 900, seconds: 10, minutesAgo: [120, 180, 240, 400])
+                + samples("claude-haiku-4-5", tokens: 300, seconds: 2, minutesAgo: [70, 260]),
+            now: now)
+        let calendar = Calendar.current
+        let daily = (0..<30).map { offset -> CostUsageDailyReport.Entry in
+            let day = calendar.date(byAdding: .day, value: -29 + offset, to: now)!
+            let key = day.formatted(.iso8601.year().month().day())
+            let cost = Double(40 + (offset * 37) % 160)
+            return CostUsageDailyReport.Entry(
+                date: key,
+                inputTokens: nil,
+                outputTokens: nil,
+                totalTokens: Int(cost * 3_000_000),
+                costUSD: cost,
+                modelsUsed: ["claude-opus-4-1", "claude-sonnet-4-5"],
+                modelBreakdowns: [
+                    .init(modelName: "claude-opus-4-1", costUSD: cost * 0.8, totalTokens: Int(cost * 2_400_000)),
+                    .init(modelName: "claude-sonnet-4-5", costUSD: cost * 0.2, totalTokens: Int(cost * 600_000)),
+                ])
+        }
+        for language in ["zh-Hans", "en"] {
+            try CodexBarLocalizationOverride.$appLanguage.withValue(language) {
+                for scheme in [ColorScheme.light, .dark] {
+                    let view = CostHistoryChartMenuView(
+                        provider: .claude,
+                        daily: daily,
+                        totalCostUSD: daily.compactMap(\.costUSD).reduce(0, +),
+                        tokenSpeed: UsageMenuCardView.Model.tokenSpeedAllModelsSummary(speed),
+                        hidePersonalInfo: false,
+                        width: 310)
+                        .codexBarLocalized()
+                        .environment(\.colorScheme, scheme)
+                        .background(scheme == .dark ? Color(white: 0.16) : Color(white: 0.97))
+                    try Self.write(
+                        view,
+                        name: "claude-cost-\(language)-\(scheme == .dark ? "dark" : "light")",
+                        directory: directory)
+                }
+            }
+        }
+    }
+
+    private static func write(_ view: some View, name: String, directory: String) throws {
+        let output = URL(fileURLWithPath: directory, isDirectory: true)
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        let renderer = ImageRenderer(content: view.frame(width: 310))
+        renderer.scale = 2
+        let bitmap = try NSBitmapImageRep(cgImage: #require(renderer.cgImage))
+        let png = try #require(bitmap.representation(using: .png, properties: [:]))
+        try png.write(to: output.appendingPathComponent("\(name).png"))
+    }
+
     private static func render(
         _ model: UsageMenuCardView.Model,
         scheme: ColorScheme,

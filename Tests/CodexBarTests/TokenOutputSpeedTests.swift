@@ -251,6 +251,46 @@ struct TokenOutputSpeedTests {
     }
 
     @Test
+    func `cost submenu lists every model of the day with its own window`() throws {
+        let now = try Self.date("2026-10-10T12:00:00.000Z")
+        func busy(_ model: String, _ tokens: Int, seconds: TimeInterval = 10) -> [TokenOutputSpeedSample] {
+            (1...3).map { Self.speedSample(model, tokens, minutesAgo: Double($0) * 5, seconds: seconds, now: now) }
+        }
+        let opus = "claude-opus-4-1-20250805"
+        let sonnet = "claude-sonnet-4-5"
+        let haiku = "claude-haiku-4-5"
+        // Opus is busy this hour and slower than earlier; Sonnet and a tiny Haiku share only ran earlier, which
+        // the card leaves out but the submenu still lists with their 24h rates.
+        let snapshot = TokenOutputSpeedSnapshot(
+            samples: busy(opus, 300) + [
+                Self.speedSample(opus, 9000, minutesAgo: 300, seconds: 100, now: now),
+                Self.speedSample(sonnet, 800, minutesAgo: 200, now: now),
+                Self.speedSample(sonnet, 1000, minutesAgo: 400, now: now),
+                Self.speedSample(haiku, 40, minutesAgo: 90, seconds: 0.5, now: now),
+            ],
+            now: now)
+        typealias Model = UsageMenuCardView.Model
+        #expect(Model.tokenSpeedSummary(snapshot)?.rows.map(\.model) == ["Opus 4.1"])
+
+        let summary = try #require(Model.tokenSpeedAllModelsSummary(snapshot))
+        #expect(summary.rows.map(\.model) == ["Opus 4.1", "Sonnet 4.5", "Haiku 4.5"])
+        #expect(summary.rows.map(\.value) == ["30 tok/s", "90 tok/s", "80 tok/s"])
+        #expect(summary.rows.map(\.slowdownPercent) == [61, nil, nil])
+        #expect(summary.rows.map(\.detail) == [
+            [
+                L("token_speed_window_last_hour"),
+                L("token_speed_vs_day_slower", "61"),
+                L("token_speed_requests", codexBarLocalizedInteger(3)),
+            ].joined(separator: " · "),
+            "\(L("token_speed_window_24h")) · \(L("token_speed_requests", codexBarLocalizedInteger(2)))",
+            "\(L("token_speed_window_24h")) · \(L("token_speed_requests", codexBarLocalizedInteger(1)))",
+        ])
+        #expect(summary.rows.first?.detailIsWarning == true)
+        #expect(summary.requestCount == 7)
+        #expect(Model.tokenSpeedAllModelsSummary(nil) == nil)
+    }
+
+    @Test
     func `snapshot keeps each model's median request and its recent active periods`() throws {
         let now = try Self.date("2026-10-10T12:00:00.000Z")
         let snapshot = TokenOutputSpeedSnapshot(

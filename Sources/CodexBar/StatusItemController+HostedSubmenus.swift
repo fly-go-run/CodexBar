@@ -299,7 +299,13 @@ extension StatusItemController {
             provider: provider,
             hidePersonalInfo: self.settings.hidePersonalInfo,
             displayCurrencyCode: displayConversion.currencyCode,
-            displayCostMultiplier: displayConversion.multiplier))
+            displayCostMultiplier: displayConversion.multiplier,
+            tokenSpeed: self.tokenSpeedForCostHistorySubmenu(provider: provider)))
+    }
+
+    /// Every model's output speed, not just the ones the card lists.
+    private func tokenSpeedForCostHistorySubmenu(provider: UsageProvider) -> TokenSpeedSummary? {
+        UsageMenuCardView.Model.tokenSpeedAllModelsSummary(self.store.tokenOutputSpeed(for: provider))
     }
 
     /// Resolves the user's preferred display currency for cost-history values, falling back to
@@ -449,6 +455,7 @@ extension StatusItemController {
             windowLabel: tokenSnapshot.historyLabel,
             projects: provider == .codex ? tokenSnapshot.projects : [],
             sessions: provider == .codex ? tokenSnapshot.sessions : [],
+            tokenSpeed: self.tokenSpeedForCostHistorySubmenu(provider: provider),
             hidePersonalInfo: self.settings.hidePersonalInfo,
             width: width)
         let hosting = MenuHostingView(rootView: chartView.codexBarLocalized())

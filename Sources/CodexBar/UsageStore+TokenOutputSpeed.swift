@@ -239,25 +239,68 @@ extension UsageMenuCardView.Model {
                     windowNote: L("token_speed_window_24h"),
                     slowdown: nil)
             }
-            let lastHourRate = bucket.tokensPerSecond
-            let dayRate = dayBucket.tokensPerSecond
-            let slowdown: Int? = if dayRate > 0, lastHourRate < dayRate * (1 - Self.tokenSpeedSlowdownThreshold) {
-                Int(((1 - lastHourRate / dayRate) * 100).rounded())
-            } else {
-                nil
-            }
             return Self.tokenSpeedRow(
                 bucket: bucket,
                 dayBucket: dayBucket,
                 trend: trend,
                 windowNote: nil,
-                slowdown: slowdown)
+                slowdown: Self.tokenSpeedSlowdown(rate: bucket.tokensPerSecond, average: dayBucket.tokensPerSecond))
         }
         return TokenSpeedSummary(
             title: L("token_speed_title_last_hour"),
             rows: rows,
             windowLabel: L("token_speed_window_last_hour"),
             requestCount: snapshot.lastHour?.requestCount ?? 0)
+    }
+
+    static let tokenSpeedAllModelsMaximumRows = 8
+
+    /// Every model of the last 24h for the cost submenu, where there is room for the ones the card leaves out.
+    /// A model with enough requests in the last hour shows that rate against its 24h average; the rest show
+    /// their 24h rate. Each row's detail says which window it is and how many requests are behind it.
+    static func tokenSpeedAllModelsSummary(_ snapshot: TokenOutputSpeedSnapshot?) -> TokenSpeedSummary? {
+        guard let snapshot, !snapshot.models.isEmpty else { return nil }
+        let hourBuckets = Dictionary(
+            snapshot.lastHourModels.map { ($0.model ?? "", $0) },
+            uniquingKeysWith: { first, _ in first })
+        let rows = snapshot.models.prefix(Self.tokenSpeedAllModelsMaximumRows).map { dayBucket in
+            let key = dayBucket.model ?? ""
+            let trend = snapshot.recentRates[key] ?? []
+            guard let hourBucket = hourBuckets[key],
+                  hourBucket.requestCount >= Self.tokenSpeedLastHourMinimumRequests
+            else {
+                var row = Self.tokenSpeedRow(
+                    bucket: dayBucket,
+                    dayBucket: nil,
+                    trend: trend,
+                    windowNote: nil,
+                    slowdown: nil)
+                row.detail = [
+                    L("token_speed_window_24h"),
+                    L("token_speed_requests", codexBarLocalizedInteger(dayBucket.requestCount)),
+                ].joined(separator: " · ")
+                return row
+            }
+            var row = Self.tokenSpeedRow(
+                bucket: hourBucket,
+                dayBucket: dayBucket,
+                trend: trend,
+                windowNote: nil,
+                slowdown: Self.tokenSpeedSlowdown(
+                    rate: hourBucket.tokensPerSecond,
+                    average: dayBucket.tokensPerSecond))
+            row.detail = [
+                L("token_speed_window_last_hour"),
+                Self.tokenSpeedComparison(rate: hourBucket.tokensPerSecond, average: dayBucket.tokensPerSecond),
+                L("token_speed_requests", codexBarLocalizedInteger(hourBucket.requestCount)),
+            ].joined(separator: " · ")
+            return row
+        }
+        return TokenSpeedSummary(
+            title: L("token_speed_title_24h"),
+            rows: Array(rows),
+            windowLabel: L("token_speed_window_24h"),
+            requestCount: snapshot.models.reduce(0) { $0 + $1.requestCount })
     }
 
     /// The leader always stays; the rest need their share of the window's output.
@@ -304,6 +347,12 @@ extension UsageMenuCardView.Model {
             help: help,
             trend: trend,
             baseline: (dayBucket ?? bucket).tokensPerSecond)
+    }
+
+    /// Percent the last hour ran below the 24h average, only once it is clearly slower.
+    private static func tokenSpeedSlowdown(rate: Double, average: Double) -> Int? {
+        guard average > 0, rate < average * (1 - self.tokenSpeedSlowdownThreshold) else { return nil }
+        return Int(((1 - rate / average) * 100).rounded())
     }
 
     /// "比 24h 均值快 6%" / "与 24h 均值持平" / "比 24h 均值慢 18%".

@@ -620,6 +620,26 @@ struct CostHistoryChartMenuViewTests {
 
     @Test
     @MainActor
+    func `render fingerprint changes when output speed changes`() {
+        let snapshot = Self.makeSnapshot(dailyCost: 1.0)
+        let speed = TokenSpeedSummary(
+            title: "speed",
+            rows: [TokenSpeedSummary.Row(model: "Model A", value: "60 tok/s", windowNote: nil, slowdownPercent: nil)])
+        let faster = TokenSpeedSummary(
+            title: "speed",
+            rows: [TokenSpeedSummary.Row(model: "Model A", value: "80 tok/s", windowNote: nil, slowdownPercent: nil)])
+        let without = CostHistoryChartMenuView.renderFingerprint(from: snapshot, provider: .claude)
+        let with = CostHistoryChartMenuView.renderFingerprint(from: snapshot, provider: .claude, tokenSpeed: speed)
+
+        #expect(without != with)
+        #expect(with != CostHistoryChartMenuView.renderFingerprint(
+            from: snapshot,
+            provider: .claude,
+            tokenSpeed: faster))
+    }
+
+    @Test
+    @MainActor
     func `render fingerprint changes when history coverage completes`() {
         let partial = Self.makeSnapshot(historyCoverageIsEstablished: false)
         let complete = Self.makeSnapshot(historyCoverageIsEstablished: true)

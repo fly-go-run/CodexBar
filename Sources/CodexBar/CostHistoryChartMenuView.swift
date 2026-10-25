@@ -77,6 +77,7 @@ struct CostHistoryChartMenuView: View {
     private let windowLabel: String
     private let projects: [CostUsageProjectBreakdown]
     private let sessions: [CostUsageSessionBreakdown]
+    private let tokenSpeed: TokenSpeedSummary?
     private let hidePersonalInfo: Bool
     private let width: CGFloat
     private let onMetricChanged: (@MainActor (ChartMetric) -> Void)?
@@ -94,6 +95,7 @@ struct CostHistoryChartMenuView: View {
         windowLabel: String? = nil,
         projects: [CostUsageProjectBreakdown] = [],
         sessions: [CostUsageSessionBreakdown] = [],
+        tokenSpeed: TokenSpeedSummary? = nil,
         hidePersonalInfo: Bool,
         width: CGFloat,
         onMetricChanged: (@MainActor (ChartMetric) -> Void)? = nil)
@@ -107,6 +109,7 @@ struct CostHistoryChartMenuView: View {
         self.windowLabel = windowLabel.map { L($0) } ?? Self.windowLabel(days: max(1, historyDays))
         self.projects = projects
         self.sessions = sessions
+        self.tokenSpeed = tokenSpeed
         self.hidePersonalInfo = hidePersonalInfo
         self.width = width
         self.onMetricChanged = onMetricChanged
@@ -360,6 +363,11 @@ struct CostHistoryChartMenuView: View {
                 }
             }
 
+            if let tokenSpeed = self.tokenSpeed {
+                CostHistoryTokenSpeedSection(summary: tokenSpeed)
+                    .padding(.top, Self.tokenSpeedTopPadding)
+            }
+
             if !self.projects.isEmpty {
                 VStack(alignment: .leading, spacing: Self.projectRowSpacing) {
                     Text(L("Projects"))
@@ -448,6 +456,7 @@ struct CostHistoryChartMenuView: View {
     private static let metricPickerHeight: CGFloat = 22
     private static let metricPickerWidth: CGFloat = 132
     private static let outerSpacing: CGFloat = 10
+    private static let tokenSpeedTopPadding: CGFloat = 6
     private static let projectRowHeight: CGFloat = 31
     private static let projectRowSpacing: CGFloat = 5
     private static let maxVisibleProjectRows = 5
@@ -1107,6 +1116,7 @@ extension CostHistoryChartMenuView {
         let daily: [VisibleDailyFingerprint]
         let projects: [VisibleProjectFingerprint]
         let sessions: [VisibleSessionFingerprint]
+        let tokenSpeed: TokenSpeedSummary?
     }
 
     struct VisibleDailyFingerprint: Equatable {
@@ -1172,7 +1182,8 @@ extension CostHistoryChartMenuView {
         provider: UsageProvider,
         hidePersonalInfo: Bool = false,
         displayCurrencyCode: String? = nil,
-        displayCostMultiplier: Double = 1.0) -> RenderFingerprint
+        displayCostMultiplier: Double = 1.0,
+        tokenSpeed: TokenSpeedSummary? = nil) -> RenderFingerprint
     {
         let projects = provider == .codex ? snapshot.projects : []
         let sessions = provider == .codex ? snapshot.sessions : []
@@ -1225,7 +1236,8 @@ extension CostHistoryChartMenuView {
                     totalTokens: session.totalTokens,
                     costBitPattern: session.costUSD.map(\.bitPattern),
                     models: session.modelBreakdowns.map(VisibleModelBreakdownFingerprint.init))
-            })
+            },
+            tokenSpeed: tokenSpeed)
     }
 
     private static func visibleDailyFingerprint(_ entry: DailyEntry) -> VisibleDailyFingerprint {
