@@ -950,6 +950,7 @@
 "network" = "mạng";
 "none" = "không có";
 "claude_oauth_keychain_access_disabled" = "Quyền truy cập Keychain bị tắt nên CodexBar không thể đọc thông tin đăng nhập Claude.";
+"claude_safari_full_disk_access_required" = "Quyền truy cập Keychain bị tắt và CodexBar không thể đọc cookie claude.ai của Safari. Hãy cấp Truy cập toàn bộ ổ đĩa cho CodexBar trong Cài đặt hệ thống › Quyền riêng tư & Bảo mật, sau đó mở lại CodexBar.";
 "claude_oauth_keychain_access_revoked" = "Quyền truy cập Chuỗi khóa Claude đã bị thu hồi do Claude Code xoay vòng mã thông báo. Nhấp vào Làm mới để cấp lại quyền truy cập hoặc chuyển nguồn sử dụng Claude sang CLI/Web.";
 "claude_showing_last_known_usage" = "Đang hiển thị mức sử dụng đã biết gần nhất, được ghi nhận %@.";
 "claude_limited_usage_detail" = "Thông tin sử dụng ít chi tiết";

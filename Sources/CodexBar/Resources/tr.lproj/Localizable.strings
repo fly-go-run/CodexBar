@@ -951,6 +951,7 @@
 "network" = "ağ";
 "none" = "yok";
 "claude_oauth_keychain_access_disabled" = "Keychain erişimi devre dışı olduğundan CodexBar, Claude oturum açma bilgilerini okuyamıyor.";
+"claude_safari_full_disk_access_required" = "Keychain erişimi devre dışı ve CodexBar, Safari'deki claude.ai çerezlerini okuyamıyor. Sistem Ayarları › Gizlilik ve Güvenlik bölümünden CodexBar'a Tam Disk Erişimi verin, ardından CodexBar'ı yeniden açın.";
 "claude_oauth_keychain_access_revoked" = "Claude Anahtar Zinciri erişimi, Claude Code'un token yenilemesi nedeniyle iptal edildi. Erişimi yeniden vermek için Yenile'ye tıklayın veya Claude kullanım kaynağını CLI/Web olarak değiştirin.";
 "claude_showing_last_known_usage" = "Bilinen son kullanım gösteriliyor (yakalanma zamanı: %@).";
 "claude_limited_usage_detail" = "Kullanım ayrıntıları sınırlı";

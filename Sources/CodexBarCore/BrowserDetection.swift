@@ -34,6 +34,7 @@ public final class BrowserDetection: Sendable {
         case appInstalled
         case usableProfileData
         case usableCookieStore
+        case cookieStoreAccessDenied
     }
 
     private struct CacheKey: Hashable {
@@ -160,6 +161,19 @@ public final class BrowserDetection: Sendable {
         }
         return self.safariCookieAccessProbePaths().contains { path in
             self.fileExists(path) && self.profileAccessIssue(path) == nil
+        }
+    }
+
+    /// True when Safari's cookie storage exists but every existing location is permission-denied, which means
+    /// CodexBar lacks Full Disk Access. Absent storage is not reported: Safari may simply have no data yet.
+    public func safariCookieStoreNeedsFullDiskAccess() -> Bool {
+        self.cachedBool(browser: .safari, kind: .cookieStoreAccessDenied) {
+            let homeURL = URL(fileURLWithPath: self.homeDirectory, isDirectory: true)
+            guard BrowserCookieAccessGate.cookieStoreAccessDecision(homeDirectories: [homeURL]) == .allowed else {
+                return false
+            }
+            let existingPaths = self.safariCookieAccessProbePaths().filter(self.fileExists)
+            return !existingPaths.isEmpty && existingPaths.allSatisfy { self.profileAccessIssue($0) == .accessDenied }
         }
     }
 

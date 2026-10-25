@@ -956,6 +956,7 @@
 "network" = "xarxa";
 "none" = "cap";
 "claude_oauth_keychain_access_disabled" = "L’accés al Keychain està desactivat, de manera que CodexBar no pot llegir les dades d’inici de sessió de Claude.";
+"claude_safari_full_disk_access_required" = "L’accés al Keychain està desactivat i CodexBar no pot llegir les galetes de claude.ai de Safari. Doneu a CodexBar accés total al disc a Configuració del Sistema › Privacitat i seguretat i torneu a obrir CodexBar.";
 "claude_oauth_keychain_access_revoked" = "L'accés al clauer de Claude s'ha revocat per la rotació del token de Claude Code. Feu clic a Actualitza per tornar a concedir l'accés, o canvieu l'origen d'ús de Claude a CLI/Web.";
 "claude_showing_last_known_usage" = "Es mostra l'últim ús conegut capturat %@.";
 "claude_limited_usage_detail" = "Detalls d’ús limitats";

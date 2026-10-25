@@ -948,6 +948,7 @@
 "network" = "red";
 "none" = "ninguno";
 "claude_oauth_keychain_access_disabled" = "El acceso a Keychain está desactivado, por lo que CodexBar no puede leer los datos de inicio de sesión de Claude.";
+"claude_safari_full_disk_access_required" = "El acceso a Keychain está desactivado y CodexBar no puede leer las cookies de claude.ai de Safari. Concede a CodexBar acceso total al disco en Ajustes del Sistema › Privacidad y seguridad y vuelve a abrir CodexBar.";
 "claude_oauth_keychain_access_revoked" = "El acceso al llavero de Claude fue revocado por la rotación del token de Claude Code. Haz clic en Actualizar para volver a conceder acceso o cambia el origen del uso de Claude a CLI/Web.";
 "claude_showing_last_known_usage" = "Mostrando el último uso conocido, capturado %@.";
 "claude_limited_usage_detail" = "Detalles de uso limitados";

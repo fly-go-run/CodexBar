@@ -706,6 +706,31 @@ struct BrowserDetectionTests {
     }
 
     @Test
+    func `Safari Full Disk Access is reported only when existing cookie storage is denied`() {
+        let home = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+        let legacyCookies = "\(home)/Library/Cookies"
+        let containerCookies = "\(home)/Library/Containers/com.apple.Safari/Data/Library/Cookies"
+        func detection(
+            existing: Set<String>,
+            denied: Set<String>) -> BrowserDetection
+        {
+            BrowserDetection(
+                homeDirectory: home,
+                cacheTTL: 0,
+                now: Date.init,
+                fileExists: { existing.contains($0) },
+                directoryContents: { _ in nil },
+                applicationURLs: { _ in [] },
+                profileAccessIssue: { denied.contains($0) ? .accessDenied : nil })
+        }
+
+        let bothDenied: Set = [legacyCookies, containerCookies]
+        #expect(detection(existing: bothDenied, denied: bothDenied).safariCookieStoreNeedsFullDiskAccess())
+        #expect(!detection(existing: bothDenied, denied: [legacyCookies]).safariCookieStoreNeedsFullDiskAccess())
+        #expect(!detection(existing: [], denied: bothDenied).safariCookieStoreNeedsFullDiskAccess())
+    }
+
+    @Test
     func `interactive source treats a missing production profile path as fresh`() throws {
         let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)

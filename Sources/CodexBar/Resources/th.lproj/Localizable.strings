@@ -953,6 +953,7 @@
 "network" = "เครือข่าย";
 "none" = "ไม่มี";
 "claude_oauth_keychain_access_disabled" = "การเข้าถึง Keychain ถูกปิดใช้งาน จึงทำให้ CodexBar ไม่สามารถอ่านข้อมูลการลงชื่อเข้าใช้ Claude ได้";
+"claude_safari_full_disk_access_required" = "การเข้าถึง Keychain ถูกปิดใช้งาน และ CodexBar ไม่สามารถอ่านคุกกี้ claude.ai ของ Safari ได้ ให้สิทธิ์การเข้าถึงดิสก์เต็มรูปแบบแก่ CodexBar ในการตั้งค่าระบบ › ความเป็นส่วนตัวและความปลอดภัย แล้วเปิด CodexBar ใหม่";
 "claude_oauth_keychain_access_revoked" = "สิทธิ์เข้าถึงพวงกุญแจ Claude ถูกเพิกถอนจากการหมุนเวียนโทเค็นของ Claude Code คลิกรีเฟรชเพื่อให้สิทธิ์อีกครั้ง หรือเปลี่ยนแหล่งที่มาการใช้งาน Claude เป็น CLI/Web";
 "claude_showing_last_known_usage" = "กำลังแสดงการใช้งานล่าสุดที่ทราบ ซึ่งบันทึกเมื่อ %@";
 "claude_limited_usage_detail" = "รายละเอียดการใช้งานมีจำกัด";

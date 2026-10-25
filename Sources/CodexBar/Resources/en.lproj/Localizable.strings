@@ -4,6 +4,7 @@
 "Conversations (%@)" = "Conversations (%@)";
 "Fast" = "Fast";
 "claude_oauth_keychain_access_disabled" = "Keychain access is disabled, so CodexBar can't read Claude's sign-in.";
+"claude_safari_full_disk_access_required" = "Keychain access is disabled and CodexBar can't read Safari's claude.ai cookies. Grant CodexBar Full Disk Access in System Settings › Privacy & Security, then reopen CodexBar.";
 "claude_oauth_keychain_access_revoked" = "Claude Keychain access was revoked by Claude Code's token rotation. Click Refresh to re-grant access, or switch Claude Usage source to CLI/Web.";
 "claude_showing_last_known_usage" = "Showing last-known usage captured %@.";
 "claude_limited_usage_detail" = "Limited usage detail";

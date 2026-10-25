@@ -949,6 +949,7 @@
 "network" = "网络";
 "none" = "无";
 "claude_oauth_keychain_access_disabled" = "Keychain 访问已禁用，因此 CodexBar 无法读取 Claude 的登录信息。";
+"claude_safari_full_disk_access_required" = "Keychain 访问已禁用，且 CodexBar 无法读取 Safari 中 claude.ai 的 Cookie。请在“系统设置 › 隐私与安全性 › 完全磁盘访问权限”中允许 CodexBar，然后重新打开 CodexBar。";
 "claude_oauth_keychain_access_revoked" = "Claude Code 轮换令牌后撤销了对 Claude 钥匙串的访问权限。点击“刷新”以重新授权，或将 Claude 用量来源切换为 CLI/Web。";
 "claude_showing_last_known_usage" = "正在显示 %@ 采集的最后已知用量。";
 "claude_limited_usage_detail" = "用量详情有限";

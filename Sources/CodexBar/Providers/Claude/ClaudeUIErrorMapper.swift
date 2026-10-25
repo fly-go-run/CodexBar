@@ -7,6 +7,7 @@ enum ClaudeUIErrorMapper {
         _ raw: String?,
         staleSnapshotUpdatedAt: Date?,
         keychainAccessDisabled: Bool = KeychainAccessGate.isExplicitlyDisabled,
+        safariNeedsFullDiskAccess: () -> Bool = { false },
         localize: (String) -> String = L) -> String?
     {
         guard let raw else { return nil }
@@ -18,7 +19,11 @@ enum ClaudeUIErrorMapper {
             .missingOAuth,
             .notFound,
         ].contains { $0.localizedDescription == trimmed }
-        let message = if keychainAccessDisabled, missingCredentials {
+        // With Keychain disabled, Safari web is the preferred source; when it is unreadable, the actionable fix is
+        // Full Disk Access rather than the Keychain setting itself.
+        let message = if keychainAccessDisabled, missingCredentials, safariNeedsFullDiskAccess() {
+            localize("claude_safari_full_disk_access_required")
+        } else if keychainAccessDisabled, missingCredentials {
             localize("claude_oauth_keychain_access_disabled")
         } else if trimmed == ClaudeOAuthCredentialsError.keychainAccessRevoked.localizedDescription {
             localize("claude_oauth_keychain_access_revoked")

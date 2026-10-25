@@ -104,7 +104,11 @@ extension UsageStore {
             case .claude:
                 return ClaudeUIErrorMapper.userFacingMessage(
                     raw,
-                    staleSnapshotUpdatedAt: nil).map { ($0, self.snapshots[provider.instanceID]?.updatedAt) }
+                    staleSnapshotUpdatedAt: nil,
+                    safariNeedsFullDiskAccess: {
+                        self.settings.claudeCookieSource == .auto
+                            && self.browserDetection.safariCookieStoreNeedsFullDiskAccess()
+                    }).map { ($0, self.snapshots[provider.instanceID]?.updatedAt) }
             }
         }
         if let diagnostic = self.diagnostics[provider.instanceID] {

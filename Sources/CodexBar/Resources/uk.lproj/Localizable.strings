@@ -949,6 +949,7 @@
 "network" = "мережа";
 "none" = "немає";
 "claude_oauth_keychain_access_disabled" = "Доступ до Keychain вимкнено, тому CodexBar не може прочитати дані входу в Claude.";
+"claude_safari_full_disk_access_required" = "Доступ до Keychain вимкнено, і CodexBar не може прочитати cookie claude.ai із Safari. Надайте CodexBar повний доступ до диска в Системних параметрах › Приватність і безпека, а потім знову відкрийте CodexBar.";
 "claude_oauth_keychain_access_revoked" = "Доступ до В’язки ключів Claude було відкликано через ротацію токена в Claude Code. Натисніть «Оновити», щоб повторно надати доступ, або перемкніть джерело використання Claude на CLI/Web.";
 "claude_showing_last_known_usage" = "Показано останні відомі дані про використання (отримано %@).";
 "claude_limited_usage_detail" = "Обмежена деталізація використання";

@@ -23,6 +23,26 @@ struct ClaudeUIErrorMapperTests {
     }
 
     @Test
+    func `disabled Keychain with unreadable Safari asks for Full Disk Access`() {
+        let raw = ClaudeOAuthCredentialsError.notFound.localizedDescription
+        #expect(ClaudeUIErrorMapper.userFacingMessage(
+            raw,
+            staleSnapshotUpdatedAt: nil,
+            keychainAccessDisabled: true,
+            safariNeedsFullDiskAccess: { true }) == L("claude_safari_full_disk_access_required"))
+        #expect(ClaudeUIErrorMapper.userFacingMessage(
+            raw,
+            staleSnapshotUpdatedAt: nil,
+            keychainAccessDisabled: true,
+            safariNeedsFullDiskAccess: { false }) == L("claude_oauth_keychain_access_disabled"))
+        #expect(ClaudeUIErrorMapper.userFacingMessage(
+            raw,
+            staleSnapshotUpdatedAt: nil,
+            keychainAccessDisabled: false,
+            safariNeedsFullDiskAccess: { true }) == raw)
+    }
+
+    @Test
     func `disabled Keychain preserves unrelated errors and appends stale notice once`() throws {
         let raw = ClaudeOAuthCredentialsError.refreshFailed("Synthetic server failure").localizedDescription
         #expect(ClaudeUIErrorMapper.userFacingMessage(raw, staleSnapshotUpdatedAt: nil, keychainAccessDisabled: true)
