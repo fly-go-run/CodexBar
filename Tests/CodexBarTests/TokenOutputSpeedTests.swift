@@ -18,12 +18,14 @@ struct TokenOutputSpeedTests {
     }
 
     @Test
-    func `claude requests start at their parent entry and end at the last block`() throws {
+    func `claude requests start at the entry behind their attachments and end at the last block`() throws {
         let data = try Self.jsonl([
             ["type": "user", "uuid": "u1", "timestamp": "2026-10-10T11:37:00.000Z"],
-            ["type": "attachment", "uuid": "a1", "parentUuid": "u1", "timestamp": "2026-10-10T11:37:01.000Z"],
+            ["type": "attachment", "uuid": "a1", "parentUuid": "u1", "timestamp": "2026-10-10T11:37:00.010Z"],
+            // Written only once the response arrives; timing from it made the request look instant.
+            ["type": "attachment", "uuid": "a2", "parentUuid": "a1", "timestamp": "2026-10-10T11:37:03.000Z"],
             [
-                "type": "assistant", "uuid": "m1", "parentUuid": "a1", "timestamp": "2026-10-10T11:37:03.000Z",
+                "type": "assistant", "uuid": "m1", "parentUuid": "a2", "timestamp": "2026-10-10T11:37:03.000Z",
                 "message": ["id": "msg_1", "model": "claude-opus-4-1", "usage": ["output_tokens": 400]],
             ],
             [
@@ -39,16 +41,23 @@ struct TokenOutputSpeedTests {
                 "type": "assistant", "uuid": "m4", "parentUuid": "m2", "timestamp": "2026-10-10T11:38:01.000Z",
                 "message": ["id": "msg_3", "model": "<synthetic>", "usage": ["output_tokens": 0]],
             ],
+            // An attachment chain that leaves the file falls back to the nearest attachment that was read.
+            ["type": "attachment", "uuid": "a3", "parentUuid": "elsewhere", "timestamp": "2026-10-10T11:39:00.000Z"],
+            [
+                "type": "assistant", "uuid": "m5", "parentUuid": "a3", "timestamp": "2026-10-10T11:39:02.000Z",
+                "message": ["id": "msg_4", "model": "claude-opus-4-1", "usage": ["output_tokens": 100]],
+            ],
         ])
 
         let samples = TokenOutputSpeedScanner.parseClaudeSession(data)
 
-        #expect(samples.count == 1)
+        #expect(samples.count == 2)
         let sample = try #require(samples.first)
         #expect(sample.model == "claude-opus-4-1")
         #expect(sample.outputTokens == 400)
-        #expect(try sample.startedAt == (Self.date("2026-10-10T11:37:01.000Z")))
-        #expect(sample.durationSeconds == 4)
+        #expect(try sample.startedAt == (Self.date("2026-10-10T11:37:00.000Z")))
+        #expect(sample.durationSeconds == 5)
+        #expect(samples.last?.durationSeconds == 2)
     }
 
     @Test

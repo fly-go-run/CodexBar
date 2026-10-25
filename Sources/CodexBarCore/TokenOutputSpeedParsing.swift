@@ -4,6 +4,7 @@ import Foundation
 struct TokenSpeedLineFields {
     var type: String?
     var uuid: String?
+    var parentUuid: String?
     var timestamp: String?
     var hasPayloadObject = false
     var payloadType: String?
@@ -11,7 +12,7 @@ struct TokenSpeedLineFields {
     var payloadModel: String?
 }
 
-/// Single-pass, allocation-free reader for the top-level `type` / `uuid` / `timestamp` strings and the
+/// Single-pass, allocation-free reader for the top-level `type` / `uuid` / `parentUuid` / `timestamp` strings and the
 /// `payload.type` / `payload.role` / `payload.model` strings of one JSON object line. Session logs hold
 /// huge tool outputs and base64 images that the speed parsers never look at, so skipping the generic
 /// JSON decode for them is most of the scan cost.
@@ -27,7 +28,7 @@ enum TokenSpeedLineExtractor {
 
     private struct Reader {
         enum TopKey {
-            case type, uuid, timestamp, payload, other
+            case type, uuid, parentUuid, timestamp, payload, other
 
             var bit: UInt8 {
                 switch self {
@@ -35,6 +36,7 @@ enum TokenSpeedLineExtractor {
                 case .uuid: 1
                 case .timestamp: 2
                 case .payload: 3
+                case .parentUuid: 4
                 case .other: 7
                 }
             }
@@ -173,6 +175,7 @@ enum TokenSpeedLineExtractor {
             switch self.topKey {
             case .type: self.fields.type = value
             case .uuid: self.fields.uuid = value
+            case .parentUuid: self.fields.parentUuid = value
             case .timestamp: self.fields.timestamp = value
             case .payload, .other: break
             }
@@ -212,6 +215,7 @@ enum TokenSpeedLineExtractor {
         private func classifyTop(_ range: Range<Int>) -> TopKey {
             if self.matches(range, "type") { return .type }
             if self.matches(range, "uuid") { return .uuid }
+            if self.matches(range, "parentUuid") { return .parentUuid }
             if self.matches(range, "timestamp") { return .timestamp }
             if self.matches(range, "payload") { return .payload }
             return .other
@@ -232,7 +236,9 @@ enum TokenSpeedLineExtractor {
 
 /// Claude Code writes one line per content block; lines of one response share `message.id`
 /// and carry the final `usage.output_tokens`. A response's first line points (`parentUuid`)
-/// at the entry that triggered the request — a prompt, tool result, or attachment.
+/// at the entry that triggered the request — a prompt or tool result, usually through a chain of
+/// attachments. Attachments are skipped when timing the request: some (`deferred_tools_record`) are
+/// only written once the response arrives, which would make the request look instant.
 ///
 /// The parser is incremental: it keeps the entry-time map and the requests seen so far, so feeding
 /// it only the bytes appended to a log gives the same result as parsing the whole file again.
@@ -245,6 +251,8 @@ struct ClaudeSessionParser: Sendable {
     }
 
     private var entryTimes: [String: Date] = [:]
+    /// Attachment uuid → its parent, walked back to the entry that actually sent the request.
+    private var attachmentParents: [String: String] = [:]
     /// `.some(nil)` marks a response whose start is unknown, so later blocks must not revive it.
     private var requests: [String: Request?] = [:]
     private var order: [String] = []
@@ -271,6 +279,9 @@ struct ClaudeSessionParser: Sendable {
         if let fields, fields.type != "assistant" {
             if let uuid = fields.uuid, let timestamp = fields.timestamp.flatMap(Self.parseTimestamp) {
                 self.entryTimes[uuid] = timestamp
+                if fields.type == "attachment", let parent = fields.parentUuid {
+                    self.attachmentParents[uuid] = parent
+                }
             }
             return
         }
@@ -283,7 +294,12 @@ struct ClaudeSessionParser: Sendable {
         guard let timestamp = (object["timestamp"] as? String).flatMap(Self.parseTimestamp) else { return }
         guard let uuid = object["uuid"] as? String else { return }
         self.entryTimes[uuid] = timestamp
-        guard object["type"] as? String == "assistant" else { return }
+        guard object["type"] as? String == "assistant" else {
+            if object["type"] as? String == "attachment", let parent = object["parentUuid"] as? String {
+                self.attachmentParents[uuid] = parent
+            }
+            return
+        }
         guard let message = object["message"] as? [String: Any],
               let id = message["id"] as? String,
               let model = message["model"] as? String,
@@ -300,7 +316,7 @@ struct ClaudeSessionParser: Sendable {
         }
         self.order.append(id)
         guard let parent = object["parentUuid"] as? String,
-              let startedAt = self.entryTimes[parent],
+              let startedAt = self.requestStart(parent: parent),
               startedAt <= timestamp
         else {
             self.requests[id] = .some(nil)
@@ -312,6 +328,18 @@ struct ClaudeSessionParser: Sendable {
             completedAt: timestamp,
             outputTokens: output ?? 0)
     }
+
+    /// Time of the nearest non-attachment ancestor; the parent's own time when the chain leaves what was read.
+    private func requestStart(parent: String) -> Date? {
+        var current = parent
+        for _ in 0..<Self.maximumAttachmentHops {
+            guard let next = self.attachmentParents[current], self.entryTimes[next] != nil else { break }
+            current = next
+        }
+        return self.entryTimes[current]
+    }
+
+    private static let maximumAttachmentHops = 32
 
     private static func parseTimestamp(_ raw: String) -> Date? {
         CostUsageScanner.dateFromTimestamp(raw)
