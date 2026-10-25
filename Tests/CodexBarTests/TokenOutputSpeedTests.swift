@@ -116,49 +116,208 @@ struct TokenOutputSpeedTests {
         let lastHour = try #require(snapshot.lastHour)
         #expect(lastHour.requestCount == 2)
         #expect(lastHour.outputTokens == 1300)
+        #expect(snapshot.lastHourModels.map(\.model) == ["opus", "sonnet"])
+        #expect(snapshot.lastHourModels.map(\.tokensPerSecond) == [100, 50])
+    }
+
+    private static func speedSample(
+        _ model: String,
+        _ tokens: Int,
+        minutesAgo: Double,
+        seconds: TimeInterval = 10,
+        now: Date) -> TokenOutputSpeedSample
+    {
+        let end = now.addingTimeInterval(-minutesAgo * 60)
+        return TokenOutputSpeedSample(
+            model: model, outputTokens: tokens, startedAt: end.addingTimeInterval(-seconds), completedAt: end)
     }
 
     @Test
-    func `speed summary leads with the last hour once it has enough requests`() throws {
+    func `speed summary lists the models of the last hour with their own rates`() throws {
         let now = try Self.date("2026-10-10T12:00:00.000Z")
-        func sample(_ model: String, _ tokens: Int, minutesAgo: Double) -> TokenOutputSpeedSample {
-            let end = now.addingTimeInterval(-minutesAgo * 60)
-            return TokenOutputSpeedSample(
-                model: model, outputTokens: tokens, startedAt: end.addingTimeInterval(-10), completedAt: end)
+        func sample(
+            _ model: String,
+            _ tokens: Int,
+            minutesAgo: Double,
+            seconds: TimeInterval = 10) -> TokenOutputSpeedSample
+        {
+            Self.speedSample(model, tokens, minutesAgo: minutesAgo, seconds: seconds, now: now)
         }
         typealias Model = UsageMenuCardView.Model
+        typealias Row = TokenSpeedSummary.Row
+        let opus = "claude-opus-4-1-20250805"
+        let sonnet = "claude-sonnet-4-5"
+        let window24h = L("token_speed_window_24h")
+
+        // Each model keeps its own rate, never a blend; one with too few requests this hour shows its 24h rate.
         let busy = TokenOutputSpeedSnapshot(
             samples: [
-                sample("claude-opus-4-1-20250805", 900, minutesAgo: 5),
-                sample("claude-opus-4-1-20250805", 900, minutesAgo: 10),
-                sample("claude-sonnet-4-5", 600, minutesAgo: 20),
-                sample("claude-opus-4-1-20250805", 300, minutesAgo: 300),
+                sample(opus, 900, minutesAgo: 5),
+                sample(opus, 900, minutesAgo: 10),
+                sample(opus, 900, minutesAgo: 15),
+                sample(sonnet, 600, minutesAgo: 20),
+                sample(opus, 300, minutesAgo: 300),
             ],
             now: now)
-
         let summary = try #require(Model.tokenSpeedSummary(busy))
-
         #expect(summary.title == L("token_speed_title_last_hour"))
-        #expect(summary.value == "80 tok/s")
-        #expect(summary.rows == [
-            .init(name: "Opus 4.1", value: "70"),
-            .init(name: "Sonnet 4.5", value: "60"),
+        // 90 tok/s now vs 75 over 24h for Opus: not slower, so nothing is flagged.
+        #expect(summary.rows.map(\.headline) == [
+            Row(model: "Opus 4.1", value: "90 tok/s", windowNote: nil, slowdownPercent: nil),
+            Row(model: "Sonnet 4.5", value: "60 tok/s", windowNote: window24h, slowdownPercent: nil),
         ])
-        #expect(summary.rowsLine == "24h · Opus 4.1 70 · Sonnet 4.5 60")
-        // 80 tok/s now vs ~73 over 24h: not slower, so nothing is flagged.
-        #expect(summary.slowdownPercent == nil)
-        #expect(Model.tokenOutputSpeedLines(busy) == [summary.compactLine])
+        #expect(summary.lines == [
+            "\(L("token_speed_title_last_hour")) · Opus 4.1 90 tok/s",
+            "Sonnet 4.5 (\(window24h)) 60 tok/s",
+        ])
+        #expect(Model.tokenOutputSpeedLines(busy) == summary.lines)
 
-        // Too few recent requests: fall back to the 24h rate; a lone model row would only repeat it.
+        // Models that only ran earlier in the day are not listed while the last hour is busy.
+        let switched = TokenOutputSpeedSnapshot(
+            samples: [
+                sample(sonnet, 600, minutesAgo: 5),
+                sample(sonnet, 600, minutesAgo: 10),
+                sample(sonnet, 600, minutesAgo: 15),
+                sample(opus, 5000, minutesAgo: 300, seconds: 100),
+            ],
+            now: now)
+        let switchedSummary = try #require(Model.tokenSpeedSummary(switched))
+        #expect(switchedSummary.rows.map(\.model) == ["Sonnet 4.5"])
+        #expect(switchedSummary.rows.first?.value == "60 tok/s")
+
+        // A slowdown compares the model with its own 24h average; a model under 10% of the output is left out.
+        let slow = TokenOutputSpeedSnapshot(
+            samples: [
+                sample(opus, 300, minutesAgo: 5),
+                sample(opus, 300, minutesAgo: 10),
+                sample(opus, 300, minutesAgo: 15),
+                sample(opus, 9000, minutesAgo: 300, seconds: 100),
+                sample(sonnet, 50, minutesAgo: 20, seconds: 0.5),
+            ],
+            now: now)
+        let slowSummary = try #require(Model.tokenSpeedSummary(slow))
+        #expect(slowSummary.rows.map(\.headline) == [
+            Row(model: "Opus 4.1", value: "30 tok/s", windowNote: nil, slowdownPercent: 61),
+        ])
+        #expect(slowSummary.lines == ["\(L("token_speed_title_last_hour")) · Opus 4.1 30 tok/s ↓61%"])
+
+        // No model has enough requests this hour: the block lists the 24h models and their 24h rates.
         let quiet = TokenOutputSpeedSnapshot(
-            samples: [sample("claude-opus-4-1-20250805", 500, minutesAgo: 300)],
+            samples: [
+                sample(sonnet, 900, minutesAgo: 5),
+                sample(sonnet, 900, minutesAgo: 10),
+                sample(opus, 5000, minutesAgo: 300, seconds: 100),
+            ],
             now: now)
         let fallback = try #require(Model.tokenSpeedSummary(quiet))
         #expect(fallback.title == L("token_speed_title_24h"))
-        #expect(fallback.value == "50 tok/s")
-        #expect(fallback.rows.isEmpty)
+        #expect(fallback.rows.map(\.headline) == [
+            Row(model: "Opus 4.1", value: "50 tok/s", windowNote: nil, slowdownPercent: nil),
+            Row(model: "Sonnet 4.5", value: "90 tok/s", windowNote: nil, slowdownPercent: nil),
+        ])
         #expect(Model.tokenSpeedSummary(nil) == nil)
         #expect(Model.tokenOutputSpeedLines(nil).isEmpty)
+    }
+
+    @Test
+    func `speed summary caps the block at three models with a real share of the output`() throws {
+        let now = try Self.date("2026-10-10T12:00:00.000Z")
+        func busy(_ model: String, _ tokens: Int) -> [TokenOutputSpeedSample] {
+            (1...3).map { Self.speedSample(model, tokens, minutesAgo: Double($0) * 5, now: now) }
+        }
+        let snapshot = TokenOutputSpeedSnapshot(
+            samples: busy("model-a", 1000) + busy("model-b", 800) + busy("model-c", 600) + busy("model-d", 500)
+                + busy("model-e", 30),
+            now: now)
+        let summary = try #require(UsageMenuCardView.Model.tokenSpeedSummary(snapshot))
+        #expect(summary.rows.map(\.model) == ["Model A", "Model B", "Model C"])
+        #expect(summary.rows.map(\.value) == ["100 tok/s", "80 tok/s", "60 tok/s"])
+
+        // The leader stays even when no model reaches 10% of the output on its own.
+        let spread = TokenOutputSpeedSnapshot(
+            samples: (0..<12).flatMap { busy("model-\($0)", 100 - $0) },
+            now: now)
+        let spreadSummary = try #require(UsageMenuCardView.Model.tokenSpeedSummary(spread))
+        #expect(spreadSummary.rows.map(\.model) == ["Model 0"])
+    }
+
+    @Test
+    func `snapshot keeps each model's median request and its recent active periods`() throws {
+        let now = try Self.date("2026-10-10T12:00:00.000Z")
+        let snapshot = TokenOutputSpeedSnapshot(
+            samples: [
+                Self.speedSample("opus", 1000, minutesAgo: 2, now: now),
+                Self.speedSample("opus", 300, minutesAgo: 5, now: now),
+                Self.speedSample("opus", 600, minutesAgo: 25, now: now),
+                Self.speedSample("opus", 400, minutesAgo: 600, now: now),
+            ],
+            now: now)
+
+        // Per-request rates 100, 30, 60 in the last hour and 40 earlier.
+        #expect(snapshot.lastHourModels.first?.medianTokensPerSecond == 60)
+        #expect(snapshot.models.first?.medianTokensPerSecond == 50)
+        // Idle periods are skipped: ten hours ago sits right before the last half hour.
+        #expect(snapshot.recentRates["opus"] == [40, 60, 65])
+    }
+
+    @Test
+    func `recent periods keep only the latest twelve`() throws {
+        let now = try Self.date("2026-10-10T12:00:00.000Z")
+        let samples = (0..<15).map { index in
+            Self.speedSample("opus", 100 * (index + 1), minutesAgo: Double(index) * 10 + 1, now: now)
+        }
+        let snapshot = TokenOutputSpeedSnapshot(samples: samples, now: now)
+        let recent = try #require(snapshot.recentRates["opus"])
+        #expect(recent.count == TokenOutputSpeedSnapshot.recentPeriodCount)
+        #expect(recent.first == 120)
+        #expect(recent.last == 10)
+    }
+
+    @Test
+    func `speed rows compare the last hour with the model's own 24h average`() throws {
+        let now = try Self.date("2026-10-10T12:00:00.000Z")
+        let opus = "claude-opus-4-1-20250805"
+        let sonnet = "claude-sonnet-4-5"
+        let snapshot = TokenOutputSpeedSnapshot(
+            samples: [
+                Self.speedSample(opus, 900, minutesAgo: 5, now: now),
+                Self.speedSample(opus, 900, minutesAgo: 10, now: now),
+                Self.speedSample(opus, 900, minutesAgo: 15, now: now),
+                Self.speedSample(sonnet, 600, minutesAgo: 20, now: now),
+                Self.speedSample(opus, 300, minutesAgo: 300, now: now),
+            ],
+            now: now)
+        let summary = try #require(UsageMenuCardView.Model.tokenSpeedSummary(snapshot))
+
+        #expect(summary.heading == L("token_speed_heading"))
+        #expect(summary.requestCount == 4)
+        #expect(summary.windowSummary
+            == "\(L("token_speed_window_last_hour")) · \(L("token_speed_requests", codexBarLocalizedInteger(4)))")
+
+        // 90 tok/s now against 75 over 24h.
+        let lead = try #require(summary.rows.first)
+        #expect(lead.rateText == "90")
+        #expect(lead.baseline == 75)
+        #expect(lead.trend == [30, 90, 90])
+        #expect(lead.detail == L("token_speed_vs_day_faster", "20"))
+        #expect(!lead.detailIsWarning)
+        #expect(lead.help?.contains(L("token_speed_help_day", "75")) == true)
+
+        // A model on its 24h rate has nothing to compare with, so it has no sentence.
+        let fallback = try #require(summary.rows.last)
+        #expect(fallback.windowNote == L("token_speed_window_24h"))
+        #expect(fallback.baseline == 60)
+        #expect(fallback.detail == nil)
+    }
+
+    @Test
+    func `speed comparison reads steady near the average and warns only when clearly slower`() {
+        typealias Model = UsageMenuCardView.Model
+        #expect(Model.tokenSpeedComparison(rate: 103, average: 100) == L("token_speed_vs_day_same"))
+        #expect(Model.tokenSpeedComparison(rate: 96, average: 100) == L("token_speed_vs_day_same"))
+        #expect(Model.tokenSpeedComparison(rate: 111, average: 100) == L("token_speed_vs_day_faster", "11"))
+        #expect(Model.tokenSpeedComparison(rate: 88, average: 100) == L("token_speed_vs_day_slower", "12"))
+        #expect(Model.tokenSpeedComparison(rate: 50, average: 0) == L("token_speed_vs_day_same"))
     }
 
     @Test
@@ -632,5 +791,12 @@ struct TokenOutputSpeedIncrementalTests {
             now: now)
 
         #expect(snapshot?.models.first?.requestCount == 3)
+    }
+}
+
+extension TokenSpeedSummary.Row {
+    /// The rate fields alone, without the trend and context line covered by their own tests.
+    fileprivate var headline: Self {
+        Self(model: self.model, value: self.value, windowNote: self.windowNote, slowdownPercent: self.slowdownPercent)
     }
 }

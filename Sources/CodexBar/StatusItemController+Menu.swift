@@ -1264,7 +1264,8 @@ extension StatusItemController {
                 heightCacheScope: provider.rawValue,
                 heightCacheFingerprint: layoutModel.heightFingerprint(section: "usage"),
                 submenu: usageSubmenu,
-                containsInteractiveControls: true))
+                containsInteractiveControls: true,
+                selectionStyle: .subtle))
         } else {
             let headerView = UsageMenuCardHeaderSectionView(
                 model: layoutModel,

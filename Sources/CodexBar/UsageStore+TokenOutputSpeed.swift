@@ -119,37 +119,74 @@ extension UsageStore {
     }
 }
 
-/// Presentation of the output-speed block: one headline rate plus a quiet per-model line.
+/// Presentation of the output-speed block: one row per model doing a real share of the work, each with its
+/// own rate, so a number is never a blend of models.
 struct TokenSpeedSummary: Equatable {
     struct Row: Equatable {
-        let name: String
+        let model: String
         let value: String
+        /// Set when this model had too few requests in the last hour and shows its 24h rate instead.
+        let windowNote: String?
+        /// How much slower the last hour ran than this model's 24h average, when that is worth flagging.
+        let slowdownPercent: Int?
+        /// The headline rate behind `value`, for the card's large number.
+        var rate: Double = 0
+        /// One sentence under the rate comparing it with the model's 24h average; nil when the rate already
+        /// is the 24h average.
+        var detail: String?
+        /// Orange when the rate runs clearly below the average (the same cut as `slowdownPercent`).
+        var detailIsWarning = false
+        /// The figures behind the row (median request, request counts), kept out of the card itself.
+        var help: String?
+        /// Rates of the most recent active periods, oldest first.
+        var trend: [Double] = []
+        /// The model's 24h average, drawn as the trend's reference line.
+        var baseline: Double?
+
+        var slowdownText: String? {
+            self.slowdownPercent.map { "↓\($0)%" }
+        }
+
+        var slowdownHelp: String? {
+            self.slowdownPercent.map { L("token_speed_slowdown_help", "\($0)") }
+        }
+
+        var rateText: String {
+            String(format: "%.0f", self.rate)
+        }
+
+        var compactText: String {
+            [self.model, self.windowNote.map { "(\($0))" }, self.value, self.slowdownText]
+                .compactMap(\.self)
+                .joined(separator: " ")
+        }
     }
 
     let title: String
-    let value: String
-    /// Per-model 24h rates, numbers only ("96"); the unit lives on the headline.
+    /// Largest output first; never empty.
     let rows: [Row]
-    /// How much slower the last hour ran than the 24h average, when that is worth flagging.
-    let slowdownPercent: Int?
+    /// Card heading without the window, which the card shows on the right with the request count.
+    var heading: String = L("token_speed_heading")
+    var windowLabel: String = ""
+    /// Measurable requests behind the block in its window.
+    var requestCount = 0
 
-    var rowsLine: String? {
-        guard !self.rows.isEmpty else { return nil }
-        return (["24h"] + self.rows.map { "\($0.name) \($0.value)" }).joined(separator: " · ")
+    /// "近 1 小时 · 42 次请求"
+    var windowSummary: String {
+        let requests = self.requestCount > 0
+            ? L("token_speed_requests", codexBarLocalizedInteger(self.requestCount))
+            : nil
+        return [self.windowLabel, requests]
+            .compactMap { $0?.isEmpty == false ? $0 : nil }
+            .joined(separator: " · ")
     }
 
-    var slowdownText: String? {
-        self.slowdownPercent.map { "↓\($0)%" }
-    }
-
-    var slowdownHelp: String? {
-        self.slowdownPercent.map { L("token_speed_slowdown_help", "\($0)") }
-    }
-
-    /// Single-line form for text-only surfaces (cost section, provider details, tooltips).
-    var compactLine: String {
-        let headline = [self.title, self.value, self.slowdownText].compactMap(\.self).joined(separator: " ")
-        return ([headline] + [self.rowsLine].compactMap(\.self)).joined(separator: " · ")
+    /// Text-only surfaces (cost section, provider details, tooltips) show one line per model, the title only
+    /// on the first.
+    var lines: [String] {
+        self.rows.enumerated().map { index, row in
+            index == 0 ? "\(self.title) · \(row.compactText)" : row.compactText
+        }
     }
 }
 
@@ -157,39 +194,129 @@ extension UsageMenuCardView.Model {
     /// The last hour is the "how fast is it right now" number; below this many requests it is too
     /// noisy and the 24h rate takes over.
     static let tokenSpeedLastHourMinimumRequests = 3
-    static let tokenSpeedMaximumRows = 3
     /// Flag the last hour only when it is clearly slower than the 24h average.
     static let tokenSpeedSlowdownThreshold = 0.2
+    /// Within this the last hour reads as "same as usual" rather than a percentage.
+    static let tokenSpeedSteadyThreshold = 0.05
+    /// Models below this share of the window's output (background title or summary calls, a one-off
+    /// switch) are left out so they do not crowd the block.
+    static let tokenSpeedMinimumOutputShare = 0.1
+    static let tokenSpeedMaximumRows = 3
 
+    /// Lists the models of the last hour while at least one of them has enough requests there for a stable
+    /// number; a listed model with too few of its own falls back to its 24h rate, marked as such. Otherwise
+    /// the block lists the models of the last 24h.
     static func tokenSpeedSummary(_ snapshot: TokenOutputSpeedSnapshot?) -> TokenSpeedSummary? {
         guard let snapshot, !snapshot.models.isEmpty else { return nil }
-        let dayRate = Self.combinedTokensPerSecond(snapshot.models)
-        let lastHourRate = (snapshot.lastHour?.requestCount ?? 0) >= Self.tokenSpeedLastHourMinimumRequests
-            ? snapshot.lastHour?.tokensPerSecond : nil
-        let slowdown: Int? = if let lastHourRate, dayRate > 0,
-                                lastHourRate < dayRate * (1 - Self.tokenSpeedSlowdownThreshold)
-        {
-            Int(((1 - lastHourRate / dayRate) * 100).rounded())
-        } else {
-            nil
-        }
-        // With one model and no last-hour headline, its row would just repeat the headline.
-        let rows = lastHourRate != nil || snapshot.models.count > 1
-            ? snapshot.models.prefix(Self.tokenSpeedMaximumRows).map {
-                TokenSpeedSummary.Row(
-                    name: Self.tokenSpeedModelName($0.model ?? ""),
-                    value: String(format: "%.0f", $0.tokensPerSecond))
+        let dayBuckets = Dictionary(
+            snapshot.models.map { ($0.model ?? "", $0) },
+            uniquingKeysWith: { first, _ in first })
+        let hourModels = Self.tokenSpeedListedBuckets(snapshot.lastHourModels)
+        guard hourModels.contains(where: { $0.requestCount >= Self.tokenSpeedLastHourMinimumRequests }) else {
+            let rows = Self.tokenSpeedListedBuckets(snapshot.models).map { bucket in
+                Self.tokenSpeedRow(
+                    bucket: bucket,
+                    dayBucket: nil,
+                    trend: snapshot.recentRates[bucket.model ?? ""] ?? [],
+                    windowNote: nil,
+                    slowdown: nil)
             }
-            : []
+            return TokenSpeedSummary(
+                title: L("token_speed_title_24h"),
+                rows: rows,
+                windowLabel: L("token_speed_window_24h"),
+                requestCount: snapshot.models.reduce(0) { $0 + $1.requestCount })
+        }
+        let rows = hourModels.map { bucket -> TokenSpeedSummary.Row in
+            let key = bucket.model ?? ""
+            let dayBucket = dayBuckets[key]
+            let trend = snapshot.recentRates[key] ?? []
+            guard bucket.requestCount >= Self.tokenSpeedLastHourMinimumRequests, let dayBucket else {
+                return Self.tokenSpeedRow(
+                    bucket: dayBucket ?? bucket,
+                    dayBucket: nil,
+                    trend: trend,
+                    windowNote: L("token_speed_window_24h"),
+                    slowdown: nil)
+            }
+            let lastHourRate = bucket.tokensPerSecond
+            let dayRate = dayBucket.tokensPerSecond
+            let slowdown: Int? = if dayRate > 0, lastHourRate < dayRate * (1 - Self.tokenSpeedSlowdownThreshold) {
+                Int(((1 - lastHourRate / dayRate) * 100).rounded())
+            } else {
+                nil
+            }
+            return Self.tokenSpeedRow(
+                bucket: bucket,
+                dayBucket: dayBucket,
+                trend: trend,
+                windowNote: nil,
+                slowdown: slowdown)
+        }
         return TokenSpeedSummary(
-            title: L(lastHourRate != nil ? "token_speed_title_last_hour" : "token_speed_title_24h"),
-            value: String(format: "%.0f tok/s", lastHourRate ?? dayRate),
+            title: L("token_speed_title_last_hour"),
             rows: rows,
-            slowdownPercent: slowdown)
+            windowLabel: L("token_speed_window_last_hour"),
+            requestCount: snapshot.lastHour?.requestCount ?? 0)
+    }
+
+    /// The leader always stays; the rest need their share of the window's output.
+    private static func tokenSpeedListedBuckets(
+        _ buckets: [TokenOutputSpeedSnapshot.Bucket]) -> [TokenOutputSpeedSnapshot.Bucket]
+    {
+        let total = buckets.reduce(0) { $0 + $1.outputTokens }
+        return Array(buckets.enumerated()
+            .filter { index, bucket in
+                index == 0 || Double(bucket.outputTokens) >= Double(total) * Self.tokenSpeedMinimumOutputShare
+            }
+            .map(\.element)
+            .prefix(Self.tokenSpeedMaximumRows))
+    }
+
+    /// `bucket` is the window the headline rate comes from; `dayBucket` is the 24h average it is compared
+    /// with, nil when the headline already is the 24h rate.
+    private static func tokenSpeedRow(
+        bucket: TokenOutputSpeedSnapshot.Bucket,
+        dayBucket: TokenOutputSpeedSnapshot.Bucket?,
+        trend: [Double],
+        windowNote: String?,
+        slowdown: Int?) -> TokenSpeedSummary.Row
+    {
+        let rate = bucket.tokensPerSecond
+        let windowFigures = L(
+            "token_speed_help_window",
+            dayBucket != nil ? L("token_speed_window_last_hour") : L("token_speed_window_24h"),
+            String(format: "%.0f", bucket.medianTokensPerSecond),
+            codexBarLocalizedInteger(bucket.requestCount))
+        let help = [
+            windowFigures,
+            dayBucket.map { L("token_speed_help_day", String(format: "%.0f", $0.tokensPerSecond)) },
+            L("token_speed_help_end_to_end"),
+        ].compactMap(\.self).joined(separator: "\n")
+        return TokenSpeedSummary.Row(
+            model: self.tokenSpeedModelName(bucket.model ?? ""),
+            value: String(format: "%.0f tok/s", rate),
+            windowNote: windowNote,
+            slowdownPercent: slowdown,
+            rate: rate,
+            detail: dayBucket.map { Self.tokenSpeedComparison(rate: rate, average: $0.tokensPerSecond) },
+            detailIsWarning: slowdown != nil,
+            help: help,
+            trend: trend,
+            baseline: (dayBucket ?? bucket).tokensPerSecond)
+    }
+
+    /// "比 24h 均值快 6%" / "与 24h 均值持平" / "比 24h 均值慢 18%".
+    static func tokenSpeedComparison(rate: Double, average: Double) -> String {
+        guard average > 0 else { return L("token_speed_vs_day_same") }
+        let change = rate / average - 1
+        guard abs(change) >= Self.tokenSpeedSteadyThreshold else { return L("token_speed_vs_day_same") }
+        let percent = String(Int((abs(change) * 100).rounded()))
+        return change > 0 ? L("token_speed_vs_day_faster", percent) : L("token_speed_vs_day_slower", percent)
     }
 
     static func tokenOutputSpeedLines(_ snapshot: TokenOutputSpeedSnapshot?) -> [String] {
-        self.tokenSpeedSummary(snapshot).map { [$0.compactLine] } ?? []
+        self.tokenSpeedSummary(snapshot)?.lines ?? []
     }
 
     /// `claude-opus-4-1` → `Opus 4.1`, `gpt-5-codex` → `GPT-5 Codex`; unknown shapes pass through.
@@ -206,10 +333,5 @@ extension UsageMenuCardView.Model {
         let words = parts.filter { !$0.allSatisfy(\.isNumber) }.map(\.capitalized)
         guard !words.isEmpty else { return name }
         return (words + (version.isEmpty ? [] : [version.joined(separator: ".")])).joined(separator: " ")
-    }
-
-    private static func combinedTokensPerSecond(_ buckets: [TokenOutputSpeedSnapshot.Bucket]) -> Double {
-        let seconds = buckets.reduce(0) { $0 + $1.seconds }
-        return seconds > 0 ? Double(buckets.reduce(0) { $0 + $1.outputTokens }) / seconds : 0
     }
 }

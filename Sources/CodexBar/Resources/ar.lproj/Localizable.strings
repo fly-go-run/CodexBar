@@ -1439,7 +1439,18 @@
 /* Claude Platform provider */
 "token_speed_title_last_hour" = "سرعة الإخراج · آخر ساعة";
 "token_speed_title_24h" = "سرعة الإخراج · 24 ساعة";
+"token_speed_window_24h" = "24 ساعة";
 "token_speed_slowdown_help" = "أبطأ بنسبة %@%% من متوسط 24 ساعة";
+"token_speed_vs_day_faster" = "أسرع بنسبة %@%% من متوسط 24 ساعة";
+"token_speed_vs_day_slower" = "أبطأ بنسبة %@%% من متوسط 24 ساعة";
+"token_speed_vs_day_same" = "مماثل لمتوسط 24 ساعة";
+"token_speed_help_window" = "%@: الوسيط %@ tok/s · %@ طلبات";
+"token_speed_help_day" = "متوسط 24 ساعة %@ tok/s";
+"token_speed_help_end_to_end" = "سرعة من طرف إلى طرف تشمل انتظار أول رمز";
+"token_speed_heading" = "سرعة الإخراج";
+"token_speed_window_last_hour" = "آخر ساعة";
+"token_speed_requests" = "%@ طلبات";
+"usage_metric_unused" = "غير مستخدم";
 "plan_renews_short" = "التجديد %@";
 "menu_tokens_short" = "رموز %@";
 

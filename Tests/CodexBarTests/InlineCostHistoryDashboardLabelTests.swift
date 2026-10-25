@@ -569,6 +569,11 @@ extension InlineCostHistoryDashboardLabelTests {
         #expect(dashboard.kpis.map(\.value) == ["$10.00", "$10.00"])
         #expect(dashboard.kpis.map(\.detail) == ["1K tokens", "1K tokens"])
         #expect(dashboard.chartCaption == "Last 30 days  $14.00 · 1.4K tokens")
+        // The card shows the three figures as one compact row; token counts move to each figure's help.
+        let strip = try #require(dashboard.costStrip)
+        #expect(strip.map(\.title) == ["Today", "Current window", "Last 30 days"])
+        #expect(strip.map(\.value) == ["$10.00", "$10.00", "$14.00"])
+        #expect(strip.map(\.detail) == ["1K tokens", "1K tokens", "1.4K tokens"])
         #expect(dashboard.detailLines.contains { $0.contains("Previous window") } == false)
         #expect(dashboard.quotaWindows.map(\.title) == ["Current window", "Previous window"])
         #expect(dashboard.quotaWindows.map(\.value) == ["$10.00 · 1K", "$4.00 · 400"])

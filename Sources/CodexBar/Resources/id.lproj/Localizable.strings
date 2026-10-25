@@ -1440,7 +1440,18 @@
 /* Claude Platform provider */
 "token_speed_title_last_hour" = "Kecepatan output · satu jam terakhir";
 "token_speed_title_24h" = "Kecepatan output · 24 jam";
+"token_speed_window_24h" = "24 jam";
 "token_speed_slowdown_help" = "%@%% lebih lambat dari rata-rata 24 jam";
+"token_speed_vs_day_faster" = "%@%% lebih cepat dari rata-rata 24j";
+"token_speed_vs_day_slower" = "%@%% lebih lambat dari rata-rata 24j";
+"token_speed_vs_day_same" = "Setara rata-rata 24j";
+"token_speed_help_window" = "%@: median %@ tok/s · %@ permintaan";
+"token_speed_help_day" = "Rata-rata 24j %@ tok/s";
+"token_speed_help_end_to_end" = "Kecepatan ujung ke ujung, termasuk menunggu token pertama";
+"token_speed_heading" = "Kecepatan output";
+"token_speed_window_last_hour" = "1 jam terakhir";
+"token_speed_requests" = "%@ permintaan";
+"usage_metric_unused" = "Belum dipakai";
 "plan_renews_short" = "diperpanjang %@";
 "menu_tokens_short" = "%@ token";
 

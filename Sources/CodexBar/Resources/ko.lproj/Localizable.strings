@@ -1405,7 +1405,18 @@
 /* Claude Platform provider */
 "token_speed_title_last_hour" = "출력 속도 · 최근 1시간";
 "token_speed_title_24h" = "출력 속도 · 24시간";
+"token_speed_window_24h" = "24시간";
 "token_speed_slowdown_help" = "24시간 평균보다 %@%% 느림";
+"token_speed_vs_day_faster" = "24시간 평균보다 %@%% 빠름";
+"token_speed_vs_day_slower" = "24시간 평균보다 %@%% 느림";
+"token_speed_vs_day_same" = "24시간 평균 수준";
+"token_speed_help_window" = "%@: 중앙값 %@ tok/s · 요청 %@회";
+"token_speed_help_day" = "24시간 평균 %@ tok/s";
+"token_speed_help_end_to_end" = "첫 토큰 대기 시간을 포함한 종단 간 속도";
+"token_speed_heading" = "출력 속도";
+"token_speed_window_last_hour" = "최근 1시간";
+"token_speed_requests" = "요청 %@회";
+"usage_metric_unused" = "미사용";
 "plan_renews_short" = "%@ 갱신";
 "menu_tokens_short" = "%@ 토큰";
 

@@ -44,6 +44,8 @@ final class ProviderSwitcherView: NSView {
     private static let quotaIndicatorHeight: CGFloat = 2
     private static let quotaIndicatorBottomInset: CGFloat = 2
     private static let quotaIndicatorHorizontalInset: CGFloat = 8
+    /// Keeps the quota underline about title-sized when a segment is wider than its title.
+    private static let quotaIndicatorMaximumWidth: CGFloat = 64
 
     init(
         providers: [UsageProvider],
@@ -185,7 +187,11 @@ final class ProviderSwitcherView: NSView {
 
         let uniformWidth: CGFloat
         if self.rowCount > 1 || !self.stackedIcons {
-            uniformWidth = self.applyUniformSegmentWidth(maxAllowedWidth: layoutMetrics.maxAllowedSegmentWidth)
+            // Two tabs split the row like a segmented control; sized to their titles they would sit at the
+            // far edges with an empty middle.
+            uniformWidth = self.applyUniformSegmentWidth(
+                maxAllowedWidth: layoutMetrics.maxAllowedSegmentWidth,
+                fillsAvailableWidth: self.rowCount == 1 && !self.stackedIcons && self.buttons.count == 2)
             if uniformWidth > 0 {
                 self.segmentWidths = Array(repeating: uniformWidth, count: self.buttons.count)
             }
@@ -750,7 +756,7 @@ final class ProviderSwitcherView: NSView {
         self.buttonWidthCache.removeAll()
     }
 
-    private func applyUniformSegmentWidth(maxAllowedWidth: CGFloat) -> CGFloat {
+    private func applyUniformSegmentWidth(maxAllowedWidth: CGFloat, fillsAvailableWidth: Bool = false) -> CGFloat {
         guard !self.buttons.isEmpty else { return 0 }
 
         var desiredWidths: [CGFloat] = []
@@ -777,7 +783,9 @@ final class ProviderSwitcherView: NSView {
         let evenMaxAllowed = maxAllowedWidth > 0
             ? (maxAllowedWidth.truncatingRemainder(dividingBy: 2) == 0 ? maxAllowedWidth : maxAllowedWidth - 1)
             : 0
-        let finalWidth: CGFloat = if evenMaxAllowed > 0 {
+        let finalWidth: CGFloat = if evenMaxAllowed > 0, fillsAvailableWidth {
+            max(evenMaxDesired, evenMaxAllowed)
+        } else if evenMaxAllowed > 0 {
             min(evenMaxDesired, evenMaxAllowed)
         } else {
             evenMaxDesired
@@ -1087,13 +1095,14 @@ extension ProviderSwitcherView {
         let ratio = Self.quotaIndicatorRatio(remainingPercent: remainingPercent)
         let fillWidthConstraint = Self.quotaIndicatorFillWidthConstraint(fill: fill, track: track, ratio: ratio)
 
+        let insetWidth = track.widthAnchor.constraint(
+            equalTo: view.widthAnchor,
+            constant: -Self.quotaIndicatorHorizontalInset * 2)
+        insetWidth.priority = .defaultHigh
         NSLayoutConstraint.activate([
-            track.leadingAnchor.constraint(
-                equalTo: view.leadingAnchor,
-                constant: Self.quotaIndicatorHorizontalInset),
-            track.trailingAnchor.constraint(
-                equalTo: view.trailingAnchor,
-                constant: -Self.quotaIndicatorHorizontalInset),
+            track.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            track.widthAnchor.constraint(lessThanOrEqualToConstant: Self.quotaIndicatorMaximumWidth),
+            insetWidth,
             track.bottomAnchor.constraint(
                 equalTo: view.bottomAnchor,
                 constant: -Self.quotaIndicatorBottomInset),

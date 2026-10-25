@@ -1440,7 +1440,18 @@
 /* Claude Platform provider */
 "token_speed_title_last_hour" = "Çıktı hızı · son saat";
 "token_speed_title_24h" = "Çıktı hızı · 24 sa";
+"token_speed_window_24h" = "24 sa";
 "token_speed_slowdown_help" = "24 saat ortalamasından %%%@ yavaş";
+"token_speed_vs_day_faster" = "24 sa ortalamasından %%%@ hızlı";
+"token_speed_vs_day_slower" = "24 sa ortalamasından %%%@ yavaş";
+"token_speed_vs_day_same" = "24 sa ortalamasıyla aynı";
+"token_speed_help_window" = "%@: medyan %@ tok/s · %@ istek";
+"token_speed_help_day" = "24 sa ortalaması %@ tok/s";
+"token_speed_help_end_to_end" = "İlk token beklemesi dahil uçtan uca hız";
+"token_speed_heading" = "Çıktı hızı";
+"token_speed_window_last_hour" = "son 1 saat";
+"token_speed_requests" = "%@ istek";
+"usage_metric_unused" = "Kullanılmadı";
 "plan_renews_short" = "yenileme %@";
 "menu_tokens_short" = "%@ token";
 

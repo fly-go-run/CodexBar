@@ -617,20 +617,68 @@ private struct UsageMenuCardUsageContentView: View {
     var compactMetrics = false
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
-    private func metricRows(_ metrics: [UsageMenuCardView.Model.Metric]) -> some View {
-        ForEach(metrics, id: \.id) { metric in
-            MetricRow(
-                metric: metric,
-                layoutMetric: self.layoutModel.metrics.first { $0.id == metric.id } ?? metric,
-                title: UsageMenuCardView.popupMetricTitle(provider: self.model.provider, metric: metric),
-                progressColor: self.model.progressColor,
-                compact: self.compactMetrics)
+    private func metricRow(_ metric: UsageMenuCardView.Model.Metric, emphasized: Bool = false) -> some View {
+        MetricRow(
+            metric: metric,
+            layoutMetric: self.layoutModel.metrics.first { $0.id == metric.id } ?? metric,
+            title: UsageMenuCardView.popupMetricTitle(provider: self.model.provider, metric: metric),
+            progressColor: self.model.progressColor,
+            compact: self.compactMetrics,
+            emphasized: emphasized)
+    }
+
+    /// Arranged from the layout model so a live tick that changes the tightest quota cannot resize the row;
+    /// the values shown are the live ones.
+    @ViewBuilder
+    private var metricRows: some View {
+        let layout = self.layoutModel.quotaLayout
+        let live = Dictionary(self.model.metrics.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        if self.compactMetrics || layout.leadID == nil {
+            ForEach(self.model.metrics, id: \.id) { metric in
+                self.metricRow(metric)
+            }
+        } else {
+            if let leadID = layout.leadID, let lead = live[leadID] {
+                self.metricRow(lead, emphasized: true)
+            }
+            let compact = layout.compactIDs.compactMap { live[$0] }
+            if !compact.isEmpty {
+                Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 10) {
+                    ForEach(Array(stride(from: 0, to: compact.count, by: 2)), id: \.self) { start in
+                        GridRow {
+                            ForEach(compact[start..<min(start + 2, compact.count)], id: \.id) { metric in
+                                CompactMetricCell(
+                                    metric: metric,
+                                    title: UsageMenuCardView.popupMetricTitle(
+                                        provider: self.model.provider,
+                                        metric: metric),
+                                    progressColor: self.model.progressColor)
+                            }
+                            // A lone secondary quota keeps its half width so it never matches the lead.
+                            if start + 1 == compact.count {
+                                Color.clear.gridCellUnsizedAxes(.vertical)
+                            }
+                        }
+                    }
+                }
+            }
+            let unused = layout.unusedIDs.compactMap { live[$0] }
+            if !unused.isEmpty {
+                UnusedQuotasLine(
+                    metrics: unused,
+                    titles: unused.map {
+                        UsageMenuCardView.popupMetricTitle(provider: self.model.provider, metric: $0)
+                    })
+            }
+            ForEach(layout.fullIDs.compactMap { live[$0] }, id: \.id) { metric in
+                self.metricRow(metric)
+            }
         }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            self.metricRows(self.model.metrics)
+            self.metricRows
             if !self.model.quotaSubscriptionNotes.isEmpty, self.model.planRenewalText == nil,
                self.model.showsOverviewSupplementalContent(compact: self.compactMetrics)
             {
@@ -674,7 +722,10 @@ private struct UsageMenuCardUsageContentView: View {
             ProviderThroughputContent(section: throughput, color: self.model.progressColor)
         }
         if let dashboard = self.model.inlineUsageDashboard {
-            InlineUsageDashboardContent(model: dashboard, showsChart: !self.model.showsChartSwitch)
+            InlineUsageDashboardContent(
+                model: dashboard,
+                showsChart: !self.model.showsChartSwitch,
+                followsQuotaRows: !self.model.metrics.isEmpty)
             if self.model.quotaSubscriptionNotes.isEmpty, !self.model.subscriptionNotes.isEmpty {
                 UsageNotesContent(notes: self.model.subscriptionNotes)
             }

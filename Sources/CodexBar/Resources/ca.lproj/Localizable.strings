@@ -1441,7 +1441,18 @@
 /* Claude Platform provider */
 "token_speed_title_last_hour" = "Velocitat de sortida · darrera hora";
 "token_speed_title_24h" = "Velocitat de sortida · 24 h";
+"token_speed_window_24h" = "24 h";
 "token_speed_slowdown_help" = "%@ %% més lent que la mitjana de 24 h";
+"token_speed_vs_day_faster" = "Un %@ %% més ràpid que la mitjana de 24 h";
+"token_speed_vs_day_slower" = "Un %@ %% més lent que la mitjana de 24 h";
+"token_speed_vs_day_same" = "En la mitjana de 24 h";
+"token_speed_help_window" = "%@: mediana %@ tok/s · %@ sol·licituds";
+"token_speed_help_day" = "Mitjana de 24 h %@ tok/s";
+"token_speed_help_end_to_end" = "Velocitat d'extrem a extrem, inclosa l'espera del primer token";
+"token_speed_heading" = "Velocitat de sortida";
+"token_speed_window_last_hour" = "última hora";
+"token_speed_requests" = "%@ sol·licituds";
+"usage_metric_unused" = "Sense ús";
 "plan_renews_short" = "renova %@";
 "menu_tokens_short" = "Fitxes %@";
 

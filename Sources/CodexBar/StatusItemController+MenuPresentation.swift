@@ -160,6 +160,16 @@ struct MenuCardRowPayload {
     let containsInteractiveControls: Bool
     let usesGPUSelection: Bool
     let onClick: (() -> Void)?
+    var selectionStyle: MenuCardSelectionStyle = .fill
+}
+
+/// How a hosted row shows that it is selected (or that its submenu is open).
+enum MenuCardSelectionStyle: Equatable {
+    /// The system selection color with selection-colored text, like a native menu item.
+    case fill
+    /// A faint wash that keeps the content's own colors: for large information cards, where a full
+    /// accent fill would flash the whole card and recolor every number while the pointer passes over it.
+    case subtle
 }
 
 /// One stable AppKit class for every menu-card row. Keeping the outer view attached while payloads
@@ -517,6 +527,7 @@ final class MenuRowContainerView: NSView, MenuCardHighlighting, MenuCardMeasurin
     {
         MenuCardSectionContainerView(
             highlightState: highlightState,
+            selectionStyle: payload.selectionStyle,
             showsSubmenuIndicator: payload.showsSubmenuIndicator,
             submenuIndicatorAlignment: payload.submenuIndicatorAlignment,
             submenuIndicatorTopPadding: payload.submenuIndicatorTopPadding,
@@ -840,6 +851,7 @@ extension MenuRowContainerView {
 
 struct MenuCardSectionContainerView<Content: View>: View {
     @Bindable var highlightState: MenuCardHighlightState
+    let selectionStyle: MenuCardSelectionStyle
     let showsSubmenuIndicator: Bool
     let submenuIndicatorAlignment: Alignment
     let submenuIndicatorTopPadding: CGFloat
@@ -849,6 +861,7 @@ struct MenuCardSectionContainerView<Content: View>: View {
 
     init(
         highlightState: MenuCardHighlightState,
+        selectionStyle: MenuCardSelectionStyle = .fill,
         showsSubmenuIndicator: Bool,
         submenuIndicatorAlignment: Alignment,
         submenuIndicatorTopPadding: CGFloat,
@@ -857,6 +870,7 @@ struct MenuCardSectionContainerView<Content: View>: View {
         @ViewBuilder content: @escaping () -> Content)
     {
         self.highlightState = highlightState
+        self.selectionStyle = selectionStyle
         self.showsSubmenuIndicator = showsSubmenuIndicator
         self.submenuIndicatorAlignment = submenuIndicatorAlignment
         self.submenuIndicatorTopPadding = submenuIndicatorTopPadding
@@ -865,19 +879,26 @@ struct MenuCardSectionContainerView<Content: View>: View {
         self.content = content
     }
 
+    /// Whether the content draws itself in selection colors; a subtle selection keeps its normal colors.
+    private var contentIsHighlighted: Bool {
+        self.selectionStyle == .fill && self.highlightState.isHighlighted
+    }
+
     var body: some View {
         self.content()
-            .environment(\.menuItemHighlighted, self.highlightState.isHighlighted)
+            .environment(\.menuItemHighlighted, self.contentIsHighlighted)
             .environment(\.menuCardRefreshMonitor, self.refreshMonitor)
             .coordinateSpace(name: MenuCardInteractiveRegionPreferenceKey.coordinateSpaceName)
             .onPreferenceChange(MenuCardInteractiveRegionPreferenceKey.self) { regions in
                 self.interactiveRegionStore?.regions = regions
             }
-            .foregroundStyle(MenuHighlightStyle.primary(self.highlightState.isHighlighted))
+            .foregroundStyle(MenuHighlightStyle.primary(self.contentIsHighlighted))
             .background(alignment: .topLeading) {
                 if self.highlightState.isHighlighted {
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(MenuHighlightStyle.selectionBackground(true))
+                        .fill(self.selectionStyle == .fill
+                            ? MenuHighlightStyle.selectionBackground(true)
+                            : MenuHighlightStyle.subtleSelectionBackground)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                 }
@@ -886,7 +907,7 @@ struct MenuCardSectionContainerView<Content: View>: View {
                 if self.showsSubmenuIndicator {
                     Image(systemName: "chevron.forward")
                         .font(.caption2.weight(.semibold))
-                        .foregroundStyle(MenuHighlightStyle.secondary(self.highlightState.isHighlighted))
+                        .foregroundStyle(MenuHighlightStyle.secondary(self.contentIsHighlighted))
                         .padding(.top, self.submenuIndicatorTopPadding)
                         .padding(.trailing, 10)
                 }

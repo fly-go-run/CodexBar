@@ -1438,7 +1438,18 @@
 /* Claude Platform provider */
 "token_speed_title_last_hour" = "Скорость вывода · последний час";
 "token_speed_title_24h" = "Скорость вывода · 24 ч";
+"token_speed_window_24h" = "24 ч";
 "token_speed_slowdown_help" = "на %@%% медленнее среднего за 24 ч";
+"token_speed_vs_day_faster" = "На %@%% быстрее среднего за 24 ч";
+"token_speed_vs_day_slower" = "На %@%% медленнее среднего за 24 ч";
+"token_speed_vs_day_same" = "На уровне среднего за 24 ч";
+"token_speed_help_window" = "%@: медиана %@ tok/s · %@ запросов";
+"token_speed_help_day" = "Среднее за 24 ч %@ tok/s";
+"token_speed_help_end_to_end" = "Сквозная скорость с учётом ожидания первого токена";
+"token_speed_heading" = "Скорость вывода";
+"token_speed_window_last_hour" = "последний час";
+"token_speed_requests" = "%@ запросов";
+"usage_metric_unused" = "Не используется";
 "plan_renews_short" = "продление %@";
 "menu_tokens_short" = "%@ токенов";
 

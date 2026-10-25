@@ -26,6 +26,7 @@ extension UsageMenuCardView.Model {
             "limitResetCredits=\(self.limitResetCredits?.heightFingerprint ?? "")",
             "cloudCredits=\(self.cloudCredits?.heightFingerprint ?? "")",
             "metrics=\(MenuCardHeightFingerprint.join(self.metrics.map(\.heightFingerprint)))",
+            "quotaLayout=\(self.quotaLayout.heightFingerprint)",
             "notes=\(notesFingerprint)",
             "providerDetails=\(self.providerDetails.heightFingerprint)",
             MenuCardHeightFingerprint.field("throughputSummary", self.throughput?.summaryLine),
@@ -183,6 +184,7 @@ extension InlineUsageDashboardModel {
             MenuCardHeightFingerprint.join(self.detailLines.map { MenuCardHeightFingerprint.field("detail", $0) }),
             MenuCardHeightFingerprint.field("tokenSpeed", self.tokenSpeed.map { "\($0.rows.count)" }),
             MenuCardHeightFingerprint.field("chartCaption", self.chartCaption == nil ? nil : "1"),
+            MenuCardHeightFingerprint.field("costStrip", self.costStrip.map { "\($0.count)" }),
         ])
     }
 }

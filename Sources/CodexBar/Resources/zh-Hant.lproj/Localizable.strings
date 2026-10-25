@@ -1413,7 +1413,18 @@
 /* Claude Platform provider */
 "token_speed_title_last_hour" = "輸出速度 · 近 1 小時";
 "token_speed_title_24h" = "輸出速度 · 24h";
+"token_speed_window_24h" = "24h";
 "token_speed_slowdown_help" = "比 24 小時平均慢 %@%%";
+"token_speed_vs_day_faster" = "比 24h 平均快 %@%%";
+"token_speed_vs_day_slower" = "比 24h 平均慢 %@%%";
+"token_speed_vs_day_same" = "與 24h 平均持平";
+"token_speed_help_window" = "%@：中位數 %@ tok/s · %@ 次請求";
+"token_speed_help_day" = "24h 平均 %@ tok/s";
+"token_speed_help_end_to_end" = "端到端速度，包含首個 token 等待";
+"token_speed_heading" = "輸出速度";
+"token_speed_window_last_hour" = "近 1 小時";
+"token_speed_requests" = "%@ 次請求";
+"usage_metric_unused" = "未使用";
 "plan_renews_short" = "%@ 續訂";
 "menu_tokens_short" = "%@ tokens";
 

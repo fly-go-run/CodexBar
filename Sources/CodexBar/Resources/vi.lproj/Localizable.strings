@@ -1438,7 +1438,18 @@
 /* Claude Platform provider */
 "token_speed_title_last_hour" = "Tốc độ đầu ra · giờ qua";
 "token_speed_title_24h" = "Tốc độ đầu ra · 24 giờ";
+"token_speed_window_24h" = "24 giờ";
 "token_speed_slowdown_help" = "chậm hơn %@%% so với trung bình 24 giờ";
+"token_speed_vs_day_faster" = "Nhanh hơn TB 24h %@%%";
+"token_speed_vs_day_slower" = "Chậm hơn TB 24h %@%%";
+"token_speed_vs_day_same" = "Ngang TB 24h";
+"token_speed_help_window" = "%@: trung vị %@ tok/s · %@ yêu cầu";
+"token_speed_help_day" = "TB 24h %@ tok/s";
+"token_speed_help_end_to_end" = "Tốc độ đầu cuối, gồm thời gian chờ token đầu tiên";
+"token_speed_heading" = "Tốc độ đầu ra";
+"token_speed_window_last_hour" = "1 giờ qua";
+"token_speed_requests" = "%@ yêu cầu";
+"usage_metric_unused" = "Chưa dùng";
 "plan_renews_short" = "gia hạn %@";
 "menu_tokens_short" = "%@ mã thông báo";
 

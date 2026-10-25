@@ -1436,7 +1436,18 @@
 /* Claude Platform provider */
 "token_speed_title_last_hour" = "Velocidade de saída · última hora";
 "token_speed_title_24h" = "Velocidade de saída · 24 h";
+"token_speed_window_24h" = "24 h";
 "token_speed_slowdown_help" = "%@ %% máis lento que a media de 24 h";
+"token_speed_vs_day_faster" = "Un %@ %% máis rápido ca media de 24 h";
+"token_speed_vs_day_slower" = "Un %@ %% máis lento ca media de 24 h";
+"token_speed_vs_day_same" = "Na media de 24 h";
+"token_speed_help_window" = "%@: mediana %@ tok/s · %@ solicitudes";
+"token_speed_help_day" = "Media de 24 h %@ tok/s";
+"token_speed_help_end_to_end" = "Velocidade de extremo a extremo, incluída a espera do primeiro token";
+"token_speed_heading" = "Velocidade de saída";
+"token_speed_window_last_hour" = "última hora";
+"token_speed_requests" = "%@ solicitudes";
+"usage_metric_unused" = "Sen usar";
 "plan_renews_short" = "renova %@";
 "menu_tokens_short" = "Fichas %@";
 

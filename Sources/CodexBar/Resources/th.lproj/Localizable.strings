@@ -1441,7 +1441,18 @@
 /* Claude Platform provider */
 "token_speed_title_last_hour" = "ความเร็วเอาต์พุต · ชั่วโมงล่าสุด";
 "token_speed_title_24h" = "ความเร็วเอาต์พุต · 24 ชม.";
+"token_speed_window_24h" = "24 ชม.";
 "token_speed_slowdown_help" = "ช้ากว่าค่าเฉลี่ย 24 ชม. %@%%";
+"token_speed_vs_day_faster" = "เร็วกว่าค่าเฉลี่ย 24 ชม. %@%%";
+"token_speed_vs_day_slower" = "ช้ากว่าค่าเฉลี่ย 24 ชม. %@%%";
+"token_speed_vs_day_same" = "ใกล้เคียงค่าเฉลี่ย 24 ชม.";
+"token_speed_help_window" = "%@: มัธยฐาน %@ tok/s · %@ คำขอ";
+"token_speed_help_day" = "ค่าเฉลี่ย 24 ชม. %@ tok/s";
+"token_speed_help_end_to_end" = "ความเร็วแบบต้นทางถึงปลายทาง รวมเวลารอโทเค็นแรก";
+"token_speed_heading" = "ความเร็วเอาต์พุต";
+"token_speed_window_last_hour" = "1 ชั่วโมงล่าสุด";
+"token_speed_requests" = "%@ คำขอ";
+"usage_metric_unused" = "ยังไม่ใช้";
 "plan_renews_short" = "ต่ออายุ %@";
 "menu_tokens_short" = "โทเค็น %@";
 

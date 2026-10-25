@@ -1437,7 +1437,18 @@
 /* Claude Platform provider */
 "token_speed_title_last_hour" = "Швидкість виводу · остання година";
 "token_speed_title_24h" = "Швидкість виводу · 24 год";
+"token_speed_window_24h" = "24 год";
 "token_speed_slowdown_help" = "на %@%% повільніше за середнє за 24 год";
+"token_speed_vs_day_faster" = "На %@%% швидше за середнє за 24 год";
+"token_speed_vs_day_slower" = "На %@%% повільніше за середнє за 24 год";
+"token_speed_vs_day_same" = "На рівні середнього за 24 год";
+"token_speed_help_window" = "%@: медіана %@ tok/s · %@ запитів";
+"token_speed_help_day" = "Середнє за 24 год %@ tok/s";
+"token_speed_help_end_to_end" = "Наскрізна швидкість з очікуванням першого токена";
+"token_speed_heading" = "Швидкість виводу";
+"token_speed_window_last_hour" = "остання година";
+"token_speed_requests" = "%@ запитів";
+"usage_metric_unused" = "Не використано";
 "plan_renews_short" = "продовження %@";
 "menu_tokens_short" = "%@ токенів";
 

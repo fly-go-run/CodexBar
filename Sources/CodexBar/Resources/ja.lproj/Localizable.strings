@@ -1435,7 +1435,18 @@
 /* Claude Platform provider */
 "token_speed_title_last_hour" = "出力速度 · 直近1時間";
 "token_speed_title_24h" = "出力速度 · 24時間";
+"token_speed_window_24h" = "24時間";
 "token_speed_slowdown_help" = "24時間平均より %@%% 遅い";
+"token_speed_vs_day_faster" = "24時間平均より %@%% 速い";
+"token_speed_vs_day_slower" = "24時間平均より %@%% 遅い";
+"token_speed_vs_day_same" = "24時間平均並み";
+"token_speed_help_window" = "%@：中央値 %@ tok/s · %@ リクエスト";
+"token_speed_help_day" = "24時間平均 %@ tok/s";
+"token_speed_help_end_to_end" = "最初のトークンまでの待ち時間を含むエンドツーエンド速度";
+"token_speed_heading" = "出力速度";
+"token_speed_window_last_hour" = "直近1時間";
+"token_speed_requests" = "%@ リクエスト";
+"usage_metric_unused" = "未使用";
 "plan_renews_short" = "%@ 更新";
 "menu_tokens_short" = "%@ トークン";
 

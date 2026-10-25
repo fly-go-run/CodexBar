@@ -7,6 +7,8 @@ struct MetricRow: View {
     let title: String
     let progressColor: Color
     var compact = false
+    /// The card's tightest quota: a larger percentage that turns orange when little is left.
+    var emphasized = false
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
     var body: some View {
@@ -56,14 +58,22 @@ struct MetricRow: View {
                 .layoutPriority(1)
             Spacer(minLength: 8)
             Text(presentation.percentText)
-                .font(.body.weight(.semibold))
+                .font(self.emphasized ? .title3.weight(.semibold) : .body.weight(.semibold))
                 .monospacedDigit()
+                .foregroundStyle(self.percentColor)
             Text(presentation.percentSuffix)
                 .font(.subheadline)
                 .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
         }
         .foregroundStyle(MenuHighlightStyle.primary(self.isHighlighted))
         .accessibilityElement(children: .combine)
+    }
+
+    private var percentColor: Color {
+        guard self.emphasized, !self.isHighlighted,
+              self.metric.remainingPercent < UsageMenuCardView.Model.Metric.lowRemainingPercent
+        else { return MenuHighlightStyle.primary(self.isHighlighted) }
+        return Color(nsColor: .systemOrange)
     }
 
     private func footer(_ presentation: UsageMenuCardView.Model.Metric.CardPresentation) -> some View {

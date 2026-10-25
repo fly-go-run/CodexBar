@@ -1436,7 +1436,18 @@
 /* Claude Platform provider */
 "token_speed_title_last_hour" = "Vitesse de sortie · dernière heure";
 "token_speed_title_24h" = "Vitesse de sortie · 24 h";
+"token_speed_window_24h" = "24 h";
 "token_speed_slowdown_help" = "%@ %% plus lent que la moyenne sur 24 h";
+"token_speed_vs_day_faster" = "%@ %% plus rapide que la moyenne 24 h";
+"token_speed_vs_day_slower" = "%@ %% plus lent que la moyenne 24 h";
+"token_speed_vs_day_same" = "Dans la moyenne 24 h";
+"token_speed_help_window" = "%@ : médiane %@ tok/s · %@ requêtes";
+"token_speed_help_day" = "Moyenne 24 h %@ tok/s";
+"token_speed_help_end_to_end" = "Vitesse de bout en bout, attente du premier token incluse";
+"token_speed_heading" = "Vitesse de sortie";
+"token_speed_window_last_hour" = "dernière heure";
+"token_speed_requests" = "%@ requêtes";
+"usage_metric_unused" = "Inutilisé";
 "plan_renews_short" = "renouvellement %@";
 "menu_tokens_short" = "Jetons %@";
 

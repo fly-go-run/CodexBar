@@ -71,6 +71,9 @@ struct InlineUsageDashboardModel: Equatable {
     var chartCaption: String?
     /// Cost-estimate disclaimer, shown as the chart's hover help instead of a footnote row.
     var chartHelp: String?
+    /// When set, the card shows these figures as one compact row instead of the KPI grid and the mini chart:
+    /// the full chart is one hover away in the card's submenu. Each `detail` becomes the figure's hover help.
+    var costStrip: [KPI]?
 }
 
 extension UsageMenuCardView.Model {
@@ -288,6 +291,7 @@ extension UsageMenuCardView.Model {
         let trailingKPIs = Self.costHistoryTrailingKPIs(snapshot: snapshot, latest: latest)
         var kpis: [InlineUsageDashboardModel.KPI]
         var chartCaption: String?
+        var costStrip: [InlineUsageDashboardModel.KPI]?
         if quota.insertsKPIs, let latestTokensKPI = trailingKPIs.first {
             // Two headline numbers; token counts ride underneath, the 30d totals caption the chart.
             var today = todayKPI
@@ -301,6 +305,11 @@ extension UsageMenuCardView.Model {
                     detail: L("menu_tokens_short", quota.tokenValue)),
             ]
             chartCaption = "\(period)  \(historyCostKPI.value) · \(L("menu_tokens_short", tokenHistoryKPI.value))"
+            costStrip = kpis + [.init(
+                title: period,
+                value: historyCostKPI.value,
+                emphasis: false,
+                detail: L("menu_tokens_short", tokenHistoryKPI.value))]
         } else {
             kpis = [todayKPI, historyCostKPI]
             if snapshot.last30DaysRequests == nil {
@@ -319,6 +328,7 @@ extension UsageMenuCardView.Model {
             detailLines: details)
         model.quotaWindows = quota.rows
         model.chartCaption = chartCaption
+        model.costStrip = costStrip
         model.chartHelp = Self.tokenUsageHintLines(provider: input.provider).joined(separator: "\n")
         model.tokenSpeed = Self.tokenSpeedSummary(input.tokenOutputSpeed)
         model.currencyCode = displayCurrencyCode
@@ -596,40 +606,75 @@ extension UsageMenuCardView.Model {
 struct InlineUsageDashboardContent: View {
     private let model: InlineUsageDashboardModel
     var showsChart = true
+    /// Sets the speed block apart from quota rows drawn above it in the same card. Sections are grouped by
+    /// space rather than rules, so the card does not read as a form.
+    var followsQuotaRows = false
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
-    init(model: InlineUsageDashboardModel, showsChart: Bool = true) {
+    init(model: InlineUsageDashboardModel, showsChart: Bool = true, followsQuotaRows: Bool = false) {
         self.model = model
         self.showsChart = showsChart
+        self.followsQuotaRows = followsQuotaRows
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            self.kpis
-            if self.showsChart, !self.model.points.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
-                    if let caption = self.model.chartCaption {
-                        Text(caption)
-                            .font(.subheadline)
-                            .monospacedDigit()
-                            .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
-                            .lineLimit(1)
-                    }
-                    MiniUsageBars(model: self.model)
-                        .frame(height: 46)
-                        .accessibilityElement(children: .contain)
-                        .accessibilityLabel(self.model.accessibilityLabel)
-                }
-                .help(self.model.chartHelp ?? "")
-            }
+            // Speed is what gets checked most while working, so it leads; spend is a glance below it.
             if let tokenSpeed = self.model.tokenSpeed {
                 InlineTokenSpeedRow(summary: tokenSpeed)
+                    .padding(.top, self.followsQuotaRows ? 8 : 0)
+                    .padding(.bottom, 6)
+            }
+            if let costStrip = self.model.costStrip {
+                self.costStripRow(costStrip)
+            } else {
+                self.kpis
+                if self.showsChart, !self.model.points.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        if let caption = self.model.chartCaption {
+                            Text(caption)
+                                .font(.subheadline)
+                                .monospacedDigit()
+                                .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
+                                .lineLimit(1)
+                        }
+                        MiniUsageBars(model: self.model)
+                            .frame(height: 46)
+                            .accessibilityElement(children: .contain)
+                            .accessibilityLabel(self.model.accessibilityLabel)
+                    }
+                    .help(self.model.chartHelp ?? "")
+                }
             }
             if !self.model.detailLines.isEmpty {
                 self.detailLines
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func costStripRow(_ items: [InlineUsageDashboardModel.KPI]) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(item.title)
+                        .font(.caption)
+                        .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
+                        .lineLimit(1)
+                    // Regular weight: spend is a glance here, the speed numbers above carry the weight.
+                    Text(item.value)
+                        .font(.subheadline)
+                        .monospacedDigit()
+                        .foregroundStyle(MenuHighlightStyle.primary(self.isHighlighted))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .help([item.detail, self.model.chartHelp].compactMap { $0?.isEmpty == false ? $0 : nil }
+                    .joined(separator: "\n"))
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private var kpis: some View {

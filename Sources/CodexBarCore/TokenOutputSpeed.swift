@@ -37,6 +37,8 @@ public struct TokenOutputSpeedSnapshot: Sendable, Equatable {
         public let requestCount: Int
         public let outputTokens: Int
         public let seconds: TimeInterval
+        /// Median of the per-request rates: one stalled or unusually quick response does not move it.
+        public let medianTokensPerSecond: Double
 
         /// Duration-weighted, so long responses count proportionally to the time they took.
         public var tokensPerSecond: Double {
@@ -45,12 +47,19 @@ public struct TokenOutputSpeedSnapshot: Sendable, Equatable {
     }
 
     static let minimumOutputTokens = 20
+    public static let recentPeriodSeconds: TimeInterval = 10 * 60
+    public static let recentPeriodCount = 12
 
     public let windowSeconds: TimeInterval
     /// Per-model buckets over the whole window, largest output first.
     public let models: [Bucket]
     /// All models over the trailing hour; nil when there were no measurable requests.
     public let lastHour: Bucket?
+    /// Per-model buckets over the trailing hour, largest output first.
+    public let lastHourModels: [Bucket]
+    /// Per-model rate in the most recent ten-minute periods that had requests, oldest first, at most
+    /// `recentPeriodCount` of them. Idle periods are skipped, so bursty use still reads as one continuous trend.
+    public let recentRates: [String: [Double]]
     public let updatedAt: Date
 
     public init(samples: [TokenOutputSpeedSample], now: Date, windowSeconds: TimeInterval = 24 * 60 * 60) {
@@ -59,25 +68,52 @@ public struct TokenOutputSpeedSnapshot: Sendable, Equatable {
         }
         self.windowSeconds = windowSeconds
         self.updatedAt = now
-        self.models = Dictionary(grouping: measurable, by: \.model)
-            .map { Self.bucket(model: $0.key, samples: $0.value) }
-            .sorted { lhs, rhs in
-                lhs.outputTokens != rhs.outputTokens ? lhs.outputTokens > rhs.outputTokens : lhs.model! < rhs.model!
-            }
+        self.models = Self.modelBuckets(measurable)
         let recent = measurable.filter { now.timeIntervalSince($0.completedAt) <= 60 * 60 }
         self.lastHour = recent.isEmpty ? nil : Self.bucket(model: nil, samples: recent)
+        self.lastHourModels = Self.modelBuckets(recent)
+        self.recentRates = Self.recentRates(measurable, now: now)
     }
 
     public var isEmpty: Bool {
         self.models.isEmpty
     }
 
+    private static func modelBuckets(_ samples: [TokenOutputSpeedSample]) -> [Bucket] {
+        Dictionary(grouping: samples, by: \.model)
+            .map { Self.bucket(model: $0.key, samples: $0.value) }
+            .sorted { lhs, rhs in
+                lhs.outputTokens != rhs.outputTokens ? lhs.outputTokens > rhs.outputTokens : lhs.model! < rhs.model!
+            }
+    }
+
     private static func bucket(model: String?, samples: [TokenOutputSpeedSample]) -> Bucket {
-        Bucket(
+        let rates = samples.map { Double($0.outputTokens) / $0.durationSeconds }.sorted()
+        let middle = rates.count / 2
+        let median = rates.isEmpty ? 0 : rates.count.isMultiple(of: 2)
+            ? (rates[middle - 1] + rates[middle]) / 2
+            : rates[middle]
+        return Bucket(
             model: model,
             requestCount: samples.count,
             outputTokens: samples.reduce(0) { $0 + $1.outputTokens },
-            seconds: samples.reduce(0) { $0 + $1.durationSeconds })
+            seconds: samples.reduce(0) { $0 + $1.durationSeconds },
+            medianTokensPerSecond: median)
+    }
+
+    private static func recentRates(_ samples: [TokenOutputSpeedSample], now: Date) -> [String: [Double]] {
+        Dictionary(grouping: samples, by: \.model).mapValues { modelSamples in
+            var periods: [Int: (tokens: Int, seconds: TimeInterval)] = [:]
+            for sample in modelSamples {
+                let periodsAgo = Int(now.timeIntervalSince(sample.completedAt) / Self.recentPeriodSeconds)
+                periods[periodsAgo, default: (0, 0)].tokens += sample.outputTokens
+                periods[periodsAgo, default: (0, 0)].seconds += sample.durationSeconds
+            }
+            return periods.keys.sorted().prefix(Self.recentPeriodCount).reversed().compactMap { key in
+                guard let period = periods[key], period.seconds > 0 else { return nil }
+                return Double(period.tokens) / period.seconds
+            }
+        }
     }
 }
 

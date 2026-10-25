@@ -39,6 +39,9 @@ enum MenuHighlightStyle {
         highlighted ? self.selectionText : fallback
     }
 
+    /// Hover wash for information cards that keep their own colors while selected.
+    static let subtleSelectionBackground = Color(nsColor: .labelColor).opacity(0.06)
+
     static func selectionBackground(_ highlighted: Bool) -> Color {
         highlighted ? Color(nsColor: .selectedContentBackgroundColor) : .clear
     }
