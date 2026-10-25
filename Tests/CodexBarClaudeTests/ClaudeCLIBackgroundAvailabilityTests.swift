@@ -146,6 +146,108 @@ struct ClaudeCLIBackgroundAvailabilityTests {
     }
 
     @Test
+    func `retry cooldown backs off from fifteen minutes to a two hour cap`() {
+        let minutes = (1...6).map { ClaudeCLIBackgroundAvailability.retryCooldown(afterFailures: $0) / 60 }
+        #expect(minutes == [15, 30, 60, 120, 120, 120])
+    }
+
+    @Test
+    func `failed disabled Keychain exception retries background Auto usage after the cooldown`() async throws {
+        let strategy = self.makeStrategy()
+        let profile = try self.makeProfile(accountID: "account-a")
+        defer { try? FileManager.default.removeItem(at: profile.root) }
+        let context = self.makeContext(environment: profile.environment)
+        let clock = TestClock()
+
+        await self.withBackgroundGates(
+            keychainDisabled: true,
+            promptMode: .never,
+            oauthCredentialsMissing: false,
+            now: clock.read)
+        {
+            await self.expectFailedFetch(strategy: strategy, context: context)
+            clock.advance(minutes: 14)
+            #expect(await !strategy.isAvailable(context))
+            clock.advance(minutes: 1)
+            #expect(await strategy.isAvailable(context))
+
+            // A second consecutive failure doubles the wait.
+            await self.expectFailedFetch(strategy: strategy, context: context)
+            clock.advance(minutes: 29)
+            #expect(await !strategy.isAvailable(context))
+            clock.advance(minutes: 1)
+            #expect(await strategy.isAvailable(context))
+        }
+    }
+
+    @Test
+    func `background success resets the disabled Keychain retry backoff`() async throws {
+        let strategy = self.makeStrategy()
+        let profile = try self.makeProfile(accountID: "account-a")
+        defer { try? FileManager.default.removeItem(at: profile.root) }
+        let context = self.makeContext(environment: profile.environment)
+        let clock = TestClock()
+        let succeedingFetch: ClaudeStatusProbe.FetchOverride = { _, _, _ in
+            ClaudeStatusSnapshot(
+                sessionPercentLeft: 80,
+                weeklyPercentLeft: 60,
+                opusPercentLeft: nil,
+                accountEmail: nil,
+                accountOrganization: nil,
+                loginMethod: nil,
+                primaryResetDescription: nil,
+                secondaryResetDescription: nil,
+                opusResetDescription: nil,
+                rawText: "")
+        }
+
+        await ClaudeCLIUsageSpawnThrottle.withIsolatedStoreForTesting {
+            await ClaudeCLIUsageSpawnThrottle.withNowOverrideForTesting(clock.read) {
+                await self.withBackgroundGates(
+                    keychainDisabled: true,
+                    promptMode: .never,
+                    oauthCredentialsMissing: false,
+                    now: clock.read)
+                {
+                    await self.expectFailedFetch(strategy: strategy, context: context)
+                    clock.advance(minutes: 15)
+                    let success = try? await ClaudeStatusProbe.$fetchOverride.withValue(succeedingFetch) {
+                        try await strategy.fetch(context)
+                    }
+                    #expect(success != nil)
+                    // Outlast the spawn throttle so the next background tick launches the CLI again.
+                    clock.advance(minutes: 16)
+                    await self.expectFailedFetch(strategy: strategy, context: context)
+                    clock.advance(minutes: 15)
+                    #expect(await strategy.isAvailable(context))
+                }
+            }
+        }
+    }
+
+    @Test
+    func `enabled Keychain revocation does not expire with the disabled Keychain cooldown`() async throws {
+        let strategy = self.makeStrategy()
+        let profile = try self.makeProfile(accountID: "account-a")
+        defer { try? FileManager.default.removeItem(at: profile.root) }
+        let context = self.makeContext(environment: profile.environment)
+        let clock = TestClock()
+
+        await self.withBackgroundGates(
+            keychainDisabled: false,
+            promptMode: .always,
+            establishedBinary: "/bin/echo",
+            establishedEnvironment: context.env,
+            oauthCredentialsMissing: false,
+            now: clock.read)
+        {
+            await self.expectFailedFetch(strategy: strategy, context: context)
+            clock.advance(minutes: 24 * 60)
+            #expect(await !strategy.isAvailable(context))
+        }
+    }
+
+    @Test
     func `enabled Keychain revocation is not bypassed by the OAuth absence deadlock breaker`() async throws {
         let strategy = self.makeStrategy()
         let profile = try self.makeProfile(accountID: "account-a")
@@ -372,6 +474,30 @@ struct ClaudeCLIBackgroundAvailabilityTests {
         case failed
     }
 
+    private final class TestClock: @unchecked Sendable {
+        private let lock = NSLock()
+        private var current = Date(timeIntervalSince1970: 1_800_000_000)
+
+        var read: @Sendable () -> Date {
+            { self.lock.withLock { self.current } }
+        }
+
+        func advance(minutes: Double) {
+            self.lock.withLock { self.current.addTimeInterval(minutes * 60) }
+        }
+    }
+
+    private func expectFailedFetch(strategy: ClaudeCLIFetchStrategy, context: ProviderFetchContext) async {
+        let fetchOverride: ClaudeStatusProbe.FetchOverride = { _, _, _ in throw ExpectedFetchError.failed }
+        #expect(await strategy.isAvailable(context))
+        await #expect(throws: ExpectedFetchError.self) {
+            try await ClaudeStatusProbe.$fetchOverride.withValue(fetchOverride) {
+                try await strategy.fetch(context)
+            }
+        }
+        #expect(await !strategy.isAvailable(context))
+    }
+
     private func makeContext(
         sourceMode: ProviderSourceMode = .auto,
         environment: [String: String] = [:]) -> ProviderFetchContext
@@ -421,9 +547,10 @@ struct ClaudeCLIBackgroundAvailabilityTests {
         establishedBinary: String? = nil,
         establishedEnvironment: [String: String]? = nil,
         oauthCredentialsMissing: Bool? = nil,
+        now: @escaping @Sendable () -> Date = Date.init,
         operation: () async throws -> T) async rethrows -> T
     {
-        try await ClaudeCLIBackgroundAvailability.withIsolatedStoreForTesting {
+        try await ClaudeCLIBackgroundAvailability.withIsolatedStoreForTesting(now: now) {
             if let establishedBinary {
                 ClaudeCLIBackgroundAvailability.establish(
                     binary: establishedBinary,

@@ -1137,11 +1137,12 @@ struct ClaudeCLIFetchStrategy: ProviderFetchStrategy {
             }
             throw error
         }
-        if context.runtime == .app,
-           ProviderInteractionContext.current == .userInitiated,
-           let backgroundAvailabilityMarker
-        {
-            ClaudeCLIBackgroundAvailability.establish(backgroundAvailabilityMarker)
+        if let backgroundAvailabilityMarker {
+            if context.runtime == .app, ProviderInteractionContext.current == .userInitiated {
+                ClaudeCLIBackgroundAvailability.establish(backgroundAvailabilityMarker)
+            } else {
+                ClaudeCLIBackgroundAvailability.clearRevocation(backgroundAvailabilityMarker)
+            }
         }
         let result = self.makeResult(
             // The PTY /usage panel exposes rendered percentages only, so CLI-sourced data carries an
@@ -1182,10 +1183,20 @@ enum ClaudeCLIBackgroundAvailability {
         let accountScope: String
     }
 
+    struct Revocation {
+        let failureCount: Int
+        let revokedAt: Date
+    }
+
     final class Store: @unchecked Sendable {
         private let lock = NSLock()
         private var markers: Set<Marker> = []
-        private var revokedMarkers: Set<Marker> = []
+        private var revocations: [Marker: Revocation] = [:]
+        let now: @Sendable () -> Date
+
+        init(now: @escaping @Sendable () -> Date = Date.init) {
+            self.now = now
+        }
 
         func contains(_ marker: Marker) -> Bool {
             self.lock.withLock { self.markers.contains(marker) }
@@ -1194,20 +1205,38 @@ enum ClaudeCLIBackgroundAvailability {
         func insert(_ marker: Marker) {
             self.lock.withLock {
                 _ = self.markers.insert(marker)
-                self.revokedMarkers.remove(marker)
+                self.revocations.removeValue(forKey: marker)
             }
         }
 
         func remove(_ marker: Marker) {
+            let now = self.now()
             self.lock.withLock {
                 self.markers.remove(marker)
-                _ = self.revokedMarkers.insert(marker)
+                let failureCount = (self.revocations[marker]?.failureCount ?? 0) + 1
+                self.revocations[marker] = Revocation(failureCount: failureCount, revokedAt: now)
             }
         }
 
-        func isRevoked(_ marker: Marker) -> Bool {
-            self.lock.withLock { self.revokedMarkers.contains(marker) }
+        func clearRevocation(_ marker: Marker) {
+            self.lock.withLock { _ = self.revocations.removeValue(forKey: marker) }
         }
+
+        func isRevoked(_ marker: Marker) -> Bool {
+            self.lock.withLock { self.revocations[marker] != nil }
+        }
+
+        func revocation(_ marker: Marker) -> Revocation? {
+            self.lock.withLock { self.revocations[marker] }
+        }
+    }
+
+    /// Background retry spacing after consecutive failed owner-CLI usage attempts: 15m, 30m, 1h, then 2h.
+    static func retryCooldown(afterFailures failureCount: Int) -> TimeInterval {
+        let baseCooldown: TimeInterval = 15 * 60
+        let maximumCooldown: TimeInterval = 2 * 60 * 60
+        let exponent = max(0, min(failureCount - 1, 3))
+        return min(baseCooldown * pow(2, Double(exponent)), maximumCooldown)
     }
 
     private static let sharedStore = Store()
@@ -1272,10 +1301,13 @@ enum ClaudeCLIBackgroundAvailability {
             guard ClaudeOAuthKeychainPromptPreference.storedMode() == .always else { return false }
             return oauthCredentialsConfirmedAbsent()
         }
-        // Disable Keychain explicitly permits one owner-CLI usage attempt on a cold profile. A failed attempt
-        // records revocation below, preventing each background timer tick from retrying until a foreground success.
+        // Disable Keychain explicitly permits owner-CLI usage attempts on a cold profile. A failed attempt records
+        // revocation, so background ticks back off (`retryCooldown`) instead of relaunching the CLI every refresh;
+        // a later success, background or foreground, resets the backoff.
         guard let marker = self.captureMarker(binary: binary, environment: environment) else { return false }
-        return !self.store.isRevoked(marker)
+        guard let revocation = self.store.revocation(marker) else { return true }
+        let cooldown = self.retryCooldown(afterFailures: revocation.failureCount)
+        return self.store.now().timeIntervalSince(revocation.revokedAt) >= cooldown
     }
 
     static func establish(binary: String, environment: [String: String]) {
@@ -1291,6 +1323,10 @@ enum ClaudeCLIBackgroundAvailability {
         self.store.remove(marker)
     }
 
+    static func clearRevocation(_ marker: Marker) {
+        self.store.clearRevocation(marker)
+    }
+
     static func captureMarker(binary: String, environment: [String: String]) -> Marker? {
         guard let accountScope = ClaudeAccountProfile.identifiedSessionScope(environment: environment) else {
             return nil
@@ -1300,9 +1336,10 @@ enum ClaudeCLIBackgroundAvailability {
 
     #if DEBUG
     static func withIsolatedStoreForTesting<T>(
+        now: @escaping @Sendable () -> Date = Date.init,
         operation: () async throws -> T) async rethrows -> T
     {
-        try await self.$storeOverrideForTesting.withValue(Store()) {
+        try await self.$storeOverrideForTesting.withValue(Store(now: now)) {
             try await operation()
         }
     }
