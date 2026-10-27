@@ -242,12 +242,33 @@ struct TokenOutputSpeedTests {
         #expect(summary.rows.map(\.model) == ["Model A", "Model B", "Model C"])
         #expect(summary.rows.map(\.value) == ["100 tok/s", "80 tok/s", "60 tok/s"])
 
-        // The leader stays even when no model reaches 10% of the output on its own.
+        func twice(_ model: String, _ tokens: Int) -> [TokenOutputSpeedSample] {
+            (1...2).map { Self.speedSample(model, tokens, minutesAgo: Double($0) * 5, now: now) }
+        }
+        // The leader stays even when no model reaches 10% of the output or enough requests on its own.
         let spread = TokenOutputSpeedSnapshot(
-            samples: (0..<12).flatMap { busy("model-\($0)", 100 - $0) },
+            samples: (0..<12).flatMap { twice("model-\($0)", 100 - $0) },
             now: now)
         let spreadSummary = try #require(UsageMenuCardView.Model.tokenSpeedSummary(spread))
         #expect(spreadSummary.rows.map(\.model) == ["Model 0"])
+    }
+
+    @Test
+    func `speed summary keeps a small model the user ran enough requests on`() throws {
+        let now = try Self.date("2026-10-10T12:00:00.000Z")
+        func samples(_ model: String, _ tokens: Int, count: Int) -> [TokenOutputSpeedSample] {
+            (1...count).map { Self.speedSample(model, tokens, minutesAgo: Double($0), now: now) }
+        }
+        // Sonnet is well under 10% of the hour's output but has three requests; Haiku has two and stays out.
+        let snapshot = TokenOutputSpeedSnapshot(
+            samples: samples("claude-opus-4-1", 900, count: 40)
+                + samples("claude-sonnet-4-5", 600, count: 3)
+                + samples("claude-haiku-4-5", 400, count: 2),
+            now: now)
+        let summary = try #require(UsageMenuCardView.Model.tokenSpeedSummary(snapshot))
+        #expect(summary.title == L("token_speed_title_last_hour"))
+        #expect(summary.rows.map(\.model) == ["Opus 4.1", "Sonnet 4.5"])
+        #expect(summary.rows.map(\.value) == ["90 tok/s", "60 tok/s"])
     }
 
     @Test

@@ -199,7 +199,7 @@ extension UsageMenuCardView.Model {
     /// Within this the last hour reads as "same as usual" rather than a percentage.
     static let tokenSpeedSteadyThreshold = 0.05
     /// Models below this share of the window's output (background title or summary calls, a one-off
-    /// switch) are left out so they do not crowd the block.
+    /// switch) are left out so they do not crowd the block, unless they ran enough requests to count as used.
     static let tokenSpeedMinimumOutputShare = 0.1
     static let tokenSpeedMaximumRows = 3
 
@@ -303,14 +303,17 @@ extension UsageMenuCardView.Model {
             requestCount: snapshot.models.reduce(0) { $0 + $1.requestCount })
     }
 
-    /// The leader always stays; the rest need their share of the window's output.
+    /// The leader always stays; the rest need their share of the window's output or enough requests that a
+    /// smaller model the user switched to briefly still shows up.
     private static func tokenSpeedListedBuckets(
         _ buckets: [TokenOutputSpeedSnapshot.Bucket]) -> [TokenOutputSpeedSnapshot.Bucket]
     {
         let total = buckets.reduce(0) { $0 + $1.outputTokens }
         return Array(buckets.enumerated()
             .filter { index, bucket in
-                index == 0 || Double(bucket.outputTokens) >= Double(total) * Self.tokenSpeedMinimumOutputShare
+                index == 0
+                    || Double(bucket.outputTokens) >= Double(total) * Self.tokenSpeedMinimumOutputShare
+                    || bucket.requestCount >= Self.tokenSpeedLastHourMinimumRequests
             }
             .map(\.element)
             .prefix(Self.tokenSpeedMaximumRows))
