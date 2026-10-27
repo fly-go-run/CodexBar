@@ -41,6 +41,28 @@ struct UsageMenuCardLayoutTests {
     }
 
     @Test
+    func `card presentation keeps run out forecasts in the help only`() {
+        let metric = UsageMenuCardView.Model.Metric(
+            id: "session",
+            title: "Session",
+            percent: 90,
+            percentStyle: .left,
+            resetText: "Resets in 4h 31m",
+            detailText: nil,
+            detailLeftText: "26% in deficit",
+            detailRightText: "Projected empty in 4h 30m",
+            pacePercent: 43,
+            detailIsPaceDerived: true,
+            paceOnTop: true)
+
+        let presentation = metric.cardPresentation(title: metric.title)
+
+        #expect(presentation.resetText == "Resets in 4h 31m")
+        #expect(presentation.footnoteText == nil)
+        #expect(presentation.helpText == "26% in deficit · Projected empty in 4h 30m")
+    }
+
+    @Test
     func `metric title follows configured percent style`() {
         let leftMetric = UsageMenuCardView.Model.Metric(
             id: "weekly",

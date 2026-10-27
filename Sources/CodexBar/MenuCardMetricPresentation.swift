@@ -2,16 +2,15 @@ import CodexBarCore
 import Foundation
 
 extension UsageMenuCardView.Model.Metric {
-    /// Menu-card layout of a quota row: the percentage is its own emphasized value, the reset time
-    /// and any risk sit under the bar, and pace commentary only surfaces when the quota will not
-    /// last. Everything else moves to the hover help. Text surfaces keep `linePresentation`.
+    /// Menu-card layout of a quota row: the percentage is its own emphasized value and the reset time
+    /// sits under the bar. Pace commentary, run-out forecasts included, moves to the hover help. Text surfaces
+    /// keep `linePresentation`.
     struct CardPresentation: Equatable {
         let title: String
         let percentText: String
         let percentSuffix: String
         let resetText: String?
         let footnoteText: String?
-        let footnoteIsWarning: Bool
         let helpText: String?
 
         var hasFooter: Bool {
@@ -24,14 +23,9 @@ extension UsageMenuCardView.Model.Metric {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let detailParts = [self.detailLeftText, self.detailRightText].compactMap(\.trimmedNonEmpty)
         var footnote: String?
-        var footnoteIsWarning = false
         var helpParts = [self.helpText].compactMap(\.trimmedNonEmpty)
         if self.detailIsPaceDerived {
-            // "Lasts until reset" is the healthy case; silence is the signal there.
-            if let right = self.detailRightText.trimmedNonEmpty, !right.hasPrefix(L("Lasts until reset")) {
-                footnote = right
-                footnoteIsWarning = true
-            }
+            // Run-out forecasts only repeat what the bar and reset time already say; keep them in the help.
             if !detailParts.isEmpty { helpParts.append(detailParts.joined(separator: " · ")) }
         } else if !detailParts.isEmpty {
             footnote = detailParts.joined(separator: " · ")
@@ -45,7 +39,6 @@ extension UsageMenuCardView.Model.Metric {
             percentSuffix: self.percentStyle.labelSuffix,
             resetText: self.resetText.trimmedNonEmpty,
             footnoteText: footnote,
-            footnoteIsWarning: footnoteIsWarning,
             helpText: helpParts.isEmpty ? nil : helpParts.joined(separator: "\n"))
     }
 }

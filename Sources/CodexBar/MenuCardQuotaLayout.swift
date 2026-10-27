@@ -92,27 +92,16 @@ struct CompactMetricCell: View {
                 accessibilityLabel: self.metric.percentStyle.accessibilityLabel,
                 pacePercent: self.metric.pacePercent,
                 paceOnTop: self.metric.paceOnTop)
-            Text(self.caption(presentation))
+            Text(presentation.resetText ?? " ")
                 .font(.caption)
                 .monospacedDigit()
-                .foregroundStyle(self.captionIsWarning(presentation) && !self.isHighlighted
-                    ? Color(nsColor: .systemOrange)
-                    : MenuHighlightStyle.secondary(self.isHighlighted))
+                .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
                 .lineLimit(1)
                 .truncationMode(.tail)
         }
         .help(self.help(presentation))
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
-    }
-
-    private func caption(_ presentation: UsageMenuCardView.Model.Metric.CardPresentation) -> String {
-        if presentation.footnoteIsWarning, let footnote = presentation.footnoteText { return footnote }
-        return presentation.resetText ?? " "
-    }
-
-    private func captionIsWarning(_ presentation: UsageMenuCardView.Model.Metric.CardPresentation) -> Bool {
-        presentation.footnoteIsWarning && presentation.footnoteText != nil
     }
 
     private func help(_ presentation: UsageMenuCardView.Model.Metric.CardPresentation) -> String {

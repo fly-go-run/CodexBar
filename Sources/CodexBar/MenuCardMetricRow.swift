@@ -84,10 +84,7 @@ struct MetricRow: View {
             Spacer(minLength: 8)
             if let footnote = presentation.footnoteText {
                 Text(footnote)
-                    .foregroundStyle(
-                        presentation.footnoteIsWarning && !self.isHighlighted
-                            ? Color(nsColor: .systemOrange)
-                            : MenuHighlightStyle.secondary(self.isHighlighted))
+                    .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
                     .minimumScaleFactor(0.85)
             }
         }
