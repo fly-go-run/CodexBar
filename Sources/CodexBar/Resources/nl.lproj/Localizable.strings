@@ -1444,7 +1444,7 @@
 "token_speed_vs_day_same" = "Gelijk aan het 24u-gemiddelde";
 "token_speed_help_window" = "%@: mediaan %@ tok/s · %@ verzoeken";
 "token_speed_help_day" = "24u-gemiddelde %@ tok/s";
-"token_speed_help_end_to_end" = "End-to-end-snelheid, inclusief wachten op het eerste token";
+"token_speed_help_generation" = "Generatiesnelheid, van eerste tot laatste token; wachten op het eerste token telt niet mee";
 "token_speed_heading" = "Uitvoersnelheid";
 "token_speed_window_last_hour" = "afgelopen uur";
 "token_speed_requests" = "%@ verzoeken";

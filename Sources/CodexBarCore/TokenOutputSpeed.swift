@@ -2,9 +2,9 @@ import Foundation
 
 /// One model API request reconstructed from local session logs.
 ///
-/// `startedAt` is when the request was sent (the log entry that triggered it) and `completedAt`
-/// is when the last content block of the response was written, so the duration includes
-/// time-to-first-token. The derived rate is end-to-end output throughput, not pure decode speed.
+/// `startedAt` is when the response's first output began streaming and `completedAt` is when its last
+/// content block was written, so the derived rate is generation speed: the wait for the first token
+/// (queueing, prompt processing) and tool runs between requests are left out.
 public struct TokenOutputSpeedSample: Sendable, Equatable {
     public let model: String
     public let outputTokens: Int

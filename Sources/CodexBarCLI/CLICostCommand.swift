@@ -132,7 +132,7 @@ extension CodexBarCLI {
 
     static func renderOutputSpeedText(provider: UsageProvider, now: Date) -> String? {
         guard let speed = try? TokenOutputSpeedScanner.shared.snapshot(provider: provider, now: now) else { return nil }
-        var lines = ["Output speed (24h, includes time to first token):"]
+        var lines = ["Output speed (24h, from first token to last):"]
         for bucket in speed.models {
             let rate = String(format: "%.0f", bucket.tokensPerSecond)
             lines.append("  \(bucket.model ?? "?"): \(rate) tok/s · \(bucket.requestCount) requests")

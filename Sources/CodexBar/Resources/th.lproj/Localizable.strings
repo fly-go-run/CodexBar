@@ -1449,7 +1449,7 @@
 "token_speed_vs_day_same" = "ใกล้เคียงค่าเฉลี่ย 24 ชม.";
 "token_speed_help_window" = "%@: มัธยฐาน %@ tok/s · %@ คำขอ";
 "token_speed_help_day" = "ค่าเฉลี่ย 24 ชม. %@ tok/s";
-"token_speed_help_end_to_end" = "ความเร็วแบบต้นทางถึงปลายทาง รวมเวลารอโทเค็นแรก";
+"token_speed_help_generation" = "ความเร็วในการสร้าง ตั้งแต่โทเค็นแรกถึงโทเค็นสุดท้าย ไม่นับเวลารอโทเค็นแรก";
 "token_speed_heading" = "ความเร็วเอาต์พุต";
 "token_speed_window_last_hour" = "1 ชั่วโมงล่าสุด";
 "token_speed_requests" = "%@ คำขอ";

@@ -3,8 +3,6 @@ import Foundation
 /// The few fields the speed parsers need from a session log line, read without decoding the line.
 struct TokenSpeedLineFields {
     var type: String?
-    var uuid: String?
-    var parentUuid: String?
     var timestamp: String?
     var hasPayloadObject = false
     var payloadType: String?
@@ -12,7 +10,7 @@ struct TokenSpeedLineFields {
     var payloadModel: String?
 }
 
-/// Single-pass, allocation-free reader for the top-level `type` / `uuid` / `parentUuid` / `timestamp` strings and the
+/// Single-pass, allocation-free reader for the top-level `type` / `timestamp` strings and the
 /// `payload.type` / `payload.role` / `payload.model` strings of one JSON object line. Session logs hold
 /// huge tool outputs and base64 images that the speed parsers never look at, so skipping the generic
 /// JSON decode for them is most of the scan cost.
@@ -28,15 +26,13 @@ enum TokenSpeedLineExtractor {
 
     private struct Reader {
         enum TopKey {
-            case type, uuid, parentUuid, timestamp, payload, other
+            case type, timestamp, payload, other
 
             var bit: UInt8 {
                 switch self {
                 case .type: 0
-                case .uuid: 1
                 case .timestamp: 2
                 case .payload: 3
-                case .parentUuid: 4
                 case .other: 7
                 }
             }
@@ -174,8 +170,6 @@ enum TokenSpeedLineExtractor {
             guard !hasEscape, let value = self.string(range) else { return false }
             switch self.topKey {
             case .type: self.fields.type = value
-            case .uuid: self.fields.uuid = value
-            case .parentUuid: self.fields.parentUuid = value
             case .timestamp: self.fields.timestamp = value
             case .payload, .other: break
             }
@@ -214,8 +208,6 @@ enum TokenSpeedLineExtractor {
 
         private func classifyTop(_ range: Range<Int>) -> TopKey {
             if self.matches(range, "type") { return .type }
-            if self.matches(range, "uuid") { return .uuid }
-            if self.matches(range, "parentUuid") { return .parentUuid }
             if self.matches(range, "timestamp") { return .timestamp }
             if self.matches(range, "payload") { return .payload }
             return .other
@@ -235,13 +227,13 @@ enum TokenSpeedLineExtractor {
 }
 
 /// Claude Code writes one line per content block; lines of one response share `message.id`
-/// and carry the final `usage.output_tokens`. A response's first line points (`parentUuid`)
-/// at the entry that triggered the request — a prompt or tool result, usually through a chain of
-/// attachments. Attachments are skipped when timing the request: some (`deferred_tools_record`) are
-/// only written once the response arrives, which would make the request look instant.
+/// and carry the final `usage.output_tokens`. A response that opens with a thinking block logs how long
+/// that block streamed (`thinkingDurationMs`), which dates its first token. Timing runs from there to the
+/// last block, so the wait for the first token (queueing, prompt processing) never counts as generation;
+/// a response without that first-token time is not measured at all rather than timed from its prompt.
 ///
-/// The parser is incremental: it keeps the entry-time map and the requests seen so far, so feeding
-/// it only the bytes appended to a log gives the same result as parsing the whole file again.
+/// The parser is incremental: it keeps the requests seen so far, so feeding it only the bytes appended
+/// to a log gives the same result as parsing the whole file again.
 struct ClaudeSessionParser: Sendable {
     private struct Request {
         let model: String
@@ -250,10 +242,7 @@ struct ClaudeSessionParser: Sendable {
         var outputTokens: Int
     }
 
-    private var entryTimes: [String: Date] = [:]
-    /// Attachment uuid → its parent, walked back to the entry that actually sent the request.
-    private var attachmentParents: [String: String] = [:]
-    /// `.some(nil)` marks a response whose start is unknown, so later blocks must not revive it.
+    /// `.some(nil)` marks a response whose first token is unknown, so later blocks must not revive it.
     private var requests: [String: Request?] = [:]
     private var order: [String] = []
 
@@ -269,38 +258,23 @@ struct ClaudeSessionParser: Sendable {
     }
 
     /// Responses are fully decoded since their usage sits at the tail, so a line cut off at the byte
-    /// cap is unusable. Every other entry only needs uuid + timestamp, which the extractor reads
-    /// without decoding the (often huge) tool output or image payload.
+    /// cap is unusable. Every other entry is dropped once the extractor has read its type, without
+    /// decoding the (often huge) tool output or image payload.
     mutating func consume(line: Data, truncated: Bool) {
         guard !truncated else { return }
         let fields = line.withUnsafeBytes { raw -> TokenSpeedLineFields? in
             TokenSpeedLineExtractor.extract(raw.bindMemory(to: UInt8.self), allowIncomplete: false)
         }
-        if let fields, fields.type != "assistant" {
-            if let uuid = fields.uuid, let timestamp = fields.timestamp.flatMap(Self.parseTimestamp) {
-                self.entryTimes[uuid] = timestamp
-                if fields.type == "attachment", let parent = fields.parentUuid {
-                    self.attachmentParents[uuid] = parent
-                }
-            }
-            return
-        }
+        if let fields, fields.type != "assistant" { return }
         if let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any] {
             self.consume(object: object)
         }
     }
 
     mutating func consume(object: [String: Any]) {
-        guard let timestamp = (object["timestamp"] as? String).flatMap(Self.parseTimestamp) else { return }
-        guard let uuid = object["uuid"] as? String else { return }
-        self.entryTimes[uuid] = timestamp
-        guard object["type"] as? String == "assistant" else {
-            if object["type"] as? String == "attachment", let parent = object["parentUuid"] as? String {
-                self.attachmentParents[uuid] = parent
-            }
-            return
-        }
-        guard let message = object["message"] as? [String: Any],
+        guard object["type"] as? String == "assistant",
+              let timestamp = (object["timestamp"] as? String).flatMap(Self.parseTimestamp),
+              let message = object["message"] as? [String: Any],
               let id = message["id"] as? String,
               let model = message["model"] as? String,
               model != "<synthetic>"
@@ -315,31 +289,19 @@ struct ClaudeSessionParser: Sendable {
             return
         }
         self.order.append(id)
-        guard let parent = object["parentUuid"] as? String,
-              let startedAt = self.requestStart(parent: parent),
-              startedAt <= timestamp
+        // Only the response's first line can date its first token.
+        guard let thinkingMilliseconds = (object["thinkingDurationMs"] as? NSNumber)?.doubleValue,
+              thinkingMilliseconds >= 0
         else {
             self.requests[id] = .some(nil)
             return
         }
         self.requests[id] = Request(
             model: model,
-            startedAt: startedAt,
+            startedAt: timestamp.addingTimeInterval(-thinkingMilliseconds / 1000),
             completedAt: timestamp,
             outputTokens: output ?? 0)
     }
-
-    /// Time of the nearest non-attachment ancestor; the parent's own time when the chain leaves what was read.
-    private func requestStart(parent: String) -> Date? {
-        var current = parent
-        for _ in 0..<Self.maximumAttachmentHops {
-            guard let next = self.attachmentParents[current], self.entryTimes[next] != nil else { break }
-            current = next
-        }
-        return self.entryTimes[current]
-    }
-
-    private static let maximumAttachmentHops = 32
 
     private static func parseTimestamp(_ raw: String) -> Date? {
         CostUsageScanner.dateFromTimestamp(raw)
@@ -351,14 +313,26 @@ struct ClaudeSessionParser: Sendable {
 /// output tokens (reasoning included). `token_count` is often logged after the tool output
 /// that already belongs to the next request, so that input is held until the count lands.
 ///
-/// Incremental like `ClaudeSessionParser`: model, startedAt, completedAt and nextStartedAt carry
-/// across appended chunks.
+/// Timing runs from the first output item, dated by the `item_completed` event of its reasoning or message
+/// (`started_at_ms`), so the wait for the first token never counts as generation. A request whose first
+/// output has no such start (it opens with a tool call, or the log predates the field) is not measured.
+///
+/// Incremental like `ClaudeSessionParser`: model, startedAt, outputStartedAt, completedAt and nextStartedAt
+/// carry across appended chunks.
 struct CodexSessionParser: Sendable {
     private(set) var samples: [TokenOutputSpeedSample] = []
     private var model: String?
     private var startedAt: Date?
+    private var outputStartedAt: Date?
     private var completedAt: Date?
     private var nextStartedAt: Date?
+
+    private static let outputItemTypes: Set<String> = ["Reasoning", "AgentMessage"]
+
+    /// Between a request's input and its first output item, where that item's start is still unknown.
+    private var awaitsOutputStart: Bool {
+        self.startedAt != nil && self.completedAt == nil && self.outputStartedAt == nil
+    }
 
     mutating func consume(line: Data, truncated: Bool) {
         let fields = line.withUnsafeBytes { raw -> TokenSpeedLineFields? in
@@ -375,8 +349,14 @@ struct CodexSessionParser: Sendable {
         case "turn_context", "response_item":
             break
         case "event_msg":
-            // Only token counts matter, and they are small; decode them for the nested usage.
-            guard fields.payloadType == "token_count", !truncated,
+            // Only token counts and the completion of a request's first output item matter; decode those for
+            // their nested fields. Later items (tool runs with large output) are never decoded.
+            let wanted = switch fields.payloadType {
+            case "token_count": true
+            case "item_completed": self.awaitsOutputStart
+            default: false
+            }
+            guard wanted, !truncated,
                   let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any]
             else { return }
             self.consume(object: object)
@@ -391,7 +371,8 @@ struct CodexSessionParser: Sendable {
                 payloadType: fields.payloadType,
                 role: fields.payloadRole,
                 payloadModel: fields.payloadModel,
-                outputTokens: nil),
+                outputTokens: nil,
+                outputStartedAt: nil),
             at: timestamp)
     }
 
@@ -401,13 +382,21 @@ struct CodexSessionParser: Sendable {
         else { return }
         let info = payload["info"] as? [String: Any]
         let last = info?["last_token_usage"] as? [String: Any]
+        var outputStartedAt: Date?
+        if let itemType = (payload["item"] as? [String: Any])?["type"] as? String,
+           Self.outputItemTypes.contains(itemType),
+           let milliseconds = (payload["started_at_ms"] as? NSNumber)?.doubleValue
+        {
+            outputStartedAt = Date(timeIntervalSince1970: milliseconds / 1000)
+        }
         self.apply(
             Line(
                 type: object["type"] as? String,
                 payloadType: payload["type"] as? String,
                 role: payload["role"] as? String,
                 payloadModel: payload["model"] as? String,
-                outputTokens: (last?["output_tokens"] as? NSNumber)?.intValue),
+                outputTokens: (last?["output_tokens"] as? NSNumber)?.intValue,
+                outputStartedAt: outputStartedAt),
             at: timestamp)
     }
 
@@ -417,6 +406,8 @@ struct CodexSessionParser: Sendable {
         let role: String?
         let payloadModel: String?
         let outputTokens: Int?
+        /// When a reasoning or message item began streaming, from its `item_completed` event.
+        let outputStartedAt: Date?
     }
 
     private mutating func apply(_ line: Line, at timestamp: Date) {
@@ -433,10 +424,15 @@ struct CodexSessionParser: Sendable {
             self.input(timestamp)
         case ("response_item", _):
             self.output(timestamp)
+        case ("event_msg", "item_completed"):
+            guard self.awaitsOutputStart, let start = self.startedAt,
+                  let outputStart = line.outputStartedAt, outputStart >= start
+            else { return }
+            self.outputStartedAt = outputStart
         case ("event_msg", "token_count"):
-            guard let start = self.startedAt, let end = self.completedAt else { return }
+            guard self.startedAt != nil, let end = self.completedAt else { return }
             guard let outputTokens = line.outputTokens else { return }
-            if let model = self.model {
+            if let model = self.model, let start = self.outputStartedAt {
                 self.samples.append(TokenOutputSpeedSample(
                     model: model,
                     outputTokens: outputTokens,
@@ -444,6 +440,7 @@ struct CodexSessionParser: Sendable {
                     completedAt: end))
             }
             self.startedAt = self.nextStartedAt
+            self.outputStartedAt = nil
             self.completedAt = nil
             self.nextStartedAt = nil
         default:
@@ -454,6 +451,7 @@ struct CodexSessionParser: Sendable {
     private mutating func input(_ timestamp: Date) {
         if self.completedAt == nil {
             self.startedAt = timestamp
+            self.outputStartedAt = nil
         } else {
             self.nextStartedAt = timestamp
         }
@@ -463,6 +461,7 @@ struct CodexSessionParser: Sendable {
         if let next = self.nextStartedAt {
             // The previous request never reported tokens; start over from the newer input.
             self.startedAt = next
+            self.outputStartedAt = nil
             self.nextStartedAt = nil
         }
         if self.startedAt != nil { self.completedAt = timestamp }

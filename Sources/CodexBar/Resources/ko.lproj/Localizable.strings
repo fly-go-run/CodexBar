@@ -1413,7 +1413,7 @@
 "token_speed_vs_day_same" = "24시간 평균 수준";
 "token_speed_help_window" = "%@: 중앙값 %@ tok/s · 요청 %@회";
 "token_speed_help_day" = "24시간 평균 %@ tok/s";
-"token_speed_help_end_to_end" = "첫 토큰 대기 시간을 포함한 종단 간 속도";
+"token_speed_help_generation" = "생성 속도: 첫 토큰부터 마지막 토큰까지, 첫 토큰 대기 시간은 제외";
 "token_speed_heading" = "출력 속도";
 "token_speed_window_last_hour" = "최근 1시간";
 "token_speed_requests" = "요청 %@회";

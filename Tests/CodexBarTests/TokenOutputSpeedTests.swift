@@ -18,33 +18,39 @@ struct TokenOutputSpeedTests {
     }
 
     @Test
-    func `claude requests start at the entry behind their attachments and end at the last block`() throws {
+    func `claude requests run from the first token of their thinking block to the last block`() throws {
         let data = try Self.jsonl([
             ["type": "user", "uuid": "u1", "timestamp": "2026-10-10T11:37:00.000Z"],
-            ["type": "attachment", "uuid": "a1", "parentUuid": "u1", "timestamp": "2026-10-10T11:37:00.010Z"],
-            // Written only once the response arrives; timing from it made the request look instant.
-            ["type": "attachment", "uuid": "a2", "parentUuid": "a1", "timestamp": "2026-10-10T11:37:03.000Z"],
+            // The first block streamed for 1.5s before it was written: the first token came at 11:37:01.5, and the
+            // wait since the prompt is not generation time.
             [
-                "type": "assistant", "uuid": "m1", "parentUuid": "a2", "timestamp": "2026-10-10T11:37:03.000Z",
+                "type": "assistant", "uuid": "m1", "parentUuid": "u1", "timestamp": "2026-10-10T11:37:03.000Z",
+                "thinkingDurationMs": 1500,
                 "message": ["id": "msg_1", "model": "claude-opus-4-1", "usage": ["output_tokens": 400]],
             ],
             [
                 "type": "assistant", "uuid": "m2", "parentUuid": "m1", "timestamp": "2026-10-10T11:37:05.000Z",
                 "message": ["id": "msg_1", "model": "claude-opus-4-1", "usage": ["output_tokens": 400]],
             ],
-            // Parent was never logged (e.g. a resumed session): no trustworthy start time.
+            // Opens without a thinking block: its first token is unknown, so it is not measured at all, even
+            // when a later block of the same response carries a thinking duration.
             [
-                "type": "assistant", "uuid": "m3", "parentUuid": "missing", "timestamp": "2026-10-10T11:38:00.000Z",
+                "type": "assistant", "uuid": "m3", "parentUuid": "m2", "timestamp": "2026-10-10T11:38:00.000Z",
                 "message": ["id": "msg_2", "model": "claude-opus-4-1", "usage": ["output_tokens": 50]],
             ],
             [
-                "type": "assistant", "uuid": "m4", "parentUuid": "m2", "timestamp": "2026-10-10T11:38:01.000Z",
+                "type": "assistant", "uuid": "m4", "parentUuid": "m3", "timestamp": "2026-10-10T11:38:02.000Z",
+                "thinkingDurationMs": 1000,
+                "message": ["id": "msg_2", "model": "claude-opus-4-1", "usage": ["output_tokens": 50]],
+            ],
+            [
+                "type": "assistant", "uuid": "m5", "parentUuid": "m4", "timestamp": "2026-10-10T11:38:03.000Z",
+                "thinkingDurationMs": 100,
                 "message": ["id": "msg_3", "model": "<synthetic>", "usage": ["output_tokens": 0]],
             ],
-            // An attachment chain that leaves the file falls back to the nearest attachment that was read.
-            ["type": "attachment", "uuid": "a3", "parentUuid": "elsewhere", "timestamp": "2026-10-10T11:39:00.000Z"],
             [
-                "type": "assistant", "uuid": "m5", "parentUuid": "a3", "timestamp": "2026-10-10T11:39:02.000Z",
+                "type": "assistant", "uuid": "m6", "timestamp": "2026-10-10T11:39:02.000Z",
+                "thinkingDurationMs": 2000,
                 "message": ["id": "msg_4", "model": "claude-opus-4-1", "usage": ["output_tokens": 100]],
             ],
         ])
@@ -55,15 +61,22 @@ struct TokenOutputSpeedTests {
         let sample = try #require(samples.first)
         #expect(sample.model == "claude-opus-4-1")
         #expect(sample.outputTokens == 400)
-        #expect(try sample.startedAt == (Self.date("2026-10-10T11:37:00.000Z")))
-        #expect(sample.durationSeconds == 5)
+        #expect(try sample.startedAt == (Self.date("2026-10-10T11:37:01.500Z")))
+        #expect(sample.durationSeconds == 3.5)
         #expect(samples.last?.durationSeconds == 2)
     }
 
     @Test
-    func `codex requests span from the triggering input to the last output item`() throws {
+    func `codex requests run from the first output item's start to the last output item`() throws {
         func item(_ ts: String, _ payload: [String: Any]) -> [String: Any] {
             ["timestamp": ts, "type": "response_item", "payload": payload]
+        }
+        func completed(_ ts: String, _ type: String, startedAt: String) throws -> [String: Any] {
+            let started = try Self.date(startedAt).timeIntervalSince1970 * 1000
+            return [
+                "timestamp": ts, "type": "event_msg",
+                "payload": ["type": "item_completed", "item": ["type": type], "started_at_ms": started],
+            ]
         }
         func tokens(_ ts: String, _ output: Int) -> [String: Any] {
             [
@@ -74,14 +87,26 @@ struct TokenOutputSpeedTests {
         let data = try Self.jsonl([
             ["timestamp": "2026-10-08T14:30:19.000Z", "type": "turn_context", "payload": ["model": "gpt-5"]],
             item("2026-10-08T14:30:19.500Z", ["type": "message", "role": "user"]),
+            completed("2026-10-08T14:30:19.600Z", "UserMessage", startedAt: "2026-10-08T14:30:19.500Z"),
+            // The wait for the first token (19.5s to 21s) is not generation time.
+            completed("2026-10-08T14:30:22.000Z", "Reasoning", startedAt: "2026-10-08T14:30:21.000Z"),
             item("2026-10-08T14:30:22.000Z", ["type": "reasoning"]),
             item("2026-10-08T14:30:24.500Z", ["type": "custom_tool_call"]),
+            // The tool runs after its call was written: neither its events nor its run time count.
+            completed("2026-10-08T14:30:29.000Z", "CommandExecution", startedAt: "2026-10-08T14:30:24.600Z"),
             item("2026-10-08T14:30:30.000Z", ["type": "custom_tool_call_output"]),
             tokens("2026-10-08T14:30:30.001Z", 250),
             // Duplicate token_count for the same request must not produce a second sample.
             tokens("2026-10-08T14:30:30.002Z", 250),
+            completed("2026-10-08T14:30:32.000Z", "AgentMessage", startedAt: "2026-10-08T14:30:31.000Z"),
+            // A later item does not move the start of the first one.
+            completed("2026-10-08T14:30:32.000Z", "Reasoning", startedAt: "2026-10-08T14:30:31.500Z"),
             item("2026-10-08T14:30:32.000Z", ["type": "message", "role": "assistant"]),
             tokens("2026-10-08T14:30:32.100Z", 120),
+            // Opens with a tool call, so the first token is unknown and the request is not measured.
+            item("2026-10-08T14:30:40.000Z", ["type": "message", "role": "user"]),
+            item("2026-10-08T14:30:45.000Z", ["type": "function_call"]),
+            tokens("2026-10-08T14:30:45.100Z", 80),
             // A user message without any model output yet never yields a sample.
             item("2026-10-08T14:31:00.000Z", ["type": "message", "role": "user"]),
             tokens("2026-10-08T14:31:00.100Z", 99),
@@ -91,8 +116,8 @@ struct TokenOutputSpeedTests {
 
         #expect(samples.count == 2)
         #expect(samples.map(\.outputTokens) == [250, 120])
-        #expect(samples.map(\.durationSeconds) == [5, 2])
-        #expect(try samples[1].startedAt == (Self.date("2026-10-08T14:30:30.000Z")))
+        #expect(samples.map(\.durationSeconds) == [3.5, 1])
+        #expect(try samples[1].startedAt == (Self.date("2026-10-08T14:30:31.000Z")))
         #expect(samples.allSatisfy { $0.model == "gpt-5" })
     }
 
@@ -415,7 +440,7 @@ struct TokenOutputSpeedTests {
             ["type": "user", "uuid": "u1", "timestamp": formatter.string(from: now.addingTimeInterval(-20))],
             [
                 "type": "assistant", "uuid": "m1", "parentUuid": "u1",
-                "timestamp": formatter.string(from: now.addingTimeInterval(-10)),
+                "timestamp": formatter.string(from: now.addingTimeInterval(-10)), "thinkingDurationMs": 10000,
                 "message": ["id": "msg_1", "model": "claude-sonnet-4-5", "usage": ["output_tokens": 500]],
             ],
         ])
@@ -481,15 +506,24 @@ struct TokenOutputSpeedIncrementalTests {
     }
 
     private static func claudeEntries(_ now: Date) -> [[String: Any]] {
-        func assistant(_ uuid: String, parent: String, ago: Double, id: String, output: Int) -> [String: Any] {
-            [
+        func assistant(
+            _ uuid: String,
+            parent: String,
+            ago: Double,
+            id: String,
+            output: Int,
+            thinkingSeconds: Double? = nil) -> [String: Any]
+        {
+            var entry: [String: Any] = [
                 "type": "assistant", "uuid": uuid, "parentUuid": parent, "timestamp": self.stamp(now, ago),
                 "message": ["id": id, "model": "claude-sonnet-4-5", "usage": ["output_tokens": output]],
             ]
+            if let thinkingSeconds { entry["thinkingDurationMs"] = thinkingSeconds * 1000 }
+            return entry
         }
         return [
             ["type": "user", "uuid": "u1", "timestamp": self.stamp(now, 100)],
-            assistant("a1", parent: "u1", ago: 95, id: "msg_1", output: 500),
+            assistant("a1", parent: "u1", ago: 95, id: "msg_1", output: 500, thinkingSeconds: 3),
             assistant("a2", parent: "a1", ago: 90, id: "msg_1", output: 500),
             // Tool results mention assistant entries in nested payloads without being one.
             [
@@ -497,10 +531,10 @@ struct TokenOutputSpeedIncrementalTests {
                 "toolUseResult": ["uuid": "nested", "type": "assistant", "timestamp": "bogus"],
                 "message": ["content": [["type": "tool_result", "content": "\"type\":\"assistant\" caf\u{e9}"]]],
             ],
-            assistant("a3", parent: "u2", ago: 70, id: "msg_2", output: 300),
+            assistant("a3", parent: "u2", ago: 70, id: "msg_2", output: 300, thinkingSeconds: 5),
             assistant("a4", parent: "a3", ago: 60, id: "msg_2", output: 300),
             ["type": "user", "uuid": "u3", "parentUuid": "a4", "timestamp": self.stamp(now, 50)],
-            assistant("a5", parent: "u3", ago: 40, id: "msg_3", output: 200),
+            assistant("a5", parent: "u3", ago: 40, id: "msg_3", output: 200, thinkingSeconds: 5),
         ]
     }
 
@@ -514,16 +548,28 @@ struct TokenOutputSpeedIncrementalTests {
                 "payload": ["type": "token_count", "info": ["last_token_usage": ["output_tokens": output]]],
             ]
         }
+        func completed(_ ago: Double, _ type: String, startedAgo: Double) -> [String: Any] {
+            [
+                "timestamp": self.stamp(now, ago), "type": "event_msg",
+                "payload": [
+                    "type": "item_completed", "item": ["type": type],
+                    "started_at_ms": (now.timeIntervalSince1970 - startedAgo) * 1000,
+                ],
+            ]
+        }
         return [
             ["timestamp": self.stamp(now, 200), "type": "turn_context", "payload": ["model": "gpt-5"]],
             ["timestamp": self.stamp(now, 199), "type": "event_msg", "payload": ["type": "agent_message"]],
             item(198, ["type": "message", "role": "user"]),
+            completed(195, "Reasoning", startedAgo: 197),
             item(195, ["type": "reasoning"]),
             item(190, ["type": "function_call_output", "output": String(repeating: "x", count: 500)]),
             tokens(189, 250),
+            completed(180, "AgentMessage", startedAgo: 182),
             item(180, ["type": "message", "role": "assistant"]),
             tokens(179, 120),
             item(100, ["type": "message", "role": "user"]),
+            completed(90, "AgentMessage", startedAgo: 95),
             item(90, ["type": "message", "role": "assistant"]),
             tokens(89, 400),
         ]
@@ -567,13 +613,14 @@ struct TokenOutputSpeedIncrementalTests {
         let file = sessions.appendingPathComponent("rollout.jsonl")
         let codexHome = root.appendingPathComponent("home").path
 
-        // Split between an output item and its token_count, and again inside the last request.
-        try Data(entries[0...6].joined()).write(to: file)
+        // Split between an output item and its token_count, and again between the last request's first item
+        // starting and its output.
+        try Data(entries[0...8].joined()).write(to: file)
         let incremental = TokenOutputSpeedScanner()
         _ = try incremental.snapshot(provider: .codex, codexHomePath: codexHome, now: now)
-        try Self.append(Data(entries[7...8].joined()), to: file)
+        try Self.append(Data(entries[9...11].joined()), to: file)
         _ = try incremental.snapshot(provider: .codex, codexHomePath: codexHome, now: now)
-        try Self.append(Data(entries[9...].joined()), to: file)
+        try Self.append(Data(entries[12...].joined()), to: file)
         let result = try incremental.snapshot(provider: .codex, codexHomePath: codexHome, now: now)
 
         let full = try TokenOutputSpeedScanner().snapshot(provider: .codex, codexHomePath: codexHome, now: now)
@@ -658,17 +705,15 @@ struct TokenOutputSpeedIncrementalTests {
         let now = Date()
         let data = try Self.jsonl([
             ["type": "user", "uuid": "u1", "timestamp": Self.stamp(now, 100)],
-            // Too long for the cap: its uuid is never learned, so the response it triggered is dropped.
+            // Too long for the cap: its first-token time is never learned, so the response is dropped.
             [
-                "type": "user", "uuid": "u2", "timestamp": Self.stamp(now, 90),
-                "blob": String(repeating: "x", count: 10000),
-            ],
-            [
-                "type": "assistant", "uuid": "a1", "parentUuid": "u2", "timestamp": Self.stamp(now, 80),
+                "type": "assistant", "uuid": "a1", "parentUuid": "u1", "timestamp": Self.stamp(now, 80),
+                "thinkingDurationMs": 5000, "blob": String(repeating: "x", count: 10000),
                 "message": ["id": "msg_1", "model": "claude-sonnet-4-5", "usage": ["output_tokens": 500]],
             ],
             [
-                "type": "assistant", "uuid": "a2", "parentUuid": "u1", "timestamp": Self.stamp(now, 70),
+                "type": "assistant", "uuid": "a2", "parentUuid": "a1", "timestamp": Self.stamp(now, 70),
+                "thinkingDurationMs": 5000,
                 "message": ["id": "msg_2", "model": "claude-sonnet-4-5", "usage": ["output_tokens": 300]],
             ],
         ])
@@ -701,6 +746,12 @@ struct TokenOutputSpeedIncrementalTests {
         parser.consume(
             line: line("2026-10-08T14:30:20.000Z", "response_item", #"{"type":"message","role":"user"}"#),
             truncated: false)
+        parser.consume(
+            line: line(
+                "2026-10-08T14:30:24.000Z",
+                "event_msg",
+                #"{"type":"item_completed","item":{"type":"AgentMessage"},"started_at_ms":1791469821000}"#),
+            truncated: false)
         // The scanner hands over only the leading bytes of a line that exceeds the cap.
         parser.consume(line: Data(cutOff.prefix(200)), truncated: true)
         parser.consume(
@@ -711,7 +762,7 @@ struct TokenOutputSpeedIncrementalTests {
             truncated: false)
 
         #expect(parser.samples.map(\.outputTokens) == [250])
-        #expect(parser.samples.first?.durationSeconds == 4)
+        #expect(parser.samples.first?.durationSeconds == 3)
     }
 
     @Test
@@ -768,7 +819,7 @@ struct TokenOutputSpeedIncrementalTests {
             + #""payload":{"type":"message","role":"user"},"payload":null}"#
         let duplicateInner = #"{"timestamp":"\#(stamp)","type":"response_item","#
             + #""payload":{"type":"message","type":"reasoning","role":"user"}}"#
-        let duplicateTop = #"{"uuid":"d1","uuid":"d2","type":"user","timestamp":"\#(stamp)"}"#
+        let duplicateTop = #"{"timestamp":"\#(stamp)","type":"user","timestamp":"\#(stamp)"}"#
         #expect(fields(duplicatePayload) == nil)
         #expect(fields(duplicateInner) == nil)
         #expect(fields(duplicateTop) == nil)
@@ -779,9 +830,11 @@ struct TokenOutputSpeedIncrementalTests {
         var reference = CodexSessionParser()
         let lines = [
             #"{"timestamp":"\#(Self.stamp(now, 60))","type":"turn_context","payload":{"model":"gpt-5"}}"#,
+            duplicatePayload,
             #"{"timestamp":"\#(Self.stamp(now, 55))","type":"response_item","#
                 + #""payload":{"type":"message","role":"user"}}"#,
-            duplicatePayload,
+            #"{"timestamp":"\#(Self.stamp(now, 45))","type":"event_msg","payload":{"type":"item_completed","#
+                + #""item":{"type":"Reasoning"},"started_at_ms":\#((now.timeIntervalSince1970 - 47) * 1000)}}"#,
             #"{"timestamp":"\#(Self.stamp(now, 45))","type":"response_item","payload":{"type":"reasoning"}}"#,
             #"{"timestamp":"\#(Self.stamp(now, 44))","type":"event_msg","payload":{"type":"token_count","#
                 + #""info":{"last_token_usage":{"output_tokens":250}}}}"#,
@@ -793,6 +846,7 @@ struct TokenOutputSpeedIncrementalTests {
             }
         }
         #expect(fast.samples == reference.samples)
+        #expect(fast.samples.count == 1)
     }
 
     @Test

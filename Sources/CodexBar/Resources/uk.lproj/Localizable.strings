@@ -1445,7 +1445,7 @@
 "token_speed_vs_day_same" = "На рівні середнього за 24 год";
 "token_speed_help_window" = "%@: медіана %@ tok/s · %@ запитів";
 "token_speed_help_day" = "Середнє за 24 год %@ tok/s";
-"token_speed_help_end_to_end" = "Наскрізна швидкість з очікуванням першого токена";
+"token_speed_help_generation" = "Швидкість генерації від першого токена до останнього, без очікування першого токена";
 "token_speed_heading" = "Швидкість виводу";
 "token_speed_window_last_hour" = "остання година";
 "token_speed_requests" = "%@ запитів";

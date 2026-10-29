@@ -1444,7 +1444,7 @@
 "token_speed_vs_day_same" = "I nivå med 24h-snittet";
 "token_speed_help_window" = "%@: median %@ tok/s · %@ förfrågningar";
 "token_speed_help_day" = "24h-snitt %@ tok/s";
-"token_speed_help_end_to_end" = "Hastighet från början till slut, inklusive väntan på första token";
+"token_speed_help_generation" = "Genereringshastighet från första till sista token; väntan på första token räknas inte";
 "token_speed_heading" = "Utdatahastighet";
 "token_speed_window_last_hour" = "senaste timmen";
 "token_speed_requests" = "%@ förfrågningar";

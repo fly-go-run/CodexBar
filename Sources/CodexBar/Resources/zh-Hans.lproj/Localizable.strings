@@ -1420,7 +1420,7 @@
 "token_speed_vs_day_same" = "与 24h 均值持平";
 "token_speed_help_window" = "%@：中位 %@ tok/s · %@ 次请求";
 "token_speed_help_day" = "24h 均值 %@ tok/s";
-"token_speed_help_end_to_end" = "端到端速度，包含首 token 等待";
+"token_speed_help_generation" = "生成速度：从首个 token 到最后一个，不含等待首 token 的时间";
 "token_speed_heading" = "输出速度";
 "token_speed_window_last_hour" = "近 1 小时";
 "token_speed_requests" = "%@ 次请求";

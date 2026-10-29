@@ -1447,7 +1447,7 @@
 "token_speed_vs_day_same" = "مماثل لمتوسط 24 ساعة";
 "token_speed_help_window" = "%@: الوسيط %@ tok/s · %@ طلبات";
 "token_speed_help_day" = "متوسط 24 ساعة %@ tok/s";
-"token_speed_help_end_to_end" = "سرعة من طرف إلى طرف تشمل انتظار أول رمز";
+"token_speed_help_generation" = "سرعة التوليد من أول رمز إلى آخره، دون احتساب انتظار أول رمز";
 "token_speed_heading" = "سرعة الإخراج";
 "token_speed_window_last_hour" = "آخر ساعة";
 "token_speed_requests" = "%@ طلبات";

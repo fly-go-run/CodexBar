@@ -1447,7 +1447,7 @@
 "token_speed_vs_day_same" = "هم‌سطح میانگین ۲۴ ساعت";
 "token_speed_help_window" = "%@: میانه %@ tok/s · %@ درخواست";
 "token_speed_help_day" = "میانگین ۲۴ ساعت %@ tok/s";
-"token_speed_help_end_to_end" = "سرعت سرتاسری، شامل انتظار برای اولین توکن";
+"token_speed_help_generation" = "سرعت تولید، از اولین توکن تا آخرین؛ زمان انتظار برای اولین توکن حساب نمی‌شود";
 "token_speed_heading" = "سرعت خروجی";
 "token_speed_window_last_hour" = "یک ساعت اخیر";
 "token_speed_requests" = "%@ درخواست";

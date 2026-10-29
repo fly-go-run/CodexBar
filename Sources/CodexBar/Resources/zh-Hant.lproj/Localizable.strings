@@ -1421,7 +1421,7 @@
 "token_speed_vs_day_same" = "與 24h 平均持平";
 "token_speed_help_window" = "%@：中位數 %@ tok/s · %@ 次請求";
 "token_speed_help_day" = "24h 平均 %@ tok/s";
-"token_speed_help_end_to_end" = "端到端速度，包含首個 token 等待";
+"token_speed_help_generation" = "生成速度：從首個 token 到最後一個，不含等待首個 token 的時間";
 "token_speed_heading" = "輸出速度";
 "token_speed_window_last_hour" = "近 1 小時";
 "token_speed_requests" = "%@ 次請求";

@@ -1444,7 +1444,7 @@
 "token_speed_vs_day_same" = "Dans la moyenne 24 h";
 "token_speed_help_window" = "%@ : médiane %@ tok/s · %@ requêtes";
 "token_speed_help_day" = "Moyenne 24 h %@ tok/s";
-"token_speed_help_end_to_end" = "Vitesse de bout en bout, attente du premier token incluse";
+"token_speed_help_generation" = "Vitesse de génération, du premier au dernier token ; l'attente du premier token n'est pas comptée";
 "token_speed_heading" = "Vitesse de sortie";
 "token_speed_window_last_hour" = "dernière heure";
 "token_speed_requests" = "%@ requêtes";

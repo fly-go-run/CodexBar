@@ -337,7 +337,7 @@ extension UsageMenuCardView.Model {
         let help = [
             windowFigures,
             dayBucket.map { L("token_speed_help_day", String(format: "%.0f", $0.tokensPerSecond)) },
-            L("token_speed_help_end_to_end"),
+            L("token_speed_help_generation"),
         ].compactMap(\.self).joined(separator: "\n")
         return TokenSpeedSummary.Row(
             model: self.tokenSpeedModelName(bucket.model ?? ""),
