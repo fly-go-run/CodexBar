@@ -1329,6 +1329,11 @@ extension UsageStore {
                 if !preservesPriorData, !preservesClaudeWebSessionFailure {
                     self.snapshots.removeValue(forKey: provider.instanceID)
                 }
+                self.logSurfacedRefreshFailure(
+                    provider: provider,
+                    error: error,
+                    attempts: attempts,
+                    keptPriorData: hadPriorData && (preservesPriorData || preservesClaudeWebSessionFailure))
                 self.emitHook(
                     .refreshFailed,
                     provider: provider,

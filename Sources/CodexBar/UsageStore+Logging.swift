@@ -23,4 +23,19 @@ extension UsageStore {
             },
             modeSnapshot: modeSnapshot)
     }
+
+    func logSurfacedRefreshFailure(
+        provider: UsageProvider,
+        error: Error,
+        attempts: [ProviderFetchAttempt],
+        keptPriorData: Bool)
+    {
+        ProviderLogging.logSurfacedRefreshFailure(
+            logger: self.providerLogger,
+            provider: provider.instanceID,
+            status: Self.refreshFailureHookStatus(error),
+            message: error.localizedDescription,
+            attempts: attempts,
+            keptPriorData: keptPriorData)
+    }
 }
