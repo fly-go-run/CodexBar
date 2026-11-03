@@ -1082,6 +1082,8 @@
 "Account %@" = "Conta %@";
 "Account Usage" = "Uso da conta";
 "Account switched; restart the Codex background server manually." = "Cambio de conta; reinicie o servidor en segundo plano Codex manualmente.";
+"Use the Claude desktop app's sign-in" = "Usar o inicio de sesión da app de escritorio de Claude";
+"Reads usage with the Claude desktop app's session. Click Refresh once to allow “Claude Safe Storage”; it stays readable even when Keychain access is disabled." = "Le o uso coa sesión da app de escritorio de Claude. Fai clic unha vez en Actualizar para permitir «Claude Safe Storage»; este elemento segue sendo lexible aínda que o acceso ao chaveiro estea desactivado.";
 "Allow reading Claude Code's credentials" = "Permitir ler as credenciais de Claude Code";
 "BY USAGE" = "Clasificación por uso";
 "Break down Admin API spend by workspace over the last 30 days." = "Desglosa o gasto do administrador API por espazo de traballo nos últimos 30 días.";

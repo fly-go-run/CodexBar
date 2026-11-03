@@ -127,6 +127,22 @@ struct ClaudeProviderImplementation: ProviderImplementation {
                 onAppDidBecomeActive: nil,
                 onAppearWhenEnabled: nil),
             ProviderSettingsToggleDescriptor(
+                id: "claude-desktop-session",
+                title: "Use the Claude desktop app's sign-in",
+                subtitle: [
+                    "Reads usage with the Claude desktop app's session.",
+                    "Click Refresh once to allow “Claude Safe Storage”;",
+                    "it stays readable even when Keychain access is disabled.",
+                ].joined(separator: " "),
+                binding: context.binding(\.claudeDesktopSessionEnabled),
+                statusText: nil,
+                actions: [],
+                isVisible: nil,
+                isEnabled: nil,
+                onChange: nil,
+                onAppDidBecomeActive: nil,
+                onAppearWhenEnabled: nil),
+            ProviderSettingsToggleDescriptor(
                 id: "claude-oauth-direct-keychain-read",
                 title: "Allow reading Claude Code's credentials",
                 subtitle: [

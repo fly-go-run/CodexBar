@@ -723,6 +723,11 @@ extension SettingsStore {
             key: "claudeModelScopedWeeklyUsageVisible") }
     }
 
+    var claudeDesktopSessionEnabled: Bool {
+        get { self.defaultsState.claudeDesktopSessionEnabled }
+        set { self.setDefault(\.claudeDesktopSessionEnabled, newValue, key: ClaudeDesktopSession.preferenceKey) }
+    }
+
     var codexSparkUsageVisible: Bool {
         get { self.defaultsState.codexSparkUsageVisible }
         set { self.setDefault(\.codexSparkUsageVisible, newValue, key: "codexSparkUsageVisible") }

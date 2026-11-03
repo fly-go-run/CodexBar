@@ -1086,6 +1086,8 @@
 "Account %@" = "Hesap %@";
 "Account Usage" = "Hesap Kullanımı";
 "Account switched; restart the Codex background server manually." = "Hesap değiştirildi; Codex arka plan sunucusunu manuel olarak yeniden başlatın.";
+"Use the Claude desktop app's sign-in" = "Claude masaüstü uygulamasının oturumunu kullan";
+"Reads usage with the Claude desktop app's session. Click Refresh once to allow “Claude Safe Storage”; it stays readable even when Keychain access is disabled." = "Kullanımı Claude masaüstü uygulamasının oturumuyla okur. “Claude Safe Storage” iznini vermek için bir kez Yenile’ye tıklayın; Anahtar Zinciri erişimi kapalı olsa bile bu öğe okunabilir kalır.";
 "Allow reading Claude Code's credentials" = "Claude Code'nin kimlik bilgilerinin okunmasına izin ver";
 "BY USAGE" = "Kullanıma göre sıralanmıştır";
 "Break down Admin API spend by workspace over the last 30 days." = "Yönetici API harcamasının son 30 gün içindeki çalışma alanına göre dökümü.";

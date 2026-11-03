@@ -1085,6 +1085,8 @@
 "Account %@" = "حساب %@";
 "Account Usage" = "استفاده از حساب";
 "Account switched; restart the Codex background server manually." = "تغییر حساب؛ سرور پس زمینه Codex را به صورت دستی راه اندازی مجدد کنید.";
+"Use the Claude desktop app's sign-in" = "استفاده از ورود برنامهٔ دسکتاپ Claude";
+"Reads usage with the Claude desktop app's session. Click Refresh once to allow “Claude Safe Storage”; it stays readable even when Keychain access is disabled." = "میزان استفاده را با نشست برنامهٔ دسکتاپ Claude می‌خواند. یک بار روی «تازه‌سازی» کلیک کنید تا “Claude Safe Storage” مجاز شود؛ این مورد حتی با غیرفعال بودن دسترسی به جاکلیدی خواندنی می‌ماند.";
 "Allow reading Claude Code's credentials" = "اجازه خواندن اعتبارنامه Claude Code را بدهید";
 "BY USAGE" = "رتبه بندی بر اساس استفاده";
 "Break down Admin API spend by workspace over the last 30 days." = "هزینه‌های Admin API را بر اساس فضای کاری طی 30 روز گذشته تقسیم کنید.";

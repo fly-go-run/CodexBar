@@ -167,19 +167,41 @@ struct KeychainPromptSafetyAuditTests {
         let source = try Self.readRepoFile("Sources/CodexBarCore/KeychainSecurity.swift")
         #expect(source.contains("keychainAccessDisabled: KeychainAccessGate.isDisabled"))
 
+        // Reads pass the queried service so a scoped user exemption can apply; mutations never can.
         let operationCalls = [
-            ("public static func copyMatching(", "SecItemCopyMatching"),
-            ("public static func update(", "SecItemUpdate"),
-            ("public static func add(", "SecItemAdd"),
-            ("public static func delete(", "SecItemDelete"),
+            (
+                "public static func copyMatching(",
+                "SecItemCopyMatching",
+                "guard self.currentItemOperationBlockReason(service: service) == nil else"),
+            ("public static func update(", "SecItemUpdate", "guard self.currentItemOperationBlockReason() == nil else"),
+            ("public static func add(", "SecItemAdd", "guard self.currentItemOperationBlockReason() == nil else"),
+            ("public static func delete(", "SecItemDelete", "guard self.currentItemOperationBlockReason() == nil else"),
         ]
-        for (declaration, securityCall) in operationCalls {
+        for (declaration, securityCall, guardStatement) in operationCalls {
             let declarationRange = try #require(source.range(of: declaration))
             let operationSource = source[declarationRange.lowerBound...]
             let securityCallRange = try #require(operationSource.range(of: securityCall))
             let gatewayPath = operationSource[..<securityCallRange.lowerBound]
-            #expect(gatewayPath.contains("guard self.currentItemOperationBlockReason() == nil else"))
+            #expect(gatewayPath.contains(guardStatement))
         }
+    }
+
+    @Test
+    func `user keychain exemptions stay limited to the audited desktop session reader`() throws {
+        let allowedFiles = [
+            "Sources/CodexBarCore/KeychainAccessGate.swift",
+            // Audited 2026-11-03: exempts only "Claude Safe Storage", reads it without UI in the background,
+            // and allows one prompt per user refresh with a denial cooldown.
+            "Sources/CodexBarCore/Providers/Claude/ClaudeWeb/ClaudeDesktopSession.swift",
+        ]
+        let offenders = try Self.swiftFiles(
+            under: Self.repoRoot().appendingPathComponent("Sources", isDirectory: true))
+            .filter { file in
+                guard !allowedFiles.contains(where: file.path.hasSuffix) else { return false }
+                return try Self.readFile(file).contains("withUserExemption(")
+            }
+
+        #expect(offenders.isEmpty, "Unaudited Keychain exemption: \(offenders.map(\.path))")
     }
 
     @Test

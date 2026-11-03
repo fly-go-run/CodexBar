@@ -1088,6 +1088,8 @@
 "Account %@" = "Account %@";
 "Account Usage" = "Account Usage";
 "Account switched; restart the Codex background server manually." = "Account switched; restart the Codex background server manually.";
+"Use the Claude desktop app's sign-in" = "Use the Claude desktop app's sign-in";
+"Reads usage with the Claude desktop app's session. Click Refresh once to allow “Claude Safe Storage”; it stays readable even when Keychain access is disabled." = "Reads usage with the Claude desktop app's session. Click Refresh once to allow “Claude Safe Storage”; it stays readable even when Keychain access is disabled.";
 "Allow reading Claude Code's credentials" = "Allow reading Claude Code's credentials";
 "BY USAGE" = "BY USAGE";
 "Break down Admin API spend by workspace over the last 30 days." = "Break down Admin API spend by workspace over the last 30 days.";

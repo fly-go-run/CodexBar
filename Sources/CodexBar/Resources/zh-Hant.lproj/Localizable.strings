@@ -1093,6 +1093,8 @@
 "Account %@" = "帳戶 %@";
 "Account Usage" = "帳戶使用狀況";
 "Account switched; restart the Codex background server manually." = "已切換帳戶，請手動重啓 Codex 後台服務。";
+"Use the Claude desktop app's sign-in" = "使用 Claude 桌面 App 的登入狀態";
+"Reads usage with the Claude desktop app's session. Click Refresh once to allow “Claude Safe Storage”; it stays readable even when Keychain access is disabled." = "以 Claude 桌面 App 的工作階段讀取用量。點一次「重新整理」以允許讀取「Claude Safe Storage」；即使停用了鑰匙圈存取，此項目仍可讀取。";
 "Allow reading Claude Code's credentials" = "允許讀取 Claude Code 的憑證";
 "BY USAGE" = "按用量排序";
 "Break down Admin API spend by workspace over the last 30 days." = "按工作區細分過去 30 天內的管理員 API 支出。";

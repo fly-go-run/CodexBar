@@ -562,6 +562,8 @@ extension SettingsStore {
             // Model-scoped weekly rows are opt-in: a fresh install keeps widgets on the standard quota lanes.
             claudeModelScopedWeeklyUsageVisible: userDefaults.object(
                 forKey: "claudeModelScopedWeeklyUsageVisible") as? Bool ?? false,
+            claudeDesktopSessionEnabled: userDefaults.object(
+                forKey: ClaudeDesktopSession.preferenceKey) as? Bool ?? false,
             codexSparkUsageVisible: Self.loadBoolDefault("codexSparkUsageVisible", fallback: true, from: userDefaults),
             codexExternalOAuthSourcesAllowed: userDefaults.object(
                 forKey: "codexExternalOAuthSourcesAllowed") as? Bool ?? false,

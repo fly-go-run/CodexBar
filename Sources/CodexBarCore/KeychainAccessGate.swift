@@ -7,6 +7,7 @@ public enum KeychainAccessGate {
     private static let flagKey = "debugDisableKeychainAccess"
     static let disableAccessEnvironmentKey = "CODEXBAR_DISABLE_KEYCHAIN_ACCESS"
     @TaskLocal private static var taskOverrideValue: Bool?
+    @TaskLocal private static var userExemptedService: String?
     #if DEBUG
     @TaskLocal private static var storedOverrideForTesting: Bool?
     #endif
@@ -46,6 +47,22 @@ public enum KeychainAccessGate {
         #endif
         if let overrideValue { return overrideValue }
         return self.defaultsDisableAccess()
+    }
+
+    /// Lifts the user's "Disable Keychain access" preference for one service inside `operation` only.
+    /// Environment and process-wide blocks still apply, and `KeychainSecurity` keeps test processes blocked.
+    static func withUserExemption<T>(forService service: String, _ operation: () throws -> T) rethrows -> T {
+        try self.$userExemptedService.withValue(service, operation: operation)
+    }
+
+    /// `isDisabled` for an item operation on `service`, honoring a scoped `withUserExemption`.
+    static func isDisabled(forService service: String?) -> Bool {
+        guard let service, service == self.userExemptedService else { return self.isDisabled }
+        return self.stateLock.withLock {
+            if let taskOverrideValue { return taskOverrideValue }
+            if self.isDisabledByEnvironment() { return true }
+            return self.processForceDisabledReason != nil
+        }
     }
 
     /// True when Keychain access was turned off by the user, environment, or an explicit test override.

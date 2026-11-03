@@ -112,9 +112,9 @@ public enum KeychainSecurity {
         return nil
     }
 
-    private static func currentItemOperationBlockReason() -> ItemOperationBlockReason? {
+    private static func currentItemOperationBlockReason(service: String? = nil) -> ItemOperationBlockReason? {
         self.itemOperationBlockReason(
-            keychainAccessDisabled: KeychainAccessGate.isDisabled,
+            keychainAccessDisabled: KeychainAccessGate.isDisabled(forService: service),
             testSafetyBlocked: KeychainTestSafety.shouldBlockRealKeychainAccess())
     }
 
@@ -122,7 +122,8 @@ public enum KeychainSecurity {
         _ query: CFDictionary,
         _ result: UnsafeMutablePointer<CFTypeRef?>?) -> OSStatus
     {
-        guard self.currentItemOperationBlockReason() == nil else {
+        let service = (query as NSDictionary)[kSecAttrService as String] as? String
+        guard self.currentItemOperationBlockReason(service: service) == nil else {
             return errSecInteractionNotAllowed
         }
         return SecItemCopyMatching(query, result)

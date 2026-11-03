@@ -1084,6 +1084,8 @@
 "Account %@" = "Tài khoản %@";
 "Account Usage" = "Sử dụng tài khoản";
 "Account switched; restart the Codex background server manually." = "Tài khoản đã chuyển đổi; khởi động lại máy chủ nền Codex theo cách thủ công.";
+"Use the Claude desktop app's sign-in" = "Dùng đăng nhập của ứng dụng Claude trên máy tính";
+"Reads usage with the Claude desktop app's session. Click Refresh once to allow “Claude Safe Storage”; it stays readable even when Keychain access is disabled." = "Đọc mức sử dụng bằng phiên của ứng dụng Claude trên máy tính. Nhấn Làm mới một lần để cho phép “Claude Safe Storage”; mục này vẫn đọc được ngay cả khi tắt quyền truy cập Chuỗi khóa.";
 "Allow reading Claude Code's credentials" = "Cho phép đọc thông tin đăng nhập của Claude Code";
 "BY USAGE" = "Xếp hạng theo cách sử dụng";
 "Break down Admin API spend by workspace over the last 30 days." = "Chia nhỏ mức chi tiêu của Quản trị viên API theo không gian làm việc trong 30 ngày qua.";

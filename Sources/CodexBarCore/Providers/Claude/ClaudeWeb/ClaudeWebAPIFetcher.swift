@@ -429,6 +429,10 @@ extension ClaudeWebAPIFetcher {
             return override
         }
         let log: (String) -> Void = { msg in logger?(msg) }
+        if let desktopSession = ClaudeDesktopSession.sessionKeyInfo(logger: log) {
+            log("Found sessionKey in \(desktopSession.sourceLabel)")
+            return desktopSession
+        }
 
         let cookieDomains = ["claude.ai"]
 
@@ -1131,6 +1135,30 @@ extension ClaudeWebAPIFetcher {
         let log: (String) -> Void = { msg in logger?("[claude-web] \(msg)") }
         var cacheObservation = CookieHeaderCache.observeForConditionalMutation(provider: .claude)
         var invalidatedCacheError: FetchError?
+
+        // A cached browser session must not mask the opted-in desktop session, which the desktop app keeps current.
+        if let cached = cacheObservation.entry,
+           cached.sourceLabel != ClaudeDesktopSession.sourceLabel,
+           let desktopSession = ClaudeDesktopSession.sessionKeyInfo(logger: log)
+        {
+            do {
+                return try await self.fetchUsage(
+                    using: desktopSession,
+                    options: options,
+                    logger: log,
+                    cachePersistence: CachePersistence(
+                        sourceLabel: desktopSession.sourceLabel,
+                        expectedObservation: cacheObservation,
+                        persistInitialSessionKey: true))
+            } catch let error as FetchError {
+                switch error {
+                case .unauthorized, .noSessionKeyFound, .invalidSessionKey:
+                    log("Claude Desktop session was rejected; using the cached \(cached.sourceLabel) session")
+                default:
+                    throw error
+                }
+            }
+        }
 
         if let cached = cacheObservation.entry,
            !cached.cookieHeader.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

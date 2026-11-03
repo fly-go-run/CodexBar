@@ -220,7 +220,7 @@ public enum KeychainAccessPreflight {
             return override.check(service, account)
         }
         #endif
-        guard !KeychainAccessGate.isDisabled else { return .notFound }
+        guard !KeychainAccessGate.isDisabled(forService: service) else { return .notFound }
         let query = self.makeGenericPasswordPreflightQuery(service: service, account: account)
 
         var result: AnyObject?

@@ -1083,6 +1083,8 @@
 "Account %@" = "Рахунок %@";
 "Account Usage" = "Використання облікового запису";
 "Account switched; restart the Codex background server manually." = "Обліковий запис змінено; перезапустіть фоновий сервер Codex вручну.";
+"Use the Claude desktop app's sign-in" = "Використовувати вхід із настільного застосунку Claude";
+"Reads usage with the Claude desktop app's session. Click Refresh once to allow “Claude Safe Storage”; it stays readable even when Keychain access is disabled." = "Отримує використання через сеанс настільного застосунку Claude. Натисніть «Оновити» один раз, щоб дозволити «Claude Safe Storage»; цей елемент залишається доступним навіть із вимкненим доступом до в’язки ключів.";
 "Allow reading Claude Code's credentials" = "Дозволити читання облікових даних Claude Code";
 "BY USAGE" = "Рейтинг за використанням";
 "Break down Admin API spend by workspace over the last 30 days." = "Розподіліть витрати адміністратора API за робочими областями за останні 30 днів.";

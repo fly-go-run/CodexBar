@@ -1086,6 +1086,8 @@
 "Account %@" = "Akun %@";
 "Account Usage" = "Penggunaan Akun";
 "Account switched; restart the Codex background server manually." = "Akun dialihkan; restart server latar belakang Codex secara manual.";
+"Use the Claude desktop app's sign-in" = "Gunakan login aplikasi desktop Claude";
+"Reads usage with the Claude desktop app's session. Click Refresh once to allow “Claude Safe Storage”; it stays readable even when Keychain access is disabled." = "Membaca penggunaan dengan sesi aplikasi desktop Claude. Klik Segarkan sekali untuk mengizinkan “Claude Safe Storage”; item ini tetap dapat dibaca meskipun akses Keychain dinonaktifkan.";
 "Allow reading Claude Code's credentials" = "Izinkan membaca kredensial Claude Code";
 "BY USAGE" = "Diberi peringkat berdasarkan penggunaan";
 "Break down Admin API spend by workspace over the last 30 days." = "Kelompokkan pembelanjaan Admin API berdasarkan ruang kerja selama 30 hari terakhir.";

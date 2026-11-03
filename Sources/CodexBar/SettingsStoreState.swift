@@ -73,6 +73,7 @@ struct SettingsDefaultsState {
     var showOptionalCreditsAndExtraUsage: Bool
     var claudeDailyRoutinesUsageVisible: Bool
     var claudeModelScopedWeeklyUsageVisible: Bool
+    var claudeDesktopSessionEnabled: Bool
     var codexSparkUsageVisible: Bool
     var codexExternalOAuthSourcesAllowed: Bool
     var openAIWebAccessEnabled: Bool
