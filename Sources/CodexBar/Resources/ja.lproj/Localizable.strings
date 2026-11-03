@@ -1447,7 +1447,6 @@
 "token_speed_heading" = "出力速度";
 "token_speed_window_last_hour" = "直近1時間";
 "token_speed_requests" = "%@ リクエスト";
-"usage_metric_unused" = "未使用";
 "plan_renews_short" = "%@ 更新";
 "menu_tokens_short" = "%@ トークン";
 

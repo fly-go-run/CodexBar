@@ -1455,7 +1455,6 @@
 "token_speed_heading" = "Output speed";
 "token_speed_window_last_hour" = "last hour";
 "token_speed_requests" = "%@ requests";
-"usage_metric_unused" = "Unused";
 "plan_renews_short" = "renews %@";
 "menu_tokens_short" = "%@ tokens";
 

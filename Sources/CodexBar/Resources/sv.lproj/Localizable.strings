@@ -1448,7 +1448,6 @@
 "token_speed_heading" = "Utdatahastighet";
 "token_speed_window_last_hour" = "senaste timmen";
 "token_speed_requests" = "%@ förfrågningar";
-"usage_metric_unused" = "Oanvänd";
 "plan_renews_short" = "förnyas %@";
 "menu_tokens_short" = "%@ token";
 

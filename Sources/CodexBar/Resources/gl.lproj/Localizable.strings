@@ -1448,7 +1448,6 @@
 "token_speed_heading" = "Velocidade de saída";
 "token_speed_window_last_hour" = "última hora";
 "token_speed_requests" = "%@ solicitudes";
-"usage_metric_unused" = "Sen usar";
 "plan_renews_short" = "renova %@";
 "menu_tokens_short" = "Fichas %@";
 

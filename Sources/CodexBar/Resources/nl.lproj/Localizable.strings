@@ -1448,7 +1448,6 @@
 "token_speed_heading" = "Uitvoersnelheid";
 "token_speed_window_last_hour" = "afgelopen uur";
 "token_speed_requests" = "%@ verzoeken";
-"usage_metric_unused" = "Ongebruikt";
 "plan_renews_short" = "verlengt %@";
 "menu_tokens_short" = "%@-tokens";
 

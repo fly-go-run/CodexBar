@@ -1448,7 +1448,6 @@
 "token_speed_heading" = "Vitesse de sortie";
 "token_speed_window_last_hour" = "dernière heure";
 "token_speed_requests" = "%@ requêtes";
-"usage_metric_unused" = "Inutilisé";
 "plan_renews_short" = "renouvellement %@";
 "menu_tokens_short" = "Jetons %@";
 

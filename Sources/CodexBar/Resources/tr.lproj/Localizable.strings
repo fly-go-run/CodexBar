@@ -1452,7 +1452,6 @@
 "token_speed_heading" = "Çıktı hızı";
 "token_speed_window_last_hour" = "son 1 saat";
 "token_speed_requests" = "%@ istek";
-"usage_metric_unused" = "Kullanılmadı";
 "plan_renews_short" = "yenileme %@";
 "menu_tokens_short" = "%@ token";
 

@@ -1417,7 +1417,6 @@
 "token_speed_heading" = "출력 속도";
 "token_speed_window_last_hour" = "최근 1시간";
 "token_speed_requests" = "요청 %@회";
-"usage_metric_unused" = "미사용";
 "plan_renews_short" = "%@ 갱신";
 "menu_tokens_short" = "%@ 토큰";
 

@@ -1450,7 +1450,6 @@
 "token_speed_heading" = "Скорость вывода";
 "token_speed_window_last_hour" = "последний час";
 "token_speed_requests" = "%@ запросов";
-"usage_metric_unused" = "Не используется";
 "plan_renews_short" = "продление %@";
 "menu_tokens_short" = "%@ токенов";
 

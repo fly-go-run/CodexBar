@@ -1452,7 +1452,6 @@
 "token_speed_heading" = "Kecepatan output";
 "token_speed_window_last_hour" = "1 jam terakhir";
 "token_speed_requests" = "%@ permintaan";
-"usage_metric_unused" = "Belum dipakai";
 "plan_renews_short" = "diperpanjang %@";
 "menu_tokens_short" = "%@ token";
 

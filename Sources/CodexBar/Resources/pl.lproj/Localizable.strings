@@ -1452,7 +1452,6 @@
 "token_speed_heading" = "Szybkość wyjścia";
 "token_speed_window_last_hour" = "ostatnia godzina";
 "token_speed_requests" = "%@ żądań";
-"usage_metric_unused" = "Nieużywane";
 "plan_renews_short" = "odnowienie %@";
 "menu_tokens_short" = "%@ tokenów";
 

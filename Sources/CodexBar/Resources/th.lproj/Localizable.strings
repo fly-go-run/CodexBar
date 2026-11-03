@@ -1453,7 +1453,6 @@
 "token_speed_heading" = "ความเร็วเอาต์พุต";
 "token_speed_window_last_hour" = "1 ชั่วโมงล่าสุด";
 "token_speed_requests" = "%@ คำขอ";
-"usage_metric_unused" = "ยังไม่ใช้";
 "plan_renews_short" = "ต่ออายุ %@";
 "menu_tokens_short" = "โทเค็น %@";
 

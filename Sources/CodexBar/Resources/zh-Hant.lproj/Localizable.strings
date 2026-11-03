@@ -1425,7 +1425,6 @@
 "token_speed_heading" = "輸出速度";
 "token_speed_window_last_hour" = "近 1 小時";
 "token_speed_requests" = "%@ 次請求";
-"usage_metric_unused" = "未使用";
 "plan_renews_short" = "%@ 續訂";
 "menu_tokens_short" = "%@ tokens";
 

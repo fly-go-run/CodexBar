@@ -662,14 +662,6 @@ private struct UsageMenuCardUsageContentView: View {
                     }
                 }
             }
-            let unused = layout.unusedIDs.compactMap { live[$0] }
-            if !unused.isEmpty {
-                UnusedQuotasLine(
-                    metrics: unused,
-                    titles: unused.map {
-                        UsageMenuCardView.popupMetricTitle(provider: self.model.provider, metric: $0)
-                    })
-            }
             ForEach(layout.fullIDs.compactMap { live[$0] }, id: \.id) { metric in
                 self.metricRow(metric)
             }

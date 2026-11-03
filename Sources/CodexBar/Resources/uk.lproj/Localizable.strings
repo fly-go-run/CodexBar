@@ -1449,7 +1449,6 @@
 "token_speed_heading" = "Швидкість виводу";
 "token_speed_window_last_hour" = "остання година";
 "token_speed_requests" = "%@ запитів";
-"usage_metric_unused" = "Не використано";
 "plan_renews_short" = "продовження %@";
 "menu_tokens_short" = "%@ токенів";
 

@@ -1450,7 +1450,6 @@
 "token_speed_heading" = "Tốc độ đầu ra";
 "token_speed_window_last_hour" = "1 giờ qua";
 "token_speed_requests" = "%@ yêu cầu";
-"usage_metric_unused" = "Chưa dùng";
 "plan_renews_short" = "gia hạn %@";
 "menu_tokens_short" = "%@ mã thông báo";
 

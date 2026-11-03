@@ -1447,7 +1447,6 @@
 "token_speed_heading" = "Ausgabegeschwindigkeit";
 "token_speed_window_last_hour" = "letzte Stunde";
 "token_speed_requests" = "%@ Anfragen";
-"usage_metric_unused" = "Unbenutzt";
 "plan_renews_short" = "verlängert %@";
 "menu_tokens_short" = "%@ Token";
 

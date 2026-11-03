@@ -1451,7 +1451,6 @@
 "token_speed_heading" = "سرعة الإخراج";
 "token_speed_window_last_hour" = "آخر ساعة";
 "token_speed_requests" = "%@ طلبات";
-"usage_metric_unused" = "غير مستخدم";
 "plan_renews_short" = "التجديد %@";
 "menu_tokens_short" = "رموز %@";
 

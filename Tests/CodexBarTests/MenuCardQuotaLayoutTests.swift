@@ -33,11 +33,10 @@ struct MenuCardQuotaLayoutTests {
             Self.metric("secondary", percent: 12),
             Self.metric("tertiary", percent: 100),
         ])
-        // An untouched quota collapses into the quiet line instead of a full bar in the grid.
+        // An untouched quota still gets its bar in the grid.
         #expect(layout == Model.QuotaLayout(
             leadID: "secondary",
-            compactIDs: ["primary"],
-            unusedIDs: ["tertiary"],
+            compactIDs: ["primary", "tertiary"],
             fullIDs: []))
     }
 
@@ -75,12 +74,5 @@ struct MenuCardQuotaLayoutTests {
         #expect(layout.leadID == nil)
         #expect(layout.compactIDs.isEmpty)
         #expect(layout.fullIDs == ["primary", "extra"])
-    }
-
-    @Test
-    func `an untouched quota reads as unused`() {
-        #expect(Self.metric("tertiary", percent: 100).isUnused)
-        #expect(Self.metric("tertiary", percent: 0, style: .used).isUnused)
-        #expect(!Self.metric("secondary", percent: 99).isUnused)
     }
 }

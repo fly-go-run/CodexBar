@@ -1451,7 +1451,6 @@
 "token_speed_heading" = "سرعت خروجی";
 "token_speed_window_last_hour" = "یک ساعت اخیر";
 "token_speed_requests" = "%@ درخواست";
-"usage_metric_unused" = "استفاده‌نشده";
 "plan_renews_short" = "تمدید %@";
 "menu_tokens_short" = "توکن های %@";
 
